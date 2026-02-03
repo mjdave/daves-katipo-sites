@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "waraki" #used to uniquely identify this site
+title = "Waraki" #displayed name
+keywords = { "waraki", "mp3", "music", "player" } #used for search
+description = "Serves music files from a local directory, and allows clients to connect and listen" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

@@ -1,0 +1,94 @@
+musicDirectoryPath = "/Volumes/music" #todo this is config, should be in a config file
+doCrawlOnLaunch = false #Will crawl anyway if the cache file is not found. #todo easier ways to toggle and trigger this, command line arg, config file, maybe callbacks when music dir modified.
+
+publicFileDirectoryPath = file.getAbsolutePath(katipo.sitePath + "/publicData")
+if(!file.fileExists(publicFileDirectoryPath))
+{
+    print("creating public directory:", publicFileDirectoryPath)
+    file.createDirectoriesIfNeededForDirPath(publicFileDirectoryPath)
+}
+
+cachePath = publicFileDirectoryPath + "/musicLibrary.tuib"
+
+doCrawl = function()
+{
+    print("crawling library. This may take some time..")
+    libraryCrawler = require(katipo.sitePath + "/libraryCrawler.tui")
+    libraryCrawler.runCrawl(musicDirectoryPath)
+
+    .availablePlaylists = libraryCrawler.availablePlaylists
+    .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
+
+    cacheData = {
+        availablePlaylists = availablePlaylists,
+        songServerInfosBySongID = songServerInfosBySongID
+    }
+
+    #print("cacheData:", cacheData)
+
+    file.saveBinary(cachePath, cacheData)
+}
+
+### this function is called when clients query this site
+get = function(url, clientData)
+{
+    print("in get. url:", url, " clientData:", clientData)
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1) #respond to get fileHost/
+    {
+        print("sending playlists")
+        return {
+            status = "ok"
+            availablePlaylists = availablePlaylists
+        }
+    }
+    else #fileHost/fileName
+    {
+        songID = urlSplit[1]
+        songInfo = songServerInfosBySongID[songID]
+        if(songInfo)
+        {
+            print("file exists. sending...")
+            return {
+                status = "ok"
+                fileName = songInfo.fileName
+                filePath = songInfo.path
+            }
+        }
+        else
+        {
+            return {
+                status = "error"
+                message = "file not found"
+            }
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unknown error"
+    }
+}
+
+runLoop = function()
+{
+    print("Waraki Server is running!")
+    while(true)
+    {
+        sleep(1.0) #nothing to do yet
+    }
+}
+
+if(!doCrawlOnLaunch and file.fileExists(cachePath))
+{
+    print("Loading cache...")
+    cacheData = file.loadBinary(cachePath)
+
+    .availablePlaylists = cacheData.availablePlaylists
+    .songServerInfosBySongID = cacheData.songServerInfosBySongID
+}
+else
+{
+    doCrawl()
+}

@@ -1,0 +1,171 @@
+
+
+songServerInfosBySongID = {}
+fileCount = 0
+m3uPlaylistInfosByPlaylistID = {}
+availablePlaylists = {}
+
+limitForDebug = false
+
+loadFile = function(path, fileName, localPath)
+{
+    if(limitForDebug and fileCount > 500)
+    {
+        print("stopping early")
+        return
+    }
+
+    if(file.isDirectory(path))
+    {
+        contents = file.directoryContents(path)
+        if(table.count(contents) > 0)
+        {
+            directoryToAdd = {
+                fileName = fileName
+                files = {}
+            }
+            for(fileOrDirectory in contents)
+            {
+                subLocalPath = fileOrDirectory
+                if(localPath)
+                {
+                    subLocalPath = localPath + "/" + fileOrDirectory
+                }
+                addedFile = loadFile(path + "/" + fileOrDirectory, fileOrDirectory, subLocalPath)
+                if(addedFile)
+                {
+                    table.insert(directoryToAdd.files, addedFile)
+                }
+            }
+            return directoryToAdd
+        }
+    }
+    else
+    {
+        if(string.subString(fileName, 0, 1) != ".")
+        {
+            extension = file.extension(fileName) 
+            if(extension == ".m4a" or extension == ".mp3" or extension == ".flac")
+            {
+                songID = string.sha1(path)
+                songServerInfosBySongID[songID] = {
+                    fileName = fileName
+                    path = path
+                    localPath = localPath
+                }
+                
+                fileToAdd = {
+                    fileName = fileName
+                    localPath = localPath
+                    songID = songID
+                }
+
+                if(fileCount % 10 == 0)
+                {
+                    print("finding files(", fileCount, "):", path, " songID:", songID)
+                }
+                .fileCount = fileCount + 1
+                return fileToAdd
+            }
+            else if(extension == ".m3u")
+            {
+                playlistID = string.sha1(path)
+                m3uPlaylistInfosByPlaylistID[playlistID] = {
+                    path = path
+                }
+                fileToAdd = {
+                    fileName = fileName
+                    m3uPlaylistID = playlistID
+                }
+                print("found m3u playlist:", path)
+                return fileToAdd
+            }
+        }
+    }
+}
+
+addm3uPlaylists = function()
+{
+    #todo some m3u playlists contain %20 html escapes which need to be converted here
+    for(playlistID,playlistInfo in m3uPlaylistInfosByPlaylistID)
+    {
+        #print("playlist:", playlistID)
+        m3uData = file.loadData(playlistInfo.path)
+        foundSongs = {}
+        playlistLocationPath = file.removeLastPathComponent(playlistInfo.path)
+        lineStart = 0
+        characterIndex = string.find(m3uData, "\n") #skip the first line
+        #print("characterIndex:", characterIndex)
+        while(characterIndex)
+        {
+            #print("characterIndex a:", characterIndex)
+            lineStart = characterIndex + 1
+            #print("lineStart:", lineStart)
+            characterIndex = string.find(m3uData, "\n", lineStart)
+            #print("characterIndex b:", characterIndex)
+            if(characterIndex)
+            {
+                line = string.subString(m3uData, lineStart, characterIndex - lineStart)
+                #print("base line:", line)
+                firstChar = string.subString(line, 0, 1)
+                if(firstChar != "#")
+                {
+                    normalizedSongPath = playlistLocationPath
+                    #print("base path:", normalizedSongPath)
+                    while(string.subString(line, 0, 3) == "../")
+                    {
+                        normalizedSongPath = file.removeLastPathComponent(normalizedSongPath)
+                        line = string.subString(line, 3)
+                    }
+                    #print("parent dirs removed:", normalizedSongPath)
+                    normalizedSongPath = normalizedSongPath + line
+                    #print("final:", normalizedSongPath)
+
+                    songID = string.sha1(normalizedSongPath)
+                    songInfo = songServerInfosBySongID[songID]
+                    print("songInfo:", songInfo)
+                    if(songInfo)
+                    {
+                        clientPlaylistSongInfo = {
+                            songID = songID,
+                            fileName = songInfo.fileName
+                            localPath = songInfo.localPath
+                        }
+                        table.insert(foundSongs, clientPlaylistSongInfo)
+                    }
+                    else
+                    {
+                        print("unable to find song at path:", normalizedSongPath)
+                    }
+                }
+            }
+        }
+
+        if(table.count(foundSongs) > 0)
+        {
+            importedPlaylist = {
+                title = file.removeExtension(file.fileName(playlistInfo.path))
+                songs = foundSongs
+            }
+
+            table.insert(availablePlaylists, importedPlaylist)
+        }
+    }
+
+    print("availablePlaylists:", availablePlaylists)
+}
+
+
+runCrawl = function(directoryPath)
+{
+
+    print("loading files in:", directoryPath)
+
+    directoryTree = loadFile(directoryPath, file.fileName(directoryPath), nil)
+
+    addm3uPlaylists()
+
+    print("Crawl complete. Found ", fileCount, " songs.")
+}
+
+
