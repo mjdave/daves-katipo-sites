@@ -1,19 +1,8 @@
 
-##NOTE most of this file is commented out
+scrollView = require("app/common/scrollView.tui")
+button = require("app/common/button.tui")
 
-print("running site code")
-print("attempting top call system")
-system("ls -la")
-print("attempting to call file.fileSize")
-songsCachePath = file.fileSize("scene.tui")
-
-
-
-/*
-scrollView = require("common/scrollView.tui")
-button = require("common/button.tui")
-
-playlistsCachePath = file.getSavePath("playlists.tuib")
+playlistsCachePath = file.getSavePath("files/musicLibrary.tuib")
 songsCachePath = file.getSavePath("songs/")
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
@@ -22,53 +11,76 @@ print("songsCachePath:", songsCachePath)
 
 disableCache = false #when true, will ignore the cached playlists, and only download from server
 resetCache = false
-hasConnection = false
-
+waitingForDownload = false
 hasStartedCache = false
-cacheDownloadInProgress = false
+allSongsSuccessfullyCached = false
 
 paused = true
 
-songsToDownload = {}
+songsToDownloadArray = {}
+songsInfosByID = {}
 
+getSongCallback = function(result, hostID)
+{
+    .waitingForDownload = false
+    print("site code got result with status:", result.status, " message:", result.message, " hostID:", hostID)
+    if(!result or result.status != "ok")
+    {
+        print("bad result")
+    }
+    else if(result.songID and result.fileData and result.fileName)
+    {
+        print("cache song downloaded: ", result.fileName)#string.length(result))
+
+        songInfo = songsInfosByID[result.songID]
+        thisSongCachePath = songsCachePath + songInfo.localPath
+        file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
+        file.saveData(thisSongCachePath, result.fileData)
+
+            #todo maybe
+            #audio.queueSongs(queue)
+            #statusSubtitleTextView.text = ""
+            ##currentlyPlayingTitleTextView.text = firstItem.fileName
+            #.paused = false
+            #updatePauseButton()
+    }
+    else
+    {
+        print("site code warning: unhandled result.")
+        defaultSiteContent.hidden = false
+        pageTitle.text = "unhandled result"
+        pageBody.text = ""
+    }
+}
 
 
 downloadToCache = function(downloadSongIndex)
 {
-    songCount = table.count(songsToDownload)
+    songCount = table.count(songsToDownloadArray)
     if(downloadSongIndex >= songCount)
     {
-        .cacheDownloadInProgress = true #hacks
         print("all files cached.")
+        .allSongsSuccessfullyCached = true
         statusSubtitleTextView.text = "Sync complete"
-        client.disconnect()
         return
     }
 
-    songInfo = songsToDownload[downloadSongIndex]
-    songID = songInfo.songID
+    songID = songsToDownloadArray[downloadSongIndex]
+    songInfo = songsInfosByID[songID]
     
     thisSongCachePath = songsCachePath + songInfo.localPath
 
     #print("songInfo:", songInfo)
     #print("thisSongCachePath:", thisSongCachePath)
 
-    file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
-
-    songDownloaded = function(result)
-    {
-        print("cache song downloaded: ", string.length(result))
-        file.saveData(thisSongCachePath, result)
-        .cacheDownloadInProgress = false
-        #downloadToCache(downloadSongIndex + 1)
-    }
 
     if(resetCache or !file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
     {
         print("downloading song:", songInfo.fileName)
         statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-        .cacheDownloadInProgress = true
-        client.downloadFromServer("song", songID, songDownloaded)
+        #client.downloadFromServer("song", songID, songDownloaded)
+        .waitingForDownload = true
+        katipo.get("songs/" + songID, getSongCallback)
     }
     else
     {
@@ -82,30 +94,28 @@ cacheDownloadIndex = 0
 
 mainLoopFunction = function(dt)
 {
-    if(hasConnection)
+    if(!hasStartedCache)
     {
-        if(!hasStartedCache)
+        print("starting cache update:", playlists)
+        .hasStartedCache = true
+        for(playlist in playlists)
         {
-            print("starting cache update:", playlists)
-            .hasStartedCache = true
-            for(playlist in playlists)
+            songs = playlist.songs
+            for(song in songs)
             {
-                songs = playlist.songs
-                for(song in songs)
-                {
-                    table.insert(songsToDownload, song)
-                }
+                table.insert(songsToDownloadArray, song.songID)
+                songsInfosByID[song.songID] = song
             }
         }
+    }
 
-        if(hasStartedCache and !cacheDownloadInProgress)
-        {
-            downloadToCache(cacheDownloadIndex)
-            cacheDownloadIndex++
-        }
+    if(hasStartedCache and !waitingForDownload and !allSongsSuccessfullyCached)
+    {
+        downloadToCache(cacheDownloadIndex)
+        cacheDownloadIndex++
     }
 }
-mainLoopTimer = updateTimer(mainLoopFunction)
+mainLoopTimer = katipo.addUpdateFunction(mainLoopFunction)
 
 songIndex = 0
 currentlyPlayingTitleTextView = scene.getView("currentlyPlayingTitle")
@@ -179,7 +189,7 @@ button.create(nextButton, -0.1, nextButtonClick)
 addButtonView = scene.getView("addButton")
 button.create(addButtonView, 0.0)
 
-loadFirstSongAndStartQueue = function(songID)
+loadFirstSongAndStartQueue = function()
 {
     print("loadFirstSongAndStartQueue")
     queue = {
@@ -188,9 +198,7 @@ loadFirstSongAndStartQueue = function(songID)
     currentPlaylist = playlists[currentPlaylistIndex]
     for(songInfo in currentPlaylist.songs)
     {
-
         thisSongCachePath = songsCachePath + songInfo.localPath
-        #thisSongCachePath = songsCachePath + songInfo.songID + file.extension(songInfo.fileName)
         table.insert(queue, thisSongCachePath)
     }
 
@@ -204,24 +212,17 @@ loadFirstSongAndStartQueue = function(songID)
 
         audio.stop()
 
-        file.createDirectoriesIfNeededForFilePath(firstSongCachePath)
-
-        songDownloaded = function(result)
-        {
-            print("cache song downloaded: ", string.length(result))
-            file.saveData(firstSongCachePath, result)
-            .cacheDownloadInProgress = false
-            #downloadToCache(downloadSongIndex + 1)
-
-            audio.queueSongs(queue)
-            statusSubtitleTextView.text = ""
-            #currentlyPlayingTitleTextView.text = firstItem.fileName
-            .paused = false
-            updatePauseButton()
+        innerCallback = function(result, hostID) {
+            getSongCallback(result, hostID)
+            if(paused)
+            {
+                audio.queueSongs(queue)
+                .paused = false
+                updatePauseButton()
+            }
         }
 
-        .cacheDownloadInProgress = true
-        client.downloadFromServer("song", firstItem.songID, songDownloaded)
+        katipo.get("songs/" + firstItem.songID, innerCallback)
 
     }
     else
@@ -264,13 +265,8 @@ loadPlaylists = function(playlists_)
 
     if(table.count(playlists) > 0)
     {
-        #..currentPlaylistIndex = 2
-
-       # currentPlaylist = playlists[currentPlaylistIndex]
-       # songID = currentPlaylist.songs[0].songID
-       # loadSong(songID)
-
         .playlistContentView = scene.getView("playlistContent")
+        playlistContentView = .playlistContentView #tui bug ?
 
         if(playlistScrollView)
         {
@@ -278,7 +274,8 @@ loadPlaylists = function(playlists_)
         }
 
         .playlistScrollView = scrollView.create(playlistContentView)
-        viewTable = scene.playlistItemPlayMode
+        playlistScrollView = .playlistScrollView
+        viewTable = scene.playlistItemPlayMode #tui bug ?
 
         for(i,playlist in playlists)
         {
@@ -312,57 +309,8 @@ loadPlaylists = function(playlists_)
             scrollView.insertRow(playlistScrollView, itemView)
         }
     }
-
-    
-    #editButtonView.butonData = {}
-
 }
 
-#loadPlaylists(testPlaylists)
-
-fileDownloaded = function(filePath)
-{
-
-}
-
-cachePlaylists = function()
-{
-    if(playlists)
-    {
-        file.saveBinary(playlistsCachePath, playlists)
-        print("saved cache:", playlistsCachePath)
-    }
-}
-
-
-setPlaylists = function(playlists_)
-{
-    .hasConnection = true
-    if(!cacheMode or !playlists)
-    {
-        print("in setPlaylists")
-        loadPlaylists(playlists_[0])
-        cachePlaylists()
-    }
-}
-
-disconnected = function()
-{
-    .hasConnection = false
-    print("Disconnected")
-    statusSubtitleTextView.text = "Disconnected"
-}
-
-client.register("setPlaylists", setPlaylists)
-
-client.register("disconnected", disconnected)
-
-
-if(!disableCache and file.fileExists(playlistsCachePath))
-{
-    print("found cache file")
-    playlists = file.loadBinary(playlistsCachePath)
-    loadPlaylists(playlists)
-}
-
-*/
+playlists = file.loadBinary(playlistsCachePath)
+#print("playlists:", playlists)
+loadPlaylists(playlists)

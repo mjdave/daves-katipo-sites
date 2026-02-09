@@ -51,7 +51,7 @@ doCrawl = function()
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
 
     #print("availablePlaylists:", availablePlaylists) #tui bug, this should not be nil, but it is
-    availablePlaylists = .availablePlaylists #hack to wrok around tui bug
+    availablePlaylists = .availablePlaylists #hack to work around tui bug
 
     cacheData = {
         availablePlaylists = availablePlaylists,
@@ -72,17 +72,25 @@ get = function(url, clientData)
     if(table.count(urlSplit) <= 1) #respond to get fileHost/
     {
         print("sending data")
+
+        files = {}
+        musicLibraryWrapper = {
+            fileName = "musicLibrary.tuib"
+            data = availablePlaylists
+        }
+        table.insert(files, musicLibraryWrapper)
+
         clientSiteData = {
             images = clientImageData
             scripts = clientScriptsData
-            availablePlaylists = availablePlaylists
+            files = files
         }
         return {
             status = "ok"
             siteData = clientSiteData
         }
     }
-    else #fileHost/fileName
+    else if(urlSplit[0] == "songs") #waraki/songs/
     {
         songID = urlSplit[1]
         songInfo = songServerInfosBySongID[songID]
@@ -91,6 +99,7 @@ get = function(url, clientData)
             print("file exists. sending...")
             return {
                 status = "ok"
+                songID = songID
                 fileName = songInfo.fileName
                 filePath = songInfo.path
             }
@@ -106,13 +115,12 @@ get = function(url, clientData)
 
     return {
         status = "error"
-        message = "unknown error"
+        message = "unhandled request"
     }
 }
 
 runLoop = function()
 {
-    print("Waraki Server is running!")
     while(true)
     {
         sleep(1.0) #nothing to do yet
@@ -129,7 +137,6 @@ if(!doCrawlOnLaunch and file.fileExists(musicLibraryPath))
     .songServerInfosBySongID = cacheData.songServerInfosBySongID
 
     print("found ", table.count(availablePlaylists), " playlists")
-    print("availablePlaylists:", availablePlaylists)
 }
 else
 {
