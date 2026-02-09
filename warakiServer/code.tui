@@ -10,6 +10,7 @@ if(!file.fileExists(publicFileDirectoryPath))
 musicLibraryPath = publicFileDirectoryPath + "/musicLibrary.tuib"
 imagesDirectoryPath = publicFileDirectoryPath + "/img"
 clientScriptsDirectoryPath = publicFileDirectoryPath + "/scripts"
+clientFontsDirectoryPath = publicFileDirectoryPath + "/fonts"
 
 loadFilesFromDir = function(dirPath)
 {
@@ -34,11 +35,16 @@ loadFilesFromDir = function(dirPath)
             }
         }
     }
+    if(table.count(files) == 0)
+    {
+        return nil
+    }
     return files
 }
 
 clientImageData = loadFilesFromDir(imagesDirectoryPath)
 clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
+clientFontsData = loadFilesFromDir(clientFontsDirectoryPath)
 
 
 doCrawl = function()
@@ -83,6 +89,7 @@ get = function(url, clientData)
         clientSiteData = {
             images = clientImageData
             scripts = clientScriptsData
+            fonts = clientFontsData
             files = files
         }
         return {
