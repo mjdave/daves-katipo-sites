@@ -2,7 +2,8 @@
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
 
-playlistsCachePath = file.getSavePath("files/musicLibrary.tuib")
+playlistsPath = file.getSavePath("files/playlists.tuib")
+directoryTreePath = file.getSavePath("files/directoryTree.tuib")
 songsCachePath = file.getSavePath("songs/")
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
@@ -314,6 +315,6 @@ loadPlaylists = function(playlists_)
     }
 }
 
-playlists = file.loadBinary(playlistsCachePath)
+playlists = file.loadBinary(playlistsPath)
 #print("playlists:", playlists)
 loadPlaylists(playlists)

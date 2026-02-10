@@ -101,61 +101,20 @@ mainView = {
                 {
                     id = "playlistContent"
                     type = "view"
-                    size = function(parentSize)
-                    {
-                        return parentSize
-                    }
                 }
 
                 {
                     id = "settingsContent"
                     hidden = true
                     type = "view"
-                    size = function(parentSize)
-                    {
-                        return parentSize
-                    }
                     subviews = {
                         {
                             id = "ipTitle"
                             type = "text"
-                            text = "IP:"
-                            alignmentY = "top"
-                            alignmentX = "right"
+                            text = "No settings yet"
                             font = "blockheadsHue"
                             #pos = vec3(-mainContentSize.x * 0.5, -40,0)
                             fontSize = 18
-                        }
-                        {
-                            id = "ipTextEntry"
-                            layoutParentID = "ipTitle"
-                            type = "color"
-                            color = vec4(0.1,0.5,0.5,0.2)
-                            alignmentX = "outerRight"
-                            pos = vec3(10, 0,0)
-                            size = vec2(200,40)
-                            
-                        }
-                        {
-                            id = "ipPort"
-                            layoutParentID = "ipTitle"
-                            type = "text"
-                            text = "Port:"
-                            alignmentY = "below"
-                            alignmentX = "right"
-                            font = "blockheadsHue"
-                            pos = vec3(0.0,-20,0)
-                            fontSize = 18
-                        }
-                        {
-                            id = "ipTextEntry"
-                            layoutParentID = "ipPort"
-                            type = "color"
-                            color = vec4(0.1,0.5,0.5,0.2)
-                            alignmentX = "outerRight"
-                            pos = vec3(10, 0,0)
-                            size = vec2(200,40)
-                            
                         }
                     }
                 }

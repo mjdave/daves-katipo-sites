@@ -1,11 +1,12 @@
 
 
-songServerInfosBySongID = {}
 fileCount = 0
 m3uPlaylistInfosByPlaylistID = {}
+songServerInfosBySongID = {}
+directoryTree = {}
 availablePlaylists = {}
 
-limitForDebug = true
+limitForDebug = false #debug hack set to true for a faster load but lots of missing songs, assumes playlists are in a dir named "Playlists"
 
 loadFile = function(path, fileName, localPath)
 {
@@ -45,7 +46,7 @@ loadFile = function(path, fileName, localPath)
         if(string.subString(fileName, 0, 1) != ".")
         {
             extension = file.extension(fileName) 
-            if(extension == ".m4a" or extension == ".mp3" or extension == ".flac")
+            if(extension == ".m4a" or extension == ".mp3" or extension == ".flac" or extension == ".ogg")
             {
                 songID = string.sha1(path)
                 songServerInfosBySongID[songID] = {
@@ -135,7 +136,7 @@ addm3uPlaylists = function()
                         }
                         table.insert(foundSongs, clientPlaylistSongInfo)
                     }
-                    else
+                    else if(!limitForDebug)
                     {
                         print("unable to find song at path:", normalizedSongPath)
                     }
@@ -163,7 +164,7 @@ runCrawl = function(directoryPath)
 
     print("loading files in:", directoryPath)
 
-    directoryTree = loadFile(directoryPath, file.fileName(directoryPath), nil)
+    .directoryTree = loadFile(directoryPath, file.fileName(directoryPath), nil)
 
     addm3uPlaylists()
 

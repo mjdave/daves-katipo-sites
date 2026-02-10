@@ -1,0 +1,2 @@
+musicDirectoryPath = "/Volumes/music"
+doCrawlOnLaunch = false #Will crawl anyway if the cache file is not found.

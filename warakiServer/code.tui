@@ -1,5 +1,8 @@
-musicDirectoryPath = "/Volumes/music" #todo this is config, should be in a config file
-doCrawlOnLaunch = true #Will crawl anyway if the cache file is not found. #todo easier ways to toggle and trigger this, command line arg, config file, maybe callbacks when music dir modified.
+config = require(katipo.sitePath + "/config.tui")
+
+musicDirectoryPath = config.musicDirectoryPath
+doCrawlOnLaunch = config.doCrawlOnLaunch
+
 
 publicFileDirectoryPath = file.getAbsolutePath(katipo.sitePath + "/publicData")
 if(!file.fileExists(publicFileDirectoryPath))
@@ -55,13 +58,17 @@ doCrawl = function()
 
     .availablePlaylists = libraryCrawler.availablePlaylists
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
+    .directoryTree = libraryCrawler.directoryTree
 
     #print("availablePlaylists:", availablePlaylists) #tui bug, this should not be nil, but it is
     availablePlaylists = .availablePlaylists #hack to work around tui bug
+    songServerInfosBySongID = .songServerInfosBySongID #hack to work around tui bug
+    directoryTree = .directoryTree #hack to work around tui bug
 
     cacheData = {
         availablePlaylists = availablePlaylists,
-        songServerInfosBySongID = songServerInfosBySongID
+        songServerInfosBySongID = songServerInfosBySongID,
+        directoryTree = directoryTree
     }
 
     #print("cacheData:", cacheData)
@@ -81,10 +88,17 @@ get = function(url, clientData)
 
         files = {}
         musicLibraryWrapper = {
-            fileName = "musicLibrary.tuib"
+            fileName = "playlists.tuib"
             data = availablePlaylists
         }
         table.insert(files, musicLibraryWrapper)
+
+        directoryTreeWrapper = {
+            fileName = "directoryTree.tuib"
+            data = directoryTree
+        }
+        table.insert(files, directoryTreeWrapper)
+        
 
         clientSiteData = {
             images = clientImageData
@@ -138,10 +152,10 @@ if(!doCrawlOnLaunch and file.fileExists(musicLibraryPath))
 {
     print("Loading cache...")
     cacheData = file.loadBinary(musicLibraryPath)
-    print("cacheData:", cacheData)
 
     .availablePlaylists = cacheData.availablePlaylists
     .songServerInfosBySongID = cacheData.songServerInfosBySongID
+    .directoryTree = cacheData.directoryTree
 
     print("found ", table.count(availablePlaylists), " playlists")
 }
