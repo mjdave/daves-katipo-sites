@@ -1,4 +1,6 @@
 config = require(katipo.sitePath + "/config.tui")
+siteInfo = require(katipo.sitePath + "/site.tui")
+siteImage = file.loadData(katipo.sitePath + "/site.png")
 
 musicDirectoryPath = config.musicDirectoryPath
 doCrawlOnLaunch = config.doCrawlOnLaunch
@@ -105,6 +107,8 @@ get = function(url, clientData)
             scripts = clientScriptsData
             fonts = clientFontsData
             files = files
+            siteInfo = siteInfo
+            siteImage = siteImage
         }
         return {
             status = "ok"
@@ -115,7 +119,7 @@ get = function(url, clientData)
     {
         songID = urlSplit[1]
         songInfo = songServerInfosBySongID[songID]
-        if(songInfo)
+        if(songInfo and file.fileExists(songInfo.path))
         {
             print("file exists. sending...")
             return {

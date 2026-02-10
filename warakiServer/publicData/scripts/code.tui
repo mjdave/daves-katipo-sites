@@ -31,26 +31,19 @@ getSongCallback = function(result, hostID)
     }
     else if(result.songID and result.fileData and result.fileName)
     {
-        print("cache song downloaded: ", result.fileName)#string.length(result))
+        print("cache song downloaded: ", result.fileName)
 
         songInfo = songsInfosByID[result.songID]
         thisSongCachePath = songsCachePath + songInfo.localPath
         file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
         file.saveData(thisSongCachePath, result.fileData)
-
-            #todo maybe
-            #audio.queueSongs(queue)
-            #statusSubtitleTextView.text = ""
-            ##currentlyPlayingTitleTextView.text = firstItem.fileName
-            #.paused = false
-            #updatePauseButton()
     }
     else
     {
-        print("site code warning: unhandled result.")
-        defaultSiteContent.hidden = false
-        pageTitle.text = "unhandled result"
-        pageBody.text = ""
+        error("unhandled result.")
+        #defaultSiteContent.hidden = false
+        #pageTitle.text = "unhandled result"
+        #pageBody.text = ""
     }
 }
 
