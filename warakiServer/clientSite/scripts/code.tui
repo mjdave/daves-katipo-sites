@@ -1,3 +1,6 @@
+# warakiServer/clientSite/scripts/code.tui
+# this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
+# It handles the user interface and all client interactions, as well as requesting music from the host
 
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
@@ -10,8 +13,6 @@ file.createDirectoriesIfNeededForDirPath(songsCachePath)
 
 print("songsCachePath:", songsCachePath)
 
-disableCache = false #when true, will ignore the cached playlists, and only download from server
-resetCache = false
 waitingForDownload = false
 hasStartedCache = false
 allSongsSuccessfullyCached = false
@@ -20,6 +21,9 @@ paused = true
 
 songsToDownloadArray = {}
 songsInfosByID = {}
+
+playlistContentView = false #create empty var
+playlistScrollView = false
 
 getSongCallback = function(result, hostID)
 {
@@ -47,7 +51,6 @@ getSongCallback = function(result, hostID)
     }
 }
 
-
 downloadToCache = function(downloadSongIndex)
 {
     songCount = table.count(songsToDownloadArray)
@@ -67,30 +70,27 @@ downloadToCache = function(downloadSongIndex)
     #print("songInfo:", songInfo)
     #print("thisSongCachePath:", thisSongCachePath)
 
-
-    if(resetCache or !file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
+    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
     {
         print("downloading song:", songInfo.fileName)
         statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-        #client.downloadFromServer("song", songID, songDownloaded)
         .waitingForDownload = true
         katipo.get("songs/" + songID, getSongCallback)
     }
     else
     {
-        print("file exists:", songInfo.fileName)
-        statusSubtitleTextView.text = "Syncing"
+        //print("file exists:", songInfo.fileName)
+        statusSubtitleTextView.text = "Ready"
         #downloadToCache(downloadSongIndex + 1)
     }
 }
 
 cacheDownloadIndex = 0
 
-mainLoopFunction = function(dt)
+katipo.update = function(dt) #called every tick
 {
     if(!hasStartedCache)
     {
-        print("starting cache update:", playlists)
         .hasStartedCache = true
         for(playlist in playlists)
         {
@@ -109,7 +109,6 @@ mainLoopFunction = function(dt)
         cacheDownloadIndex++
     }
 }
-mainLoopTimer = katipo.addUpdateFunction(mainLoopFunction)
 
 songIndex = 0
 currentlyPlayingTitleTextView = scene.getView("currentlyPlayingTitle")
@@ -263,16 +262,12 @@ loadPlaylists = function(playlists_)
     if(table.count(playlists) > 0)
     {
         .playlistContentView = scene.getView("playlistContent")
-        playlistContentView = .playlistContentView #tui bug ?
-
-        if(playlistScrollView)
-        {
-            playlistContentView.removeView(playlistScrollView)
-        }
-
+        playlistContentView = .playlistContentView #tui bug maybe
+        print("playlistContentView:", playlistContentView)
         .playlistScrollView = scrollView.create(playlistContentView)
-        playlistScrollView = .playlistScrollView
-        viewTable = scene.playlistItemPlayMode #tui bug ?
+        playlistScrollView = .playlistScrollView #tui bug  maybe
+
+        viewTable = scene.playlistItemPlayMode
 
         for(i,playlist in playlists)
         {

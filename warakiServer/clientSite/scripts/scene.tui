@@ -1,10 +1,9 @@
 topStatusBarPadding = 50
 sidePadding = 30
 headerHeight = 140
-footerHeight = 120
+footerHeight = 160
 
 #mainContentSize = vec2(screenSize.x, screenSize.y - headerHeight - footerHeight)
-
 mainView = {
     type = "view"
     subviews = {
@@ -158,7 +157,7 @@ mainView = {
                     font = "blockheadsHue"
                     additiveBlend = true
                     #pos = vec3(0,-5,0)
-                    fontSize = 18
+                    fontSize = 20
                     alignmentY = "below"
                     layoutParentID = "playPauseButton"
                 }
@@ -171,7 +170,7 @@ mainView = {
                     alignmentY = "below"
                     layoutParentID = "currentlyPlayingTitle"
                     #pos = vec3(0,0,0)
-                    fontSize = 12
+                    fontSize = 16
                 }
             }
         }

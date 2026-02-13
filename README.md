@@ -5,7 +5,7 @@ For now, the only app here is Waraki. Waraki is an MP3 player app and hosting se
 
 You can clone this repository, install a couple of dependencies, and run it on any server or desktop that has a music library in a directory.
 
-Then you can install the Katipo browser app on various devices, phones, desktops, and use it to sync your playlists wirelessly and play music anywhere offline.
+Then you can install the [Katipo browser app](https://github.com/mjdave/katipoBrowser) on various devices, phones, desktops, and use it to sync your playlists wirelessly and play music anywhere offline.
 
 The general idea is that it is playlist based, so it only synchronizes the actual music songs that are in one or more playlists. You can then currently only shuffle play playlists by clicking/tapping them. It supports bluetooth control and displays the song title and image in iOS. Currently .m4a files are only supported on Apple platforms, not Windows or Linux, and there are some problems with files that contain non-ascii characters, with a fair few other issues that will be resolved in time.
 
