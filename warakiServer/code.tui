@@ -50,10 +50,6 @@ loadFilesFromDir = function(dirPath)
     return files
 }
 
-clientImageData = loadFilesFromDir(imagesDirectoryPath)
-clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
-clientFontsData = loadFilesFromDir(clientFontsDirectoryPath)
-
 
 doCrawl = function()
 {
@@ -166,6 +162,11 @@ get = function(url, clientChecksum)
             data = directoryTree
         }
         table.insert(files, directoryTreeWrapper)
+
+        #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
+        clientImageData = loadFilesFromDir(imagesDirectoryPath)
+        clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
+        clientFontsData = loadFilesFromDir(clientFontsDirectoryPath)
         
         clientSiteData = {
             images = clientImageData

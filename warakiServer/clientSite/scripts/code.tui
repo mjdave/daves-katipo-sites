@@ -5,6 +5,9 @@
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
 
+
+retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
+
 playlistsPath = file.getSavePath("files/playlists.tuib")
 directoryTreePath = file.getSavePath("files/directoryTree.tuib")
 songsCachePath = file.getSavePath("songs/")
@@ -25,13 +28,28 @@ songsInfosByID = {}
 playlistContentView = false #create empty var
 playlistScrollView = false
 
+retryingAfterFailedToDownload = false
+retryTimer = 0
+retryCounter = 0
+
 getSongCallback = function(result, hostID)
 {
     .waitingForDownload = false
     print("site code got result with status:", result.status, " message:", result.message, " hostID:", hostID)
     if(!result or result.status != "ok")
     {
-        print("bad result")
+        if(result and result.message == "not connected")
+        {
+            .retryingAfterFailedToDownload = true
+            .retryTimer = retryDelay
+            print("failed to download. trying again in ", retryDelay, " seconds")
+            statusSubtitleTextView.text = "Not connected"
+        }
+        else
+        {
+            print("failed to download. skipping file.") 
+            cacheDownloadIndex++
+        }
     }
     else if(result.songID and result.fileData and result.fileName)
     {
@@ -41,6 +59,7 @@ getSongCallback = function(result, hostID)
         thisSongCachePath = songsCachePath + songInfo.localPath
         file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
         file.saveData(thisSongCachePath, result.fileData)
+        cacheDownloadIndex++
     }
     else
     {
@@ -81,6 +100,7 @@ downloadToCache = function(downloadSongIndex)
     {
         //print("file exists:", songInfo.fileName)
         statusSubtitleTextView.text = "Ready"
+        cacheDownloadIndex++
         #downloadToCache(downloadSongIndex + 1)
     }
 }
@@ -105,8 +125,18 @@ katipo.update = function(dt) #called every tick
 
     if(hasStartedCache and !waitingForDownload and !allSongsSuccessfullyCached)
     {
-        downloadToCache(cacheDownloadIndex)
-        cacheDownloadIndex++
+        if(retryingAfterFailedToDownload)
+        {
+            .retryTimer = retryTimer - dt
+            if(retryTimer <= 0)
+            {
+                .retryingAfterFailedToDownload = false
+            }
+        }
+        else
+        {
+            downloadToCache(cacheDownloadIndex)
+        }
     }
 }
 
@@ -240,10 +270,7 @@ audio.playingSongChanged = function(title, artist, duration)
 {
     print("got song changed:", title, " artist:", artist)
     currentlyPlayingTitleTextView.text = title
-    if(!hasConnection)
-    {
-        statusSubtitleTextView.text = artist
-    }
+    statusSubtitleTextView.text = artist
 }
 
 
