@@ -1,0 +1,205 @@
+# clientSite/scripts/code.tui
+# this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
+# It handles the user interface and all client interactions, and runs the game loop
+
+# this is very rough and unfinished still, just shows what can be done.
+
+keys = require("app/common/keys.tui")
+level = require("scripts/level1.tui")
+
+paddleView = scene.getView("paddle")
+blocksView = scene.getView("blocks")
+ballView = scene.getView("ball")
+scoreView = scene.getView("score")
+
+blockSize = vec2(90,10)
+padding = vec2(10,10)
+
+ballVelocity = vec3((math.random() - 0.5) * 0.02, 0.2, 0)
+
+fieldWidth = 0
+fieldHeight = table.count(level)
+
+loadedBrickInfos = {}
+totalBrickCount = 0
+hitCount = 0
+
+
+loadLevel = function()
+{
+    maxWidth = 0
+    .totalBrickCount = 0
+    .hitCount = 0
+
+    yOffset = 0
+    for(row in level)
+    {
+        loadedBrickRow = {}
+        table.insert(loadedBrickInfos, loadedBrickRow)
+        xOffset = 0
+        for(value in row)
+        {
+            blockView = nil
+            if(value == 1)
+            {
+                viewTable = {
+                    type = "color"
+                    color = vec4(1,1,1,1)
+                    size = blockSize
+                    alignmentY = "top"
+                    alignmentX = "left"
+                    pos = vec3(xOffset * (blockSize.x + padding.x) + padding.x, -yOffset * (blockSize.y + padding.y) - padding.y, 0)
+                }
+                blockView = blocksView.addView(viewTable)
+                .totalBrickCount++
+            }
+
+            #brickInfo = { ##todo tui bug
+            #    value = value
+            #}
+
+            brickInfo = {}
+            brickInfo.value = value
+            brickInfo.blockView = blockView
+
+            table.insert(loadedBrickRow, brickInfo)
+
+            xOffset++
+        }
+        if(xOffset > maxWidth)
+        {
+            maxWidth = xOffset
+        }
+        yOffset++
+    }
+    blocksView.size = vec2(maxWidth * (blockSize.x + padding.x) + padding.x, table.count(level) * (blockSize.y + padding.y) + padding.y)
+
+    .fieldWidth = maxWidth
+}
+
+
+loadLevel()
+
+print("fieldWidth:", fieldWidth)
+print("fieldHeight:", fieldHeight)
+print("totalBrickCount:", totalBrickCount)
+
+scoreView.text =  "hello:" + totalBrickCount
+
+ballSpeed = 3000
+paddleSpeed = 800
+halfBounds = vec2(1920/2,1080/2)
+
+katipo.update = function(dt) #called every tick
+{
+    ballView.pos += ballVelocity * dt * ballSpeed
+
+    if(ballView.pos.x > halfBounds.x)
+    {
+        ballVelocity.x = -ballVelocity.x
+        ballView.pos.x = halfBounds.x - (ballView.pos.x - halfBounds.x)
+    }
+    else if(ballView.pos.x < -halfBounds.x)
+    {
+        ballVelocity.x = -ballVelocity.x
+        ballView.pos.x = -halfBounds.x
+    }
+
+    if(ballView.pos.y > halfBounds.y)
+    {
+        ballVelocity.y = -ballVelocity.y
+        ballView.pos.y = halfBounds.y - (ballView.pos.y - halfBounds.y)
+    }
+    else if(ballView.pos.y < -halfBounds.y)
+    {
+        ballVelocity.y = -ballVelocity.y
+        ballView.pos.y = -halfBounds.y
+    }
+
+    paddleTop = paddleView.pos.y + 10
+    if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - 10)
+    {
+        if(ballView.pos.x < paddleView.pos.x + 80 and ballView.pos.x > paddleView.pos.x - 80)
+        {
+            ballVelocity.y = math.abs(ballVelocity.y)
+
+            hitAngle = (ballView.pos.x - paddleView.pos.x) * -0.01
+
+            prevBallVelocity = ballVelocity
+            ballVelocity.x = prevBallVelocity.x * math.cos(hitAngle) - prevBallVelocity.y * math.sin(hitAngle)
+            ballVelocity.y = prevBallVelocity.x * math.sin(hitAngle) + prevBallVelocity.y * math.cos(hitAngle)
+
+            ballView.pos.y = paddleTop + (paddleTop - ballView.pos.y)
+        }
+    }
+
+    fieldRelativePosX = (ballView.pos.x - blocksView.pos.x + blocksView.size.x * 0.5) / (blockSize.x + padding.x)
+    fieldRelativePosY = (ballView.pos.y - blocksView.pos.y + blocksView.size.y * 0.5) / (blockSize.y + padding.y)
+
+    if(fieldRelativePosX >= 0 and fieldRelativePosX < fieldWidth)
+    {
+        if(fieldRelativePosY >= 0 and fieldRelativePosY < fieldHeight)
+        {
+            blockX = math.floor(fieldRelativePosX)
+            blockY = math.floor(fieldRelativePosY)
+            blockY = fieldHeight - blockY - 1
+            
+            row = loadedBrickInfos[blockY]
+            if(row)
+            {
+                brickInfo = row[blockX]
+                if(brickInfo)
+                {
+                    if(brickInfo.blockView)
+                    {
+                        blocksView.removeView(brickInfo.blockView)
+                        brickInfo.blockView = nil
+
+                        xDistanceFromCenter = fieldRelativePosX - blockSize.x * 0.5
+                        xEdgeDistance = math.abs(xDistanceFromCenter) - blockSize.x * 0.5
+
+                        yDistanceFromCenter = fieldRelativePosY - blockSize.y * 0.5
+                        yEdgeDistance = math.abs(yDistanceFromCenter) - blockSize.y * 0.5
+
+                        if(xEdgeDistance > yEdgeDistance)
+                        {
+                            ballVelocity.x = -ballVelocity.x
+                        }
+                        else
+                        {
+                            ballVelocity.y = -ballVelocity.y
+                        }
+
+                        .hitCount++
+
+                        scoreView.text = "" + hitCount + ":" + totalBrickCount
+                    }
+                }
+            }
+        }
+    }
+
+    if(leftKeyDown)
+    {
+        paddleView.pos.x -= dt * paddleSpeed
+    }
+    else if(rightKeyDown)
+    {
+        paddleView.pos.x += dt * paddleSpeed
+    }
+}
+
+leftArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    .leftKeyDown = isDown
+}
+
+rightArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    .rightKeyDown = isDown
+}
+
+print("eventManager:", eventManager)
+
+eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
+eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)

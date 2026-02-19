@@ -1,0 +1,146 @@
+# warakiServer/code.tui
+# this is run on the host, it handles get requests, as well as crawling for music
+
+#config = require(katipo.sitePath + "/config.tui")
+siteInfo = require(katipo.sitePath + "/site.tui")
+#siteImage = file.loadData(katipo.sitePath + "/site.png")
+
+clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
+if(!file.fileExists(clientSitePath))
+{
+    error("missing public data directory:", clientSitePath)
+}
+
+clientScriptsDirectoryPath = clientSitePath + "/scripts"
+
+loadFilesFromDir = function(dirPath)
+{
+    files = {}
+    contents = file.directoryContents(dirPath)
+    for(fileName in contents)
+    {
+        if(string.subString(fileName, 0, 1) != ".")
+        {
+            fullPath = dirPath + "/" + fileName
+            if(!file.isDirectory(fullPath))
+            {
+                fileData = file.loadData(fullPath)
+                if(fileData)
+                {
+                    fileDataWrapper = {
+                        fileName = fileName,
+                        data = fileData
+                    }
+                    table.insert(files, fileDataWrapper)
+                }
+            }
+        }
+    }
+    if(table.count(files) == 0)
+    {
+        return nil
+    }
+    return files
+}
+
+cachedChecksum = false
+
+checksumRecursively = function(path, fileName)
+{
+    if(file.isDirectory(path))
+    {
+        contents = file.directoryContents(path)
+        foundResult = false
+        for(fileOrDirectory in contents)
+        {
+            thisResult = checksumRecursively(path + "/" + fileOrDirectory, fileOrDirectory)
+            if(thisResult)
+            {
+                if(foundResult)
+                {
+                    foundResult += thisResult
+                }
+                else
+                {
+                    foundResult = thisResult
+                }
+            }
+        }
+        return foundResult
+    }
+    else
+    {
+        if(fileName and string.subString(fileName, 0, 1) != ".")
+        {
+            return file.sha1(path)
+        }
+    }
+
+    return nil
+}
+
+getChecksum = function(path)
+{
+    combinedChecksum = checksumRecursively(path)
+    return string.sha1(combinedChecksum)
+    /*if(cachedChecksum) #todo finish this (reset below in update loop), spamming / is a potential DOS attack vector for large sites otherwise
+    {
+        return cachedChecksum
+    }
+    .cachedChecksum = string.sha1(checksumRecursively(path, nil, "_"))
+    cachedChecksum = .cachedChecksum
+    return cachedChecksum*/
+}
+
+### this function is called when clients query this site
+get = function(url, clientChecksum)
+{
+    print("in get. url:", url, " clientChecksum:", clientChecksum)
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
+    {
+        # if a clients simply enters "blockout" in the url, we end up here.
+        # This is where we will load up and send all of the site's data in one big bundle
+        # The following will probably be factored out in some way, but it is definitely a standard, the browser expects it like this
+        # This checksums all of the client code, and clients check against it, like a version number. 
+        # So clients will automatically download any updates to the site as an entire blob, but load from a cache otherwise
+        
+        checksum = getChecksum(clientSitePath)
+        if(clientChecksum == checksum)
+        {
+            return {
+                status = "ok"
+                unchanged = true
+            }
+        }
+        print("sending site data")
+
+        #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
+        clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
+        
+        clientSiteData = {
+            scripts = clientScriptsData
+            siteInfo = siteInfo
+            #siteImage = siteImage
+            checksum = checksum
+        }
+        return {
+            status = "ok"
+            siteData = clientSiteData
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unhandled request"
+    }
+}
+
+runLoop = function()
+{
+    while(true)
+    {
+        sleep(1.0) #nothing to do yet
+    }
+}

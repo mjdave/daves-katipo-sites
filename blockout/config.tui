@@ -1,0 +1,2 @@
+musicDirectoryPath = "/Volumes/music" #replace this with the root of your music directory.
+doCrawlOnLaunch = true #Will also crawl anyway on the first launch

@@ -1,0 +1,38 @@
+mainView = {
+    type = "view"
+    subviews = {
+        {
+            id = "blocks"
+            type = "color"
+            color = vec4(0.1,0.2,0.3,1)
+            size = vec2(800,200)
+            pos = vec3(0,200, 0)
+        },
+        {
+            id = "paddle"
+            type = "color"
+            color = vec4(1,1,1,1)
+            size = vec2(160,10)
+            pos = vec3(0,-200, 0)
+        },
+        {
+            id = "ball"
+            type = "color"
+            color = vec4(1,1,1,1)
+            size = vec2(10,10)
+            pos = vec3(0,-100, 0)
+        },
+        {
+            id = "score"
+            type = "text"
+            alignmentX = "right"
+            alignmentY = "top"
+            pos = vec3(-10,-10, 0)
+            text = "0-0"
+            font = "roboto"
+            fontSize = 64
+            color = vec4(0.2,0.4,1.0,1.5)
+            additiveBlend = true
+        }
+    }
+}
