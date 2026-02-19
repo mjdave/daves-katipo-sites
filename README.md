@@ -1,7 +1,9 @@
 # daves-katipo-sites
-This will be a collection of sites that can be hosted over katipo.
+This is an expanding collection of sites that can be hosted over katipo.
 
-For now, the only app here is Waraki. Waraki is an MP3 player app and hosting service, allowing you to keep playlists in sync automatically over a network with a home server.
+Blockout is a simple  clone of the Breakout game, just to show how games can be made in Katipo.
+
+Waraki is an MP3 player app and hosting service, allowing you to keep playlists in sync automatically over a network with a home server.
 
 You can clone this repository, install a couple of dependencies, and run it on any server or desktop that has a music library in a directory.
 
