@@ -8,6 +8,7 @@ siteImage = file.loadData(katipo.sitePath + "/site.png")
 musicDirectoryPath = config.musicDirectoryPath
 doCrawlOnLaunch = config.doCrawlOnLaunch
 convertToFlac = config.convertToFlac
+importM3UPlaylists = config.importM3UPlaylists
 
 clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
 if(!file.fileExists(clientSitePath))
@@ -19,6 +20,10 @@ musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
 imagesDirectoryPath = clientSitePath + "/img"
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
 clientFontsDirectoryPath = clientSitePath + "/fonts"
+
+availablePlaylists = {}
+songServerInfosBySongID = {}
+directoryTree = {}
 
 loadFilesFromDir = function(dirPath)
 {
@@ -56,14 +61,19 @@ doCrawl = function()
     print("crawling library. This may take some time..")
     libraryCrawler = require(katipo.sitePath + "/libraryCrawler.tui")
     libraryCrawler.convertToFlac = convertToFlac
+    libraryCrawler.importM3UPlaylists = importM3UPlaylists
     libraryCrawler.runCrawl(musicDirectoryPath)
 
-    .availablePlaylists = libraryCrawler.availablePlaylists
+    if(importM3UPlaylists)
+    {
+        for(newPlaylist in libraryCrawler.availablePlaylists)
+        {
+            table.insert(availablePlaylists, newPlaylist)
+        }
+    }
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
     .directoryTree = libraryCrawler.directoryTree
 
-    #print("availablePlaylists:", availablePlaylists) #tui bug, this should not be nil, but it is
-    availablePlaylists = .availablePlaylists #hack to work around tui bug
     songServerInfosBySongID = .songServerInfosBySongID #hack to work around tui bug
     directoryTree = .directoryTree #hack to work around tui bug
 

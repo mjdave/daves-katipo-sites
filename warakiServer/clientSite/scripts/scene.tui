@@ -39,7 +39,7 @@ mainView = {
                     fontSize = 24
                 }
                 {
-                    id = "addButton"
+                    id = "addPlaylistButton"
                     type = "image"
                     path = "img/add.png"
                     shader = "drawQuadTexturedHueShift"
@@ -65,7 +65,7 @@ mainView = {
             alignmentY = "top"
             subviews = {
                 {
-                    id = "backButton"
+                    id = "settingsBackButton"
                     type = "image"
                     path = "img/back.png"
                     shader = "drawQuadTexturedHueShift"
@@ -82,6 +82,51 @@ mainView = {
                     font = "blockheadsHue"
                     additiveBlend = true
                     fontSize = 24
+                }
+            }
+        }
+
+
+        {
+            id = "editPlaylistHeader"
+            type = "color"
+            hidden = true
+            color = vec4(0.1,0.1,0.4,0.4)
+            #size = vec2(screenSize.x,headerHeight)
+            size = function(parentSize)
+            {
+                return vec2(parentSize.x, headerHeight)
+            }
+            alignmentX = "left"
+            alignmentY = "top"
+            subviews = {
+                {
+                    id = "editPlaylistBackButton"
+                    type = "image"
+                    path = "img/back.png"
+                    shader = "drawQuadTexturedHueShift"
+                    #pos = vec3(80,-10 - topStatusBarPadding, 0)
+                    pos = vec3(40,0, 0)
+                    size = vec2(40,40)
+                    alignmentX = "left"
+                }
+                {
+                    id = "playlistTitleTextEntry"
+                    type = "view"
+                    size = function(parentSize)
+                    {
+                        return vec2(parentSize.x - 240, 40)
+                    }
+                }
+                {
+                    id = "addSongButton"
+                    type = "image"
+                    path = "img/add.png"
+                    shader = "drawQuadTexturedHueShift"
+                    #pos = vec3(-80,-10 - topStatusBarPadding, 0)
+                    pos = vec3(-40,0, 0)
+                    size = vec2(40,40)
+                    alignmentX = "right"
                 }
             }
         }
@@ -111,6 +156,22 @@ mainView = {
                             id = "ipTitle"
                             type = "text"
                             text = "No settings yet"
+                            font = "blockheadsHue"
+                            #pos = vec3(-mainContentSize.x * 0.5, -40,0)
+                            fontSize = 18
+                        }
+                    }
+                }
+
+                {
+                    id = "editPlaylistContent"
+                    hidden = true
+                    type = "view"
+                    subviews = {
+                        {
+                            id = "ipTitle"
+                            type = "text"
+                            text = "Not implemented yet"
                             font = "blockheadsHue"
                             #pos = vec3(-mainContentSize.x * 0.5, -40,0)
                             fontSize = 18

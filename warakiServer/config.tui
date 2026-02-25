@@ -1,9 +1,12 @@
 # musicDirectoryPath: set this to the directory that contains music files and .m3u playlists. All files can be nested in subdirectories.
-musicDirectoryPath = "/mnt/blue/music"
+musicDirectoryPath = "/Users/davidframpton/warakiTestMusic"
 
 # doCrawlOnLaunch Will crawl anyway if the cache file is not found, but you can turn off the crawl if you know your music library won't change
 doCrawlOnLaunch = true
 
+# importM3UPlaylists will attempt to import any .m3u files when crawling. Remember to turn this off again, or it will keep importing more copies
+importM3UPlaylists = false
+
 # convertToFlac will convert m4a files into flac files on import, save them as a new copy beside, and use them instead
 # you should only use this if you have the ffmpeg tool installed: sudo apt-get install ffmpeg
-convertToFlac = true
+convertToFlac = false

@@ -6,21 +6,8 @@ songServerInfosBySongID = {}
 directoryTree = {}
 availablePlaylists = {}
 
-replaceGeneratedFlacFiles = false
-limitForDebug = false #debug hack set to true for a faster load but lots of missing songs, assumes playlists are in a dir named "Playlists"
-
-removeSingleQuotes = function(inPath) #ffmpeg won't take single quotes on the command line, even with various numbers of escapes. Dunno why, will just remove them temporarily
-{
-    return string.replace(inPath, "'", "_")
-}
-
 loadFile = function(path, fileName, localPath)
 {
-    if(limitForDebug and fileCount > 500 and !string.find(path, "Playlists"))
-    {
-        print("stopping early")
-        return
-    }
 
     #print("load file:", path)
 
@@ -60,10 +47,6 @@ loadFile = function(path, fileName, localPath)
             {
                 #print("found m4a:", path)
                 flacFilename = file.changeExtension(path, "flac")
-                if(replaceGeneratedFlacFiles and file.fileExists(flacFilename))
-                {
-                    file.remove(flacFilename)
-                }
                 if(!file.fileExists(flacFilename))
                 {
                     hasQuotes = (string.find(path, "'") != nil)
@@ -218,7 +201,7 @@ addm3uPlaylists = function()
                         }
                         table.insert(foundSongs, clientPlaylistSongInfo)
                     }
-                    else if(!limitForDebug)
+                    else
                     {
                         print("unable to find song at path:", normalizedSongPath)
                     }
@@ -248,7 +231,10 @@ runCrawl = function(directoryPath)
 
     .directoryTree = loadFile(directoryPath, file.fileName(directoryPath), nil)
 
-    addm3uPlaylists()
+    if(importM3UPlaylists)
+    {
+        addm3uPlaylists()
+    }
 
     playlistSongCount = 0
     for(playlist in availablePlaylists)

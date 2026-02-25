@@ -4,6 +4,7 @@
 
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
+textEntry = require("app/common/textEntry.tui")
 
 
 retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
@@ -143,35 +144,79 @@ katipo.update = function(dt) #called every tick
 songIndex = 0
 currentlyPlayingTitleTextView = scene.getView("currentlyPlayingTitle")
 statusSubtitleTextView = scene.getView("statusSubtitle")
+playlistContentView = scene.getView("playlistContent")
 
 settingsButton = scene.getView("settingsButton")
-backButton = scene.getView("backButton")
+addPlaylistButton = scene.getView("addPlaylistButton")
+
+settingsBackButton = scene.getView("settingsBackButton")
 playPauseButton = scene.getView("playPauseButton")
 nextButton = scene.getView("nextButton")
 
 playlistsHeader = scene.getView("playlistsHeader")
 settingsHeader = scene.getView("settingsHeader")
+editPlaylistHeader = scene.getView("editPlaylistHeader")
 
 settingsContent = scene.getView("settingsContent")
+editPlaylistContent = scene.getView("editPlaylistContent")
+
+editPlaylistBackButton = scene.getView("editPlaylistBackButton")
+
+playlistTitleTextEntryContainer = scene.getView("playlistTitleTextEntry")
+playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer)
 
 settingsClick = function()
 {
     playlistsHeader.hidden = true
-    settingsHeader.hidden = false
     playlistContentView.hidden = true
+
+    settingsHeader.hidden = false
     settingsContent.hidden = false
 }
 button.create(settingsButton, -0.1, settingsClick)
 
+newPlaylistTitle = "New Playlist"
 
-backClick = function()
+addPlaylistClick = function()
+{
+    playlistsHeader.hidden = true
+    playlistContentView.hidden = true
+    
+    editPlaylistHeader.hidden = false
+    editPlaylistContent.hidden = false
+
+    textEntry.setText(playlistTitleTextEntry, newPlaylistTitle)
+}
+button.create(addPlaylistButton, -0.1, addPlaylistClick)
+
+settingsBackClick = function()
 {
     playlistsHeader.hidden = false
-    settingsHeader.hidden = true
     playlistContentView.hidden = false
+
+    settingsHeader.hidden = true
     settingsContent.hidden = true
 }
-button.create(backButton, -0.1, backClick)
+button.create(settingsBackButton, -0.1, settingsBackClick)
+
+
+editPlaylistBackClick = function()
+{
+    playlistsHeader.hidden = false
+    playlistContentView.hidden = false
+
+    editPlaylistHeader.hidden = true
+    editPlaylistContent.hidden = true
+}
+button.create(editPlaylistBackButton, -0.1, editPlaylistBackClick)
+
+
+textEntry.setOnChangeCallback(playlistTitleTextEntry, function(textValue, confirmChanges){
+    if(confirmChanges and string.length(textValue) > 0)
+    {
+        newPlaylistTitle = textValue
+    }
+})
 
 updatePauseButton = function()
 {
@@ -212,8 +257,6 @@ nextButtonClick = function()
 button.create(nextButton, -0.1, nextButtonClick)
 
 
-addButtonView = scene.getView("addButton")
-button.create(addButtonView, 0.0)
 
 loadFirstSongAndStartQueue = function()
 {
@@ -288,9 +331,6 @@ loadPlaylists = function(playlists_)
 
     if(table.count(playlists) > 0)
     {
-        .playlistContentView = scene.getView("playlistContent")
-        playlistContentView = .playlistContentView #tui bug maybe
-        print("playlistContentView:", playlistContentView)
         .playlistScrollView = scrollView.create(playlistContentView)
         playlistScrollView = .playlistScrollView #tui bug  maybe
 
