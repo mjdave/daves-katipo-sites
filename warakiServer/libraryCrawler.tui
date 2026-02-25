@@ -6,7 +6,13 @@ songServerInfosBySongID = {}
 directoryTree = {}
 availablePlaylists = {}
 
+replaceGeneratedFlacFiles = false
 limitForDebug = false #debug hack set to true for a faster load but lots of missing songs, assumes playlists are in a dir named "Playlists"
+
+removeSingleQuotes = function(inPath) #ffmpeg won't take single quotes on the command line, even with various numbers of escapes. Dunno why, will just remove them temporarily
+{
+    return string.replace(inPath, "'", "_")
+}
 
 loadFile = function(path, fileName, localPath)
 {
@@ -15,6 +21,8 @@ loadFile = function(path, fileName, localPath)
         print("stopping early")
         return
     }
+
+    #print("load file:", path)
 
     if(file.isDirectory(path))
     {
@@ -46,40 +54,109 @@ loadFile = function(path, fileName, localPath)
         if(string.subString(fileName, 0, 1) != ".")
         {
             extension = file.extension(fileName) 
-            if(extension == ".m4a" or extension == ".mp3" or extension == ".flac" or extension == ".ogg")
+            skip = false
+            pathToUse = path
+            if(convertToFlac and extension == ".m4a")
             {
-                songID = string.sha1(path)
-                songServerInfosBySongID[songID] = {
-                    fileName = fileName
-                    path = path
-                    localPath = localPath
-                }
-                
-                fileToAdd = {
-                    fileName = fileName
-                    localPath = localPath
-                    songID = songID
-                }
-
-                if(fileCount % 10 == 0)
+                #print("found m4a:", path)
+                flacFilename = file.changeExtension(path, "flac")
+                if(replaceGeneratedFlacFiles and file.fileExists(flacFilename))
                 {
-                    print("finding files(", fileCount, "):", path, " songID:", songID)
+                    file.remove(flacFilename)
                 }
-                .fileCount = fileCount + 1
-                return fileToAdd
+                if(!file.fileExists(flacFilename))
+                {
+                    hasQuotes = (string.find(path, "'") != nil)
+                    fileCopied = false
+                    inputFilePath = path
+                    outputFilePath = "/tmp/warakiServerSongConvertTo.tmp"
+                    if(file.fileExists(outputFilePath))
+                    {
+                        file.remove(outputFilePath)
+                    }
+                    if(hasQuotes)
+                    {
+                        inputFilePath = "/tmp/warakiServerSongConvertFrom.tmp"
+                        if(file.fileExists(inputFilePath))
+                        {
+                            file.remove(inputFilePath)
+                        }
+                        file.copy(path, inputFilePath)
+                        fileCopied = true
+                    }
+
+
+                    ffmpegCommand = "ffmpeg -v quiet -i '" + inputFilePath + "' -f flac '" + outputFilePath + "'" 
+                    print("running:", ffmpegCommand)
+                    system(ffmpegCommand)
+
+                    if(fileCopied)
+                    {
+                        file.remove(inputFilePath)
+                    }
+
+                    if(!file.fileExists(outputFilePath))
+                    {
+                        print("WARNING: failed to convert m4a file:", path)
+                        skip = true
+                    }
+                    else
+                    {
+                        print("moving from:", outputFilePath " to:", flacFilename)
+                        file.move(outputFilePath, flacFilename)
+                    if(file.fileExists(outputFilePath))
+                    {
+                        error("file still exists")
+                    }
+                        pathToUse = flacFilename
+                        extension = ".flac"
+                        fileName = file.changeExtension(fileName, "flac")
+                        localPath = file.changeExtension(localPath, "flac")
+                    }
+                }
+                else
+                {
+                    skip = true
+                }
             }
-            else if(extension == ".m3u")
+
+            if(!skip)
             {
-                playlistID = string.sha1(path)
-                m3uPlaylistInfosByPlaylistID[playlistID] = {
-                    path = path
+                if(extension == ".m4a" or extension == ".mp3" or extension == ".flac" or extension == ".ogg")
+                {
+                    songID = string.sha1(pathToUse)
+                    songServerInfosBySongID[songID] = {
+                        fileName = fileName
+                        path = pathToUse
+                        localPath = localPath
+                    }
+                    
+                    fileToAdd = {
+                        fileName = fileName
+                        localPath = localPath
+                        songID = songID
+                    }
+
+                    if(fileCount % 10 == 0)
+                    {
+                        print("found ", fileCount, " files. latest:", pathToUse)
+                    }
+                    .fileCount = fileCount + 1
+                    return fileToAdd
                 }
-                fileToAdd = {
-                    fileName = fileName
-                    m3uPlaylistID = playlistID
+                else if(extension == ".m3u")
+                {
+                    playlistID = string.sha1(pathToUse)
+                    m3uPlaylistInfosByPlaylistID[playlistID] = {
+                        path = pathToUse
+                    }
+                    fileToAdd = {
+                        fileName = fileName
+                        m3uPlaylistID = playlistID
+                    }
+                    print("found m3u playlist:", pathToUse)
+                    return fileToAdd
                 }
-                print("found m3u playlist:", path)
-                return fileToAdd
             }
         }
     }
@@ -123,6 +200,11 @@ addm3uPlaylists = function()
                     #print("parent dirs removed:", normalizedSongPath)
                     normalizedSongPath = normalizedSongPath + line
                     #print("final:", normalizedSongPath)
+
+                    if(convertToFlac and file.extension(normalizedSongPath) == ".m4a")
+                    {
+                        normalizedSongPath = file.changeExtension(normalizedSongPath, "flac")
+                    }
 
                     songID = string.sha1(normalizedSongPath)
                     songInfo = songServerInfosBySongID[songID]

@@ -7,7 +7,7 @@ siteImage = file.loadData(katipo.sitePath + "/site.png")
 
 musicDirectoryPath = config.musicDirectoryPath
 doCrawlOnLaunch = config.doCrawlOnLaunch
-
+convertToFlac = config.convertToFlac
 
 clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
 if(!file.fileExists(clientSitePath))
@@ -55,6 +55,7 @@ doCrawl = function()
 {
     print("crawling library. This may take some time..")
     libraryCrawler = require(katipo.sitePath + "/libraryCrawler.tui")
+    libraryCrawler.convertToFlac = convertToFlac
     libraryCrawler.runCrawl(musicDirectoryPath)
 
     .availablePlaylists = libraryCrawler.availablePlaylists
