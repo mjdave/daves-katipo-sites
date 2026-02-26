@@ -3,189 +3,221 @@ sidePadding = 30
 headerHeight = 140
 footerHeight = 160
 
-#mainContentSize = vec2(screenSize.x, screenSize.y - headerHeight - footerHeight)
-mainView = {
+playlistsHeader = {
+    id = "playlistsHeader"
+    type = "color"
+    color = vec4(0.0,0.2,0.2,0.2)
+    size = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "settingsButton"
+            type = "image"
+            path = "img/settings.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "title"
+            type = "text"
+            text = "Playlists"
+            font = "blockheadsHue"
+            additiveBlend = true
+            fontSize = 24
+        }
+        {
+            id = "addPlaylistButton"
+            type = "image"
+            path = "img/add.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(-40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "right"
+        }
+    }
+}
+
+settingsHeader = {
+    id = "settingsHeader"
+    type = "color"
+    hidden = true
+    color = vec4(0.3,0.2,0.0,0.2)
+    size = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "settingsBackButton"
+            type = "image"
+            path = "img/back.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "title"
+            type = "text"
+            text = "Settings"
+            font = "blockheadsHue"
+            additiveBlend = true
+            fontSize = 24
+        }
+    }
+}
+
+editPlaylistHeader = {
+    id = "editPlaylistHeader"
+    type = "color"
+    hidden = true
+    color = vec4(0.0,0.0,0.2,0.2)
+    size = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "editPlaylistBackButton"
+            type = "image"
+            path = "img/back.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "playlistTitleTextEntry"
+            type = "view"
+            size = function(parentSize)
+            {
+                return vec2(parentSize.x - 240, 40)
+            }
+        }
+        {
+            id = "editPlaylistAddSongButton"
+            type = "image"
+            path = "img/add.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(-40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "right"
+        }
+    }
+}
+
+
+addSongHeader = {
+    id = "addSongHeader"
+    type = "color"
+    hidden = true
+    color = vec4(0.0,0.2,0.0,0.2)
+    size = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "addSongBackButton"
+            type = "image"
+            path = "img/back.png"
+            shader = "drawQuadTexturedHueShift"
+            pos = vec3(40,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "addSong"
+            type = "text"
+            text = "Add Songs"
+            font = "blockheadsHue"
+            additiveBlend = true
+            fontSize = 24
+        } #todo add a subtitle with the playlist name
+    }
+}
+
+playlistContent = {
+    id = "playlistContent"
+    type = "view"
+}
+
+settingsContent = {
+    id = "settingsContent"
+    hidden = true
     type = "view"
     subviews = {
         {
-            id = "playlistsHeader"
-            type = "color"
-            color = vec4(0.1,0.2,0.3,0.1)
-            #size = vec2(screenSize.x,headerHeight)
-            size = function(parentSize)
-            {
-                return vec2(parentSize.x, headerHeight)
-            }
-            alignmentX = "left"
-            alignmentY = "top"
-            subviews = {
-                {
-                    id = "settingsButton"
-                    type = "image"
-                    path = "img/settings.png"
-                    shader = "drawQuadTexturedHueShift"
-                    #pos = vec3(80,-10 - topStatusBarPadding, 0)
-                    pos = vec3(40,0, 0)
-                    size = vec2(40,40)
-                    alignmentX = "left"
-                }
-                {
-                    id = "title"
-                    type = "text"
-                    #pos = vec3(0,-10 - topStatusBarPadding, 0)
-                    text = "Playlists"
-                    font = "blockheadsHue"
-                    additiveBlend = true
-                    fontSize = 24
-                }
-                {
-                    id = "addPlaylistButton"
-                    type = "image"
-                    path = "img/add.png"
-                    shader = "drawQuadTexturedHueShift"
-                    #pos = vec3(-80,-10 - topStatusBarPadding, 0)
-                    pos = vec3(-40,0, 0)
-                    size = vec2(40,40)
-                    alignmentX = "right"
-                }
-            }
+            id = "ipTitle"
+            type = "text"
+            text = "No settings yet"
+            font = "blockheadsHue"
+            fontSize = 18
         }
+    }
+}
 
+editPlaylistContent = {
+    id = "editPlaylistContent"
+    hidden = true
+    type = "view"
+    subviews = {
         {
-            id = "settingsHeader"
-            type = "color"
-            hidden = true
-            color = vec4(0.4,0.1,0.2,0.1)
-            #size = vec2(screenSize.x,headerHeight)
-            size = function(parentSize)
-            {
-                return vec2(parentSize.x, headerHeight)
-            }
-            alignmentX = "left"
-            alignmentY = "top"
-            subviews = {
-                {
-                    id = "settingsBackButton"
-                    type = "image"
-                    path = "img/back.png"
-                    shader = "drawQuadTexturedHueShift"
-                    #pos = vec3(80,-10 - topStatusBarPadding, 0)
-                    pos = vec3(40,0, 0)
-                    size = vec2(40,40)
-                    alignmentX = "left"
-                }
-                {
-                    id = "title"
-                    type = "text"
-                    #pos = vec3(0,-10 - topStatusBarPadding, 0)
-                    text = "Settings"
-                    font = "blockheadsHue"
-                    additiveBlend = true
-                    fontSize = 24
-                }
-            }
+            id = "noSongsText"
+            type = "text"
+            text = "Add songs using the '+' button, top right"
+            font = "blockheadsHue"
+            fontSize = 18
         }
+    }
+}
 
 
-        {
-            id = "editPlaylistHeader"
-            type = "color"
-            hidden = true
-            color = vec4(0.1,0.1,0.4,0.4)
-            #size = vec2(screenSize.x,headerHeight)
-            size = function(parentSize)
-            {
-                return vec2(parentSize.x, headerHeight)
-            }
-            alignmentX = "left"
-            alignmentY = "top"
-            subviews = {
-                {
-                    id = "editPlaylistBackButton"
-                    type = "image"
-                    path = "img/back.png"
-                    shader = "drawQuadTexturedHueShift"
-                    #pos = vec3(80,-10 - topStatusBarPadding, 0)
-                    pos = vec3(40,0, 0)
-                    size = vec2(40,40)
-                    alignmentX = "left"
-                }
-                {
-                    id = "playlistTitleTextEntry"
-                    type = "view"
-                    size = function(parentSize)
-                    {
-                        return vec2(parentSize.x - 240, 40)
-                    }
-                }
-                {
-                    id = "addSongButton"
-                    type = "image"
-                    path = "img/add.png"
-                    shader = "drawQuadTexturedHueShift"
-                    #pos = vec3(-80,-10 - topStatusBarPadding, 0)
-                    pos = vec3(-40,0, 0)
-                    size = vec2(40,40)
-                    alignmentX = "right"
-                }
-            }
-        }
+addSongContent = {
+    id = "addSongContent"
+    type = "view"
+    hidden = true
+}
 
+mainView = {
+    type = "view"
+    subviews = {
+        playlistsHeader
+        settingsHeader
+        editPlaylistHeader
+        addSongHeader
         {
             id = "mainContent"
             type = "view"
             alignmentY = "top"
-            #size = mainContentSize
             size = function(parentSize)
             {
                 return vec2(parentSize.x, parentSize.y - headerHeight - footerHeight)
             }
             pos = vec3(0,1.0 - headerHeight, 0)
             subviews = {
-                {
-                    id = "playlistContent"
-                    type = "view"
-                }
-
-                {
-                    id = "settingsContent"
-                    hidden = true
-                    type = "view"
-                    subviews = {
-                        {
-                            id = "ipTitle"
-                            type = "text"
-                            text = "No settings yet"
-                            font = "blockheadsHue"
-                            #pos = vec3(-mainContentSize.x * 0.5, -40,0)
-                            fontSize = 18
-                        }
-                    }
-                }
-
-                {
-                    id = "editPlaylistContent"
-                    hidden = true
-                    type = "view"
-                    subviews = {
-                        {
-                            id = "ipTitle"
-                            type = "text"
-                            text = "Not implemented yet"
-                            font = "blockheadsHue"
-                            #pos = vec3(-mainContentSize.x * 0.5, -40,0)
-                            fontSize = 18
-                        }
-                    }
-                }
+                playlistContent
+                settingsContent
+                editPlaylistContent
+                addSongContent
             }
         }
-
         {
             id = "footer"
             type = "color"
             color = vec4(0.1,0.5,0.2,0.1)
-            #size = vec2(screenSize.x,footerHeight)
             size = function(parentSize)
             {
                 return vec2(parentSize.x,footerHeight)
@@ -217,7 +249,6 @@ mainView = {
                     text = " "
                     font = "blockheadsHue"
                     additiveBlend = true
-                    #pos = vec3(0,-5,0)
                     fontSize = 20
                     alignmentY = "below"
                     layoutParentID = "playPauseButton"
@@ -230,7 +261,6 @@ mainView = {
                     additiveBlend = true
                     alignmentY = "below"
                     layoutParentID = "currentlyPlayingTitle"
-                    #pos = vec3(0,0,0)
                     fontSize = 16
                 }
             }
@@ -242,7 +272,6 @@ playlistItemPlayMode = {
     id = "playlistItemBackground"
     type = "color"
     color = vec4(0.04,0.12,0.15,0.1)
-    #size = vec2(screenSize.x - 20.0,60) // -20 due to scroller width
     size = function(parentSize)
     {
         return vec2(parentSize.x - 20.0,60)

@@ -5,6 +5,7 @@
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
 textEntry = require("app/common/textEntry.tui")
+fileBrowser = require("app/common/fileBrowser.tui")
 
 
 retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
@@ -32,6 +33,17 @@ playlistScrollView = false
 retryingAfterFailedToDownload = false
 retryTimer = 0
 retryCounter = 0
+
+fileBrowserInitialized = false
+initFileBrowserIfNeeded = function()
+{
+    if(!fileBrowserInitialized)
+    {
+        fileBrowserInitialized = true
+        directoryTree = file.loadBinary(directoryTreePath)
+        fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
+    }
+}
 
 getSongCallback = function(result, hostID)
 {
@@ -150,20 +162,27 @@ settingsButton = scene.getView("settingsButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
 
 settingsBackButton = scene.getView("settingsBackButton")
+
 playPauseButton = scene.getView("playPauseButton")
 nextButton = scene.getView("nextButton")
+
+editPlaylistBackButton = scene.getView("editPlaylistBackButton")
+editPlaylistAddSongButton = scene.getView("editPlaylistAddSongButton")
+
+addSongBackButton = scene.getView("addSongBackButton")
 
 playlistsHeader = scene.getView("playlistsHeader")
 settingsHeader = scene.getView("settingsHeader")
 editPlaylistHeader = scene.getView("editPlaylistHeader")
+addSongHeader = scene.getView("addSongHeader")
 
 settingsContent = scene.getView("settingsContent")
 editPlaylistContent = scene.getView("editPlaylistContent")
-
-editPlaylistBackButton = scene.getView("editPlaylistBackButton")
+addSongContent = scene.getView("addSongContent")
+addSongFileBrowser = fileBrowser.create(addSongContent)
 
 playlistTitleTextEntryContainer = scene.getView("playlistTitleTextEntry")
-playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer)
+playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer, {font = "blockheadsHue", fontSize = 20, backgroundColor = vec4(0.0,0.2,0.0,0.2)})
 
 settingsClick = function()
 {
@@ -209,6 +228,28 @@ editPlaylistBackClick = function()
     editPlaylistContent.hidden = true
 }
 button.create(editPlaylistBackButton, -0.1, editPlaylistBackClick)
+
+editPlaylistAddSongClick = function()
+{
+    addSongHeader.hidden = false
+    addSongContent.hidden = false
+    initFileBrowserIfNeeded()
+
+    editPlaylistHeader.hidden = true
+    editPlaylistContent.hidden = true
+}
+button.create(editPlaylistAddSongButton, -0.1, editPlaylistAddSongClick)
+
+
+addSongBackClick = function()
+{
+    editPlaylistHeader.hidden = false
+    editPlaylistContent.hidden = false
+
+    addSongHeader.hidden = true
+    addSongContent.hidden = true
+}
+button.create(addSongBackButton, -0.1, addSongBackClick)
 
 
 textEntry.setOnChangeCallback(playlistTitleTextEntry, function(textValue, confirmChanges){
@@ -332,7 +373,7 @@ loadPlaylists = function(playlists_)
     if(table.count(playlists) > 0)
     {
         .playlistScrollView = scrollView.create(playlistContentView)
-        playlistScrollView = .playlistScrollView #tui bug  maybe
+        #playlistScrollView = .playlistScrollView #tui bug  maybe
 
         viewTable = scene.playlistItemPlayMode
 
