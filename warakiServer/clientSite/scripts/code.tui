@@ -7,6 +7,30 @@ button = require("app/common/button.tui")
 textEntry = require("app/common/textEntry.tui")
 fileBrowser = require("app/common/fileBrowser.tui")
 
+addAndPlayButtonSize = vec2(30,30)
+
+playButtonLayout = {
+    id = "playButton"
+    type = "image"
+    path = "img/play.png"
+    shader = "drawQuadTexturedHueShiftClip"
+    pos = vec3(-50,0, 0)
+    size = addAndPlayButtonSize
+    alignmentX = "right"
+}
+
+table.insert(fileBrowser.fileItemLayout.subviews, playButtonLayout)
+
+table.insert(fileBrowser.fileItemLayout.subviews, {
+    id = "addButton"
+    type = "image"
+    path = "img/add.png"
+    shader = "drawQuadTexturedHueShiftClip"
+    pos = vec3(-10,0, 0)
+    size = addAndPlayButtonSize
+    alignmentX = "right"
+})
+
 
 retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
 
@@ -26,6 +50,7 @@ paused = true
 
 songsToDownloadArray = {}
 songsInfosByID = {}
+queue = {}
 
 playlistContentView = false #create empty var
 playlistScrollView = false
@@ -35,33 +60,31 @@ retryTimer = 0
 retryCounter = 0
 
 fileBrowserInitialized = false
-initFileBrowserIfNeeded = function()
-{
-    if(!fileBrowserInitialized)
-    {
-        fileBrowserInitialized = true
-        directoryTree = file.loadBinary(directoryTreePath)
-        fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
-    }
-}
 
-getSongCallback = function(result, hostID)
+getSongCallback = function(result, hostID, isCacheSync, playWhenDone) #isCacheSync assumes both that we won't play, and that we want to increment cacheDownloadIndex
 {
     .waitingForDownload = false
     print("site code got result with status:", result.status, " message:", result.message, " hostID:", hostID)
     if(!result or result.status != "ok")
     {
-        if(result and result.message == "not connected")
+        if(isCacheSync)
         {
-            .retryingAfterFailedToDownload = true
-            .retryTimer = retryDelay
-            print("failed to download. trying again in ", retryDelay, " seconds")
-            statusSubtitleTextView.text = "Not connected"
+            if(result and result.message == "not connected")
+            {
+                .retryingAfterFailedToDownload = true
+                .retryTimer = retryDelay
+                print("failed to download. trying again in ", retryDelay, " seconds")
+                statusSubtitleTextView.text = "Not connected"
+            }
+            else
+            {
+                print("failed to download. skipping file.") 
+                cacheDownloadIndex++
+            }
         }
         else
         {
-            print("failed to download. skipping file.") 
-            cacheDownloadIndex++
+            #todo inform user
         }
     }
     else if(result.songID and result.fileData and result.fileName)
@@ -72,15 +95,39 @@ getSongCallback = function(result, hostID)
         thisSongCachePath = songsCachePath + songInfo.localPath
         file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
         file.saveData(thisSongCachePath, result.fileData)
-        cacheDownloadIndex++
+
+        if(isCacheSync)
+        {
+            cacheDownloadIndex++
+        }
+        
+        if(playWhenDone)
+        {
+            table.insert(queue, 0, thisSongCachePath)
+            audio.queueSongs(queue)
+            print("playing when done:", queue)
+            .paused = false
+            updatePauseButton()
+            audio.play()
+        }
     }
     else
     {
         error("unhandled result.")
-        #defaultSiteContent.hidden = false
-        #pageTitle.text = "unhandled result"
-        #pageBody.text = ""
     }
+}
+
+doDownload = function(songInfo, isCacheSync, playWhenDone)
+{
+    print("downloading song:", songInfo.fileName, " playWhenDone:", playWhenDone)
+    statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
+    .waitingForDownload = true
+
+    innerCallback = function(result, hostID) {
+        print("calling song callback:", songInfo.fileName, " playWhenDone:", playWhenDone)
+        getSongCallback(result, hostID, isCacheSync, playWhenDone)
+    }
+    katipo.get("songs/" + songInfo.songID, innerCallback)
 }
 
 downloadToCache = function(downloadSongIndex)
@@ -104,10 +151,7 @@ downloadToCache = function(downloadSongIndex)
 
     if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
     {
-        print("downloading song:", songInfo.fileName)
-        statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-        .waitingForDownload = true
-        katipo.get("songs/" + songID, getSongCallback)
+        doDownload(songInfo, true, false)
     }
     else
     {
@@ -119,6 +163,88 @@ downloadToCache = function(downloadSongIndex)
 }
 
 cacheDownloadIndex = 0
+
+currentPreviewPlayingButtonSongID = false
+
+
+playPreview = function(buttonView, songInfo) 
+{
+    if(currentPreviewPlayingButtonSongID)
+    {
+        if(currentPreviewPlayingButtonSongID == songInfo.songID) #todo this will fail if song has finished or in other cases probably
+        {
+            playPauseButtonClick()
+            return
+        }
+        print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
+        if(currentPreviewPlayingButtonSongView)
+        {
+            currentPreviewPlayingButtonSongView.path = "img/play.png"
+            .currentPreviewPlayingButtonSongView = false
+        }
+
+        .currentPreviewPlayingButtonSongID = false
+    }
+
+    buttonView.path = "img/pause.png"
+
+    thisSongCachePath = songsCachePath + songInfo.localPath
+
+    songsInfosByID[songInfo.songID] = songInfo
+    .currentPreviewPlayingButtonSongID = songInfo.songID
+    .currentPreviewPlayingButtonSongView = buttonView
+
+    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
+    {
+        doDownload(songInfo, false, true)
+    }
+    else
+    {
+        table.insert(queue, 0, thisSongCachePath)
+        audio.queueSongs(queue)
+        print("playing:", queue)
+        .paused = false
+        updatePauseButton()
+        audio.play()
+    }
+}
+
+onBrowserItemCreate = function(itemView)
+{
+    buttonView = itemView.getView("playButton")
+    if(buttonView)
+    {
+        buttonCallback = function()
+        {
+            playPreview(buttonView, itemView.fileInfo)
+        }
+        button.create(buttonView, -0.1, buttonCallback)
+
+        if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
+        {
+            buttonView.path = "img/pause.png"
+            .currentPreviewPlayingButtonSongView = itemView
+        }
+    }
+}
+
+onBrowserContentChange = function()
+{
+    .currentPreviewPlayingButtonSongView = false
+}
+
+
+initFileBrowserIfNeeded = function()
+{
+    if(!fileBrowserInitialized)
+    {
+        fileBrowserInitialized = true
+        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
+        fileBrowser.onBrowserContentChange = onBrowserContentChange
+        directoryTree = file.loadBinary(directoryTreePath)
+        fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
+    }
+}
 
 katipo.update = function(dt) #called every tick
 {
@@ -264,10 +390,18 @@ updatePauseButton = function()
     if(paused)
     {
         playPauseButton.path = "img/play.png"
+        if(currentPreviewPlayingButtonSongView)
+        {
+            currentPreviewPlayingButtonSongView.path = "img/play.png"
+        }
     }
     else
     {
         playPauseButton.path = "img/pause.png"
+        if(currentPreviewPlayingButtonSongView)
+        {
+            currentPreviewPlayingButtonSongView.path = "img/pause.png"
+        }
     }
 }
 
@@ -302,7 +436,7 @@ button.create(nextButton, -0.1, nextButtonClick)
 loadFirstSongAndStartQueue = function()
 {
     print("loadFirstSongAndStartQueue")
-    queue = {
+    .queue = {
     }
 
     currentPlaylist = playlists[currentPlaylistIndex]
@@ -323,16 +457,12 @@ loadFirstSongAndStartQueue = function()
         audio.stop()
 
         innerCallback = function(result, hostID) {
-            getSongCallback(result, hostID)
-            if(paused)
-            {
-                audio.queueSongs(queue)
-                .paused = false
-                updatePauseButton()
-            }
+            getSongCallback(result, hostID, true, true)
         }
 
         katipo.get("songs/" + firstItem.songID, innerCallback)
+        
+        doDownload(firstItem, true, true)
 
     }
     else
