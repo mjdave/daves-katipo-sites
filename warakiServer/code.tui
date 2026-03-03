@@ -20,6 +20,7 @@ musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
 imagesDirectoryPath = clientSitePath + "/img"
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
 clientFontsDirectoryPath = clientSitePath + "/fonts"
+sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists"
 
 availablePlaylists = {}
 songServerInfosBySongID = {}
@@ -68,7 +69,8 @@ doCrawl = function()
     {
         for(newPlaylist in libraryCrawler.availablePlaylists)
         {
-            table.insert(availablePlaylists, newPlaylist)
+            error("todo, we need to convert these to individual playlist files")
+            #table.insert(availablePlaylists, newPlaylist)
         }
     }
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
@@ -78,7 +80,6 @@ doCrawl = function()
     directoryTree = .directoryTree #hack to work around tui bug
 
     cacheData = {
-        availablePlaylists = availablePlaylists,
         songServerInfosBySongID = songServerInfosBySongID,
         directoryTree = directoryTree
     }
@@ -162,11 +163,6 @@ get = function(url, clientChecksum)
         print("sending site data")
 
         files = {}
-        musicLibraryWrapper = {
-            fileName = "playlists.tuib"
-            data = availablePlaylists
-        }
-        table.insert(files, musicLibraryWrapper)
 
         directoryTreeWrapper = {
             fileName = "directoryTree.tuib"
@@ -178,11 +174,13 @@ get = function(url, clientChecksum)
         clientImageData = loadFilesFromDir(imagesDirectoryPath)
         clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
         clientFontsData = loadFilesFromDir(clientFontsDirectoryPath)
+        clientSharedPlaylistsData = loadFilesFromDir(sharedPlaylistsDirectoryPath)
         
         clientSiteData = {
             images = clientImageData
             scripts = clientScriptsData
             fonts = clientFontsData
+            sharedPlaylists = clientSharedPlaylistsData
             files = files
             siteInfo = siteInfo
             siteImage = siteImage

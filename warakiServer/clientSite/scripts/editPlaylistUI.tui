@@ -1,0 +1,341 @@
+textEntry = require("app/common/textEntry.tui")
+fileBrowser = require("app/common/fileBrowser.tui")
+scrollView = require("app/common/scrollView.tui")
+button = require("app/common/button.tui")
+
+songsCachePath = file.getSavePath("songs/")
+sharedPlaylistsDirPath = file.getSavePath("sharedPlaylists/")
+
+directoryTreePath = file.getSavePath("files/directoryTree.tuib")
+
+playlistTitle = "New Playlist"
+playlistContent = {}
+playlistAddedSongIDs = {}
+currentPlaylistID = false
+
+addSongFileBrowser = false #means nil
+playlistTitleTextEntry = false
+
+addAndPlayButtonSize = vec2(30,30)
+
+playButtonLayout = {
+    id = "playButton"
+    type = "image"
+    path = "img/play.png"
+    shader = "drawQuadTexturedHueShiftClip"
+    pos = vec3(-50,0, 0)
+    size = addAndPlayButtonSize
+    alignmentX = "right"
+}
+
+table.insert(fileBrowser.fileItemLayout.subviews, playButtonLayout)
+
+table.insert(fileBrowser.fileItemLayout.subviews, {
+    id = "addButton"
+    type = "image"
+    path = "img/add.png"
+    shader = "drawQuadTexturedHueShiftClip"
+    pos = vec3(-10,0, 0)
+    size = addAndPlayButtonSize
+    alignmentX = "right"
+})
+
+
+currentPreviewPlayingButtonSongID = false
+playPreviewInternal = function(buttonView, songInfo) #todo this downloads the song, never deletes it
+{
+    if(currentPreviewPlayingButtonSongID)
+    {
+        if(currentPreviewPlayingButtonSongID == songInfo.songID) #todo this will fail if song has finished or in other cases probably
+        {
+            playPauseButtonClick()
+            return
+        }
+        print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
+        if(currentPreviewPlayingButtonSongView)
+        {
+            currentPreviewPlayingButtonSongView.path = "img/play.png"
+            .currentPreviewPlayingButtonSongView = false
+        }
+
+        .currentPreviewPlayingButtonSongID = false
+    }
+
+    buttonView.path = "img/pause.png"
+
+    .currentPreviewPlayingButtonSongID = songInfo.songID
+    .currentPreviewPlayingButtonSongView = buttonView
+
+    playPreview(songInfo) #calls out to code.tui
+
+}
+
+saveCurrentPlaylist = function()
+{
+    if(currentPlaylistID)
+    {
+        savePath = sharedPlaylistsDirPath + currentPlaylistID + "_" + playlistTitle + ".tuib"
+        if(table.count(playlistContent) > 0)
+        {
+            saveData = {
+                playlistID = currentPlaylistID
+                name = playlistTitle
+                songs = playlistContent
+            }
+            file.saveBinary(savePath, saveData)
+        }
+        else
+        {
+            file.remove(savePath) #might be a good idea to also create a new currentPlaylistID?
+        }
+        #todo send to server
+    }
+}
+
+toggleSongAddedToPlaylist = function(buttonView, songInfo)
+{
+    if(playlistAddedSongIDs[songInfo.songID])
+    {
+        playlistAddedSongIDs[songInfo.songID] = nil
+        for(i,addedSongInfo in playlistContent)
+        {
+            if(addedSongInfo.songID == songInfo.songID)
+            {
+                table.remove(playlistContent, i)
+                saveCurrentPlaylist()
+                break
+            }
+        }
+        buttonView.path = "img/add.png"
+    }
+    else
+    {
+        table.insert(playlistContent, songInfo)
+        playlistAddedSongIDs[songInfo.songID] = true
+        buttonView.path = "img/remove.png"
+
+        if(!currentPlaylistID)
+        {
+            newPlaylistID = string.sha1(playlistTitle + songInfo.songID + math.random()) #todo tui needs a random sha1 function
+            newPlaylistID = string.subString(newPlaylistID, 0, 8)
+            .currentPlaylistID = newPlaylistID
+        }
+
+        saveCurrentPlaylist()
+    }
+
+    print("playlistContent:", playlistContent)
+}
+
+onBrowserItemCreate = function(itemView, index)
+{
+    playButtonView = itemView.getView("playButton")
+    if(playButtonView)
+    {
+        buttonCallback = function()
+        {
+            playPreviewInternal(playButtonView, itemView.fileInfo)
+        }
+        button.create(playButtonView, -0.1 * index, buttonCallback)
+
+        if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
+        {
+            playButtonView.path = "img/pause.png"
+            .currentPreviewPlayingButtonSongView = itemView
+        }
+    }
+
+    addButtonView = itemView.getView("addButton")
+    if(addButtonView)
+    {
+        buttonCallback = function()
+        {
+            toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo)
+        }
+        button.create(addButtonView, -0.1 * index + 0.05, buttonCallback)
+
+        if(playlistAddedSongIDs[itemView.fileInfo.songID])
+        {
+            addButtonView.path = "img/remove.png"
+        }
+    }
+}
+
+onBrowserContentChange = function()
+{
+    .currentPreviewPlayingButtonSongView = false
+}
+
+playlistScrollView = false
+
+loadPlaylistContent = function()
+{
+    editPlaylistCurrentPlaylistContent = scene.getView("editPlaylistCurrentPlaylistContent")
+
+    if(playlistScrollView)
+    {
+        editPlaylistCurrentPlaylistContent.removeView(playlistScrollView)
+    }
+    .playlistScrollView = false
+
+    noSongsText = scene.getView("noSongsText")
+
+    if(table.count(playlistContent) > 0)
+    {
+        noSongsText.hidden = true
+        .playlistScrollView = scrollView.create(editPlaylistCurrentPlaylistContent)
+        playlistScrollView = .playlistScrollView #tui bug  maybe
+
+        itemLayout = fileBrowser.fileItemLayout #this is a bit cheeky
+
+        for(i,songInfo in playlistContent)
+        {
+            itemView = playlistScrollView.addView(itemLayout)
+            itemView.fileInfo = songInfo
+            titleTextView = itemView.getView("fileItemTitle")
+            titleTextView.text = songInfo.fileName
+
+            if(i % 2 == 0)
+            {
+                itemView.color = itemView.color * 0.5
+                itemView.color.w = 0.1
+            }
+            
+            itemView.baseColor = itemView.color
+
+            scrollView.insertRow(playlistScrollView, itemView)
+            #table.insert(songItemViews, itemView)
+        }
+    }
+    else
+    {
+        noSongsText.hidden = false
+    }
+}
+
+addSongSubtitleText = false
+
+updatePlaylistTitle = function()
+{
+    addSongSubtitleText.text = playlistTitle
+    textEntry.setText(playlistTitleTextEntry, playlistTitle)
+}
+
+show = function(backFunction, playlistOrNil)
+{
+    if(playlistOrNil)
+    {
+        .playlistContent = playlistOrNil.songs
+        .playlistAddedSongIDs = {}
+        .currentPlaylistID = playlistOrNil.playlistID
+        .playlistTitle = playlistOrNil.name
+
+        for(song in playlistContent)
+        {
+            playlistAddedSongIDs[song.songID] = true
+        }
+
+        loadPlaylistContent()
+    }
+    else
+    {
+        .playlistTitle = "New Playlist"
+        .playlistContent = {}
+        .playlistAddedSongIDs = {}
+        .currentPlaylistID = false
+
+        loadPlaylistContent()
+    }
+
+    if(!addSongFileBrowser)
+    {
+        editPlaylistBackButton = scene.getView("editPlaylistBackButton")
+        editPlaylistAddSongButton = scene.getView("editPlaylistAddSongButton")
+
+        addSongBackButton = scene.getView("addSongBackButton")
+
+        addSongHeader = scene.getView("addSongHeader")
+        addSongContent = scene.getView("addSongContent")
+
+        .addSongSubtitleText = addSongHeader.getView("addSongSubtitleText")
+
+        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
+        fileBrowser.onBrowserContentChange = onBrowserContentChange
+        .addSongFileBrowser = fileBrowser.create(addSongContent)
+        addSongFileBrowser = .addSongFileBrowser #tui bug
+        directoryTree = file.loadBinary(directoryTreePath)
+        fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
+
+        editPlaylistHeader = scene.getView("editPlaylistHeader")
+        editPlaylistContent = scene.getView("editPlaylistContent")
+
+        playlistTitleTextEntryContainer = scene.getView("playlistTitleTextEntry")
+        titleLayout = {font = "blockheadsHue", fontSize = 20, backgroundColor = vec4(0.0,0.2,0.0,0.2)}
+        .playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer, titleLayout)
+
+        button.create(editPlaylistBackButton, -0.1, backFunction)
+
+        editPlaylistAddSongClick = function()
+        {
+            addSongHeader.hidden = false
+            addSongContent.hidden = false
+
+            editPlaylistHeader.hidden = true
+            editPlaylistContent.hidden = true
+        }
+        button.create(editPlaylistAddSongButton, -0.1, editPlaylistAddSongClick)
+
+
+        addSongBackClick = function()
+        {
+            editPlaylistHeader.hidden = false
+            editPlaylistContent.hidden = false
+
+            loadPlaylistContent()
+
+            addSongHeader.hidden = true
+            addSongContent.hidden = true
+        }
+        button.create(addSongBackButton, -0.1, addSongBackClick)
+
+        textChangeCallback = function(textValue, confirmChanges){
+            if(confirmChanges and string.length(textValue) > 0)
+            {
+                prevSavePath = sharedPlaylistsDirPath + currentPlaylistID + "_" + playlistTitle + ".tuib"
+
+                .playlistTitle = textValue
+                addSongSubtitleText.text = textValue
+
+                saveCurrentPlaylist()
+
+                if(file.fileExists(prevSavePath)) #bit of a hack, I want playlistTitle to be in the filename so it isn't impossible to know what is what
+                {
+                    file.remove(prevSavePath)
+                }
+            }
+        }
+
+        textEntry.setOnChangeCallback(playlistTitleTextEntry, textChangeCallback)
+    }
+    else if(playlistOrNil)
+    {
+        #fileBrowser.reload() todo
+    }
+
+    updatePlaylistTitle()
+}
+
+updatePauseButtons = function(paused)
+{
+    if(currentPreviewPlayingButtonSongView)
+    {
+        if(paused)
+        {
+            currentPreviewPlayingButtonSongView.path = "img/play.png"
+        }
+        else
+        {
+            currentPreviewPlayingButtonSongView.path = "img/pause.png"
+        }
+    }
+}

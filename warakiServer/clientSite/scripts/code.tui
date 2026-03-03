@@ -4,41 +4,18 @@
 
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
-textEntry = require("app/common/textEntry.tui")
-fileBrowser = require("app/common/fileBrowser.tui")
-
-addAndPlayButtonSize = vec2(30,30)
-
-playButtonLayout = {
-    id = "playButton"
-    type = "image"
-    path = "img/play.png"
-    shader = "drawQuadTexturedHueShiftClip"
-    pos = vec3(-50,0, 0)
-    size = addAndPlayButtonSize
-    alignmentX = "right"
-}
-
-table.insert(fileBrowser.fileItemLayout.subviews, playButtonLayout)
-
-table.insert(fileBrowser.fileItemLayout.subviews, {
-    id = "addButton"
-    type = "image"
-    path = "img/add.png"
-    shader = "drawQuadTexturedHueShiftClip"
-    pos = vec3(-10,0, 0)
-    size = addAndPlayButtonSize
-    alignmentX = "right"
-})
-
+editPlaylistUI = require("scripts/editPlaylistUI.tui")
 
 retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
 
-playlistsPath = file.getSavePath("files/playlists.tuib")
-directoryTreePath = file.getSavePath("files/directoryTree.tuib")
+#playlistsDiffPath = file.getSavePath("files/playlistsDiff.tuib")
+#playlistsPath = file.getSavePath("files/playlists.tuib")
 songsCachePath = file.getSavePath("songs/")
+sharedPlaylistsDirPath = file.getSavePath("sharedPlaylists/")
+
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
+file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirPath)
 
 print("songsCachePath:", songsCachePath)
 
@@ -53,15 +30,14 @@ songsInfosByID = {}
 queue = {}
 
 playlistContentView = false #create empty var
+playlistScrollViewContainer = false #create empty var
 playlistScrollView = false
 
 retryingAfterFailedToDownload = false
 retryTimer = 0
 retryCounter = 0
 
-fileBrowserInitialized = false
-
-getSongCallback = function(result, hostID, isCacheSync, playWhenDone) #isCacheSync assumes both that we won't play, and that we want to increment cacheDownloadIndex
+getSongCallback = function(result, hostID, isCacheSync, playWhenDone)
 {
     .waitingForDownload = false
     print("site code got result with status:", result.status, " message:", result.message, " hostID:", hostID)
@@ -79,7 +55,7 @@ getSongCallback = function(result, hostID, isCacheSync, playWhenDone) #isCacheSy
             else
             {
                 print("failed to download. skipping file.") 
-                cacheDownloadIndex++
+                #cacheDownloadIndex++
             }
         }
         else
@@ -130,159 +106,79 @@ doDownload = function(songInfo, isCacheSync, playWhenDone)
     katipo.get("songs/" + songInfo.songID, innerCallback)
 }
 
-downloadToCache = function(downloadSongIndex)
-{
-    songCount = table.count(songsToDownloadArray)
-    if(downloadSongIndex >= songCount)
-    {
-        print("all files cached.")
-        .allSongsSuccessfullyCached = true
-        statusSubtitleTextView.text = "Sync complete"
-        return
-    }
+#downloadToCache = function(downloadSongIndex)
+#{
+#    songCount = table.count(songsToDownloadArray)
+#    if(downloadSongIndex >= songCount)
+#    {
+#        print("all files cached.")
+#        .allSongsSuccessfullyCached = true
+#        statusSubtitleTextView.text = "Sync complete"
+#        return
+#    }
+#
+#    songID = songsToDownloadArray[downloadSongIndex]
+#    songInfo = songsInfosByID[songID]
+#    
+#    thisSongCachePath = songsCachePath + songInfo.localPath
+#
+#    #print("songInfo:", songInfo)
+#    #print("thisSongCachePath:", thisSongCachePath)
+#
+#    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
+#    {
+#        doDownload(songInfo, true, false)
+#    }
+#    else
+#    {
+#        //print("file exists:", songInfo.fileName)
+#        statusSubtitleTextView.text = "Ready"
+#        cacheDownloadIndex++
+#        #downloadToCache(downloadSongIndex + 1)
+#    }
+#}
 
-    songID = songsToDownloadArray[downloadSongIndex]
-    songInfo = songsInfosByID[songID]
-    
-    thisSongCachePath = songsCachePath + songInfo.localPath
-
-    #print("songInfo:", songInfo)
-    #print("thisSongCachePath:", thisSongCachePath)
-
-    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
-    {
-        doDownload(songInfo, true, false)
-    }
-    else
-    {
-        //print("file exists:", songInfo.fileName)
-        statusSubtitleTextView.text = "Ready"
-        cacheDownloadIndex++
-        #downloadToCache(downloadSongIndex + 1)
-    }
-}
-
-cacheDownloadIndex = 0
-
-currentPreviewPlayingButtonSongID = false
-
-
-playPreview = function(buttonView, songInfo) 
-{
-    if(currentPreviewPlayingButtonSongID)
-    {
-        if(currentPreviewPlayingButtonSongID == songInfo.songID) #todo this will fail if song has finished or in other cases probably
-        {
-            playPauseButtonClick()
-            return
-        }
-        print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
-        if(currentPreviewPlayingButtonSongView)
-        {
-            currentPreviewPlayingButtonSongView.path = "img/play.png"
-            .currentPreviewPlayingButtonSongView = false
-        }
-
-        .currentPreviewPlayingButtonSongID = false
-    }
-
-    buttonView.path = "img/pause.png"
-
-    thisSongCachePath = songsCachePath + songInfo.localPath
-
-    songsInfosByID[songInfo.songID] = songInfo
-    .currentPreviewPlayingButtonSongID = songInfo.songID
-    .currentPreviewPlayingButtonSongView = buttonView
-
-    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
-    {
-        doDownload(songInfo, false, true)
-    }
-    else
-    {
-        table.insert(queue, 0, thisSongCachePath)
-        audio.queueSongs(queue)
-        print("playing:", queue)
-        .paused = false
-        updatePauseButton()
-        audio.play()
-    }
-}
-
-onBrowserItemCreate = function(itemView)
-{
-    buttonView = itemView.getView("playButton")
-    if(buttonView)
-    {
-        buttonCallback = function()
-        {
-            playPreview(buttonView, itemView.fileInfo)
-        }
-        button.create(buttonView, -0.1, buttonCallback)
-
-        if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
-        {
-            buttonView.path = "img/pause.png"
-            .currentPreviewPlayingButtonSongView = itemView
-        }
-    }
-}
-
-onBrowserContentChange = function()
-{
-    .currentPreviewPlayingButtonSongView = false
-}
-
-
-initFileBrowserIfNeeded = function()
-{
-    if(!fileBrowserInitialized)
-    {
-        fileBrowserInitialized = true
-        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
-        fileBrowser.onBrowserContentChange = onBrowserContentChange
-        directoryTree = file.loadBinary(directoryTreePath)
-        fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
-    }
-}
+#cacheDownloadIndex = 0
 
 katipo.update = function(dt) #called every tick
 {
-    if(!hasStartedCache)
-    {
-        .hasStartedCache = true
-        for(playlist in playlists)
-        {
-            songs = playlist.songs
-            for(song in songs)
-            {
-                table.insert(songsToDownloadArray, song.songID)
-                songsInfosByID[song.songID] = song
-            }
-        }
-    }
-
-    if(hasStartedCache and !waitingForDownload and !allSongsSuccessfullyCached)
-    {
-        if(retryingAfterFailedToDownload)
-        {
-            .retryTimer = retryTimer - dt
-            if(retryTimer <= 0)
-            {
-                .retryingAfterFailedToDownload = false
-            }
-        }
-        else
-        {
-            downloadToCache(cacheDownloadIndex)
-        }
-    }
+    #if(!hasStartedCache)
+    #{
+    #    .hasStartedCache = true
+    #    for(playlist in playlists)
+    #    {
+    #        songs = playlist.songs
+    #        for(song in songs)
+    #        {
+    #            table.insert(songsToDownloadArray, song.songID)
+    #            songsInfosByID[song.songID] = song
+    #        }
+    #    }
+    #}
+#
+    #if(hasStartedCache and !waitingForDownload and !allSongsSuccessfullyCached)
+    #{
+    #    if(retryingAfterFailedToDownload)
+    #    {
+    #        .retryTimer = retryTimer - dt
+    #        if(retryTimer <= 0)
+    #        {
+    #            .retryingAfterFailedToDownload = false
+    #        }
+    #    }
+    #    else
+    #    {
+    #        downloadToCache(cacheDownloadIndex)
+    #    }
+    #}
 }
 
-songIndex = 0
-currentlyPlayingTitleTextView = scene.getView("currentlyPlayingTitle")
-statusSubtitleTextView = scene.getView("statusSubtitle")
+titleView = scene.getView("title")
+subtitleView = scene.getView("subtitle")
+
+statusSubtitleTextView = scene.getView("statusText")
 playlistContentView = scene.getView("playlistContent")
+playlistScrollViewContainer = scene.getView("playlistScrollViewContainer")
 
 settingsButton = scene.getView("settingsButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
@@ -292,23 +188,13 @@ settingsBackButton = scene.getView("settingsBackButton")
 playPauseButton = scene.getView("playPauseButton")
 nextButton = scene.getView("nextButton")
 
-editPlaylistBackButton = scene.getView("editPlaylistBackButton")
-editPlaylistAddSongButton = scene.getView("editPlaylistAddSongButton")
-
-addSongBackButton = scene.getView("addSongBackButton")
-
 playlistsHeader = scene.getView("playlistsHeader")
 settingsHeader = scene.getView("settingsHeader")
 editPlaylistHeader = scene.getView("editPlaylistHeader")
-addSongHeader = scene.getView("addSongHeader")
 
 settingsContent = scene.getView("settingsContent")
 editPlaylistContent = scene.getView("editPlaylistContent")
-addSongContent = scene.getView("addSongContent")
-addSongFileBrowser = fileBrowser.create(addSongContent)
 
-playlistTitleTextEntryContainer = scene.getView("playlistTitleTextEntry")
-playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer, {font = "blockheadsHue", fontSize = 20, backgroundColor = vec4(0.0,0.2,0.0,0.2)})
 
 settingsClick = function()
 {
@@ -320,7 +206,38 @@ settingsClick = function()
 }
 button.create(settingsButton, -0.1, settingsClick)
 
-newPlaylistTitle = "New Playlist"
+editPlaylistBackClick = function()
+{
+    playlistsHeader.hidden = false
+    playlistContentView.hidden = false
+
+    loadPlaylists()
+
+    editPlaylistHeader.hidden = true
+    editPlaylistContent.hidden = true
+}
+
+playPreview = function(songInfo)
+{
+    thisSongCachePath = songsCachePath + songInfo.localPath
+
+    songsInfosByID[songInfo.songID] = songInfo
+
+    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
+    {
+        doDownload(songInfo, false, true)
+    }
+    else
+    {
+        .queue = {}
+        table.insert(queue, thisSongCachePath)
+        audio.queueSongs(queue)
+        .paused = false
+        updatePauseButton()
+        audio.play()
+    }
+}
+editPlaylistUI.playPreview = playPreview
 
 addPlaylistClick = function()
 {
@@ -330,7 +247,7 @@ addPlaylistClick = function()
     editPlaylistHeader.hidden = false
     editPlaylistContent.hidden = false
 
-    textEntry.setText(playlistTitleTextEntry, newPlaylistTitle)
+    editPlaylistUI.show(editPlaylistBackClick, nil)
 }
 button.create(addPlaylistButton, -0.1, addPlaylistClick)
 
@@ -345,64 +262,19 @@ settingsBackClick = function()
 button.create(settingsBackButton, -0.1, settingsBackClick)
 
 
-editPlaylistBackClick = function()
-{
-    playlistsHeader.hidden = false
-    playlistContentView.hidden = false
-
-    editPlaylistHeader.hidden = true
-    editPlaylistContent.hidden = true
-}
-button.create(editPlaylistBackButton, -0.1, editPlaylistBackClick)
-
-editPlaylistAddSongClick = function()
-{
-    addSongHeader.hidden = false
-    addSongContent.hidden = false
-    initFileBrowserIfNeeded()
-
-    editPlaylistHeader.hidden = true
-    editPlaylistContent.hidden = true
-}
-button.create(editPlaylistAddSongButton, -0.1, editPlaylistAddSongClick)
-
-
-addSongBackClick = function()
-{
-    editPlaylistHeader.hidden = false
-    editPlaylistContent.hidden = false
-
-    addSongHeader.hidden = true
-    addSongContent.hidden = true
-}
-button.create(addSongBackButton, -0.1, addSongBackClick)
-
-
-textEntry.setOnChangeCallback(playlistTitleTextEntry, function(textValue, confirmChanges){
-    if(confirmChanges and string.length(textValue) > 0)
-    {
-        newPlaylistTitle = textValue
-    }
-})
 
 updatePauseButton = function()
 {
     if(paused)
     {
         playPauseButton.path = "img/play.png"
-        if(currentPreviewPlayingButtonSongView)
-        {
-            currentPreviewPlayingButtonSongView.path = "img/play.png"
-        }
     }
     else
     {
         playPauseButton.path = "img/pause.png"
-        if(currentPreviewPlayingButtonSongView)
-        {
-            currentPreviewPlayingButtonSongView.path = "img/pause.png"
-        }
     }
+
+    editPlaylistUI.updatePauseButtons(paused)
 }
 
 playPauseButtonClick = function()
@@ -417,12 +289,13 @@ playPauseButtonClick = function()
     else
     {
         #print("pause starting audio")
-        audio.play()
+        playSelectedPlaylist()
     }
     updatePauseButton()
 }
 
 button.create(playPauseButton, -0.1, playPauseButtonClick)
+editPlaylistUI.playPauseButtonClick = playPauseButtonClick
 
 nextButtonClick = function()
 {
@@ -433,58 +306,104 @@ button.create(nextButton, -0.1, nextButtonClick)
 
 
 
-loadFirstSongAndStartQueue = function()
-{
-    print("loadFirstSongAndStartQueue")
-    .queue = {
-    }
+#loadFirstSongAndStartQueue = function()
+#{
+#    print("loadFirstSongAndStartQueue")
+#    .queue = {
+#    }
+#
+#    currentPlaylist = playlists[currentPlaylistIndex]
+#    for(songInfo in currentPlaylist.songs)
+#    {
+#        thisSongCachePath = songsCachePath + songInfo.localPath
+#        table.insert(queue, thisSongCachePath)
+#    }
+#
+#    firstItem = currentPlaylist.songs[0]
+#    print("firstItem:", firstItem)
+#    firstSongCachePath = songsCachePath + firstItem.localPath
+#    if(!file.fileExists(firstSongCachePath))
+#    {
+#        print("Need to download:", firstSongCachePath)
+#        statusSubtitleTextView.text = "Downloading: " + firstItem.fileName
+#
+#        audio.stop()
+#
+#        innerCallback = function(result, hostID) {
+#            getSongCallback(result, hostID, true, true)
+#        }
+#
+#        katipo.get("songs/" + firstItem.songID, innerCallback)
+#        
+#        doDownload(firstItem, true, true)
+#
+#    }
+#    else
+#    {
+#        audio.queueSongs(queue)
+#        .paused = false
+#        updatePauseButton()
+#    }
+#}
+#
 
-    currentPlaylist = playlists[currentPlaylistIndex]
-    for(songInfo in currentPlaylist.songs)
+playlistViews = {}
+selectedPlaylistView = false
+shouldResumeSelectedPlaylist = false
+
+updateVisuals = function()
+{
+    for(itemView in playlistViews)
+    {
+        backgroundView = itemView.getView("playlistItemBackground")
+        if(itemView == selectedPlaylistView)
+        {
+            backgroundView.color = itemView.baseColor + vec4(0.2,0.0,0.5,0.3)
+        }
+        else
+        {
+            backgroundView.color = itemView.baseColor
+        }
+    }
+}
+
+playSelectedPlaylist = function()
+{
+    if(!selectedPlaylistView)
+    {
+        playlistCount = table.count(playlistViews)
+        if(playlistCount > 0)
+        {
+            randomIndex = math.randomInt(playlistCount)
+            .selectedPlaylistView = playlistViews[randomIndex]
+            updateVisuals()
+        }
+        else
+        {
+            return
+        }
+    }
+    selectedPlaylist = selectedPlaylistView.playlist
+    queue = {}
+    .queue = queue
+    for(songInfo in selectedPlaylist.songs)
     {
         thisSongCachePath = songsCachePath + songInfo.localPath
         table.insert(queue, thisSongCachePath)
     }
-
-    firstItem = currentPlaylist.songs[0]
-    print("firstItem:", firstItem)
-    firstSongCachePath = songsCachePath + firstItem.localPath
-    if(!file.fileExists(firstSongCachePath))
-    {
-        print("Need to download:", firstSongCachePath)
-        statusSubtitleTextView.text = "Downloading: " + firstItem.fileName
-
-        audio.stop()
-
-        innerCallback = function(result, hostID) {
-            getSongCallback(result, hostID, true, true)
-        }
-
-        katipo.get("songs/" + firstItem.songID, innerCallback)
-        
-        doDownload(firstItem, true, true)
-
-    }
-    else
-    {
-        audio.queueSongs(queue)
-        .paused = false
-        updatePauseButton()
-    }
-}
-
-startCurrentPlaylist = function()
-{
-    currentPlaylist = playlists[currentPlaylistIndex]
-    table.shuffle(currentPlaylist.songs)
-    loadFirstSongAndStartQueue()
+    table.shuffle(queue)
+    print("queue:", queue)
+    audio.queueSongs(queue)
+    .paused = false
+    updatePauseButton()
+    audio.play()
 }
 
 audio.playingSongChanged = function(title, artist, duration)
 {
     print("got song changed:", title, " artist:", artist)
-    currentlyPlayingTitleTextView.text = title
-    statusSubtitleTextView.text = artist
+    titleView.text = title
+    subtitleView.text = artist
 }
 
 
@@ -494,53 +413,94 @@ audio.playingSongPausedChanged = function(newPaused)
     updatePauseButton()
 }
 
-loadPlaylists = function(playlists_)
+loadPlaylists = function()
 {
-    .playlists = playlists_
-    playlistCount = table.count(playlists)
-    print("got ", playlistCount, " playlists")
-
-    if(table.count(playlists) > 0)
+    sharedPlaylists = {}
+    contents = file.directoryContents(sharedPlaylistsDirPath)
+    foundResult = false
+    for(fileOrDirectory in contents)
     {
-        .playlistScrollView = scrollView.create(playlistContentView)
-        #playlistScrollView = .playlistScrollView #tui bug  maybe
+        if(string.find(fileOrDirectory, ".tuib") != nil)
+        {
+            playlistData = file.loadBinary(sharedPlaylistsDirPath + fileOrDirectory)
+            table.insert(sharedPlaylists, playlistData)
+        }
+    }
 
-        viewTable = scene.playlistItemPlayMode
+    if(playlistScrollView)
+    {
+        .playlistViews = {}
+        playlistScrollViewContainer.removeView(playlistScrollView)
+    }
+    .playlistScrollView = false
 
-        for(i,playlist in playlists)
+    noPlaylistsText = scene.getView("noPlaylistsText")
+
+    #todo sort sharedPlaylists alphabetically
+
+    if(table.count(sharedPlaylists) > 0)
+    {
+        noPlaylistsText.hidden = true
+
+        playlistScrollViewContainer
+
+        .playlistScrollView = scrollView.create(playlistScrollViewContainer)
+
+        viewTable = scene.mainPlaylistsPlaylistItem
+
+        for(i,playlist in sharedPlaylists)
         {
             itemView = playlistScrollView.addView(viewTable)
             titleTextView = itemView.getView("playlistItemTitle")
-            titleTextView.text = playlist.title
-            //itemView.pos.y -= i * viewTable.size.y
+            titleTextView.text = playlist.name
+            itemView.playlist = playlist
 
-            dotDotDotButton = itemView.getView("dotDotDotButton")
-            button.create(dotDotDotButton, 0.2 * i)
+            backgroundView = itemView.getView("playlistItemBackground")
 
-
-            itemView.click = function()
+            dotDotDotClick = function()
             {
-                #print("i:", i)
-                .currentPlaylistIndex = i
-                #print("currentPlaylistIndex:", currentPlaylistIndex)
-                #print("itemView.click parent:", ...)
-                startCurrentPlaylist()
+                playlistsHeader.hidden = true
+                playlistContentView.hidden = true
+                
+                editPlaylistHeader.hidden = false
+                editPlaylistContent.hidden = false
+                editPlaylistUI.show(editPlaylistBackClick, playlist)
             }
 
-            #shuffleButton = itemView.getView("shuffleButton")
-            #button.create(shuffleButton, 0.55 * i)
+            dotDotDotButton = itemView.getView("dotDotDotButton")
+            button.create(dotDotDotButton, -0.1 * i + 0.2, dotDotDotClick)
+
+            playClick = function()
+            {
+                .selectedPlaylistView = itemView
+                playSelectedPlaylist()
+                updateVisuals()
+
+            }
+
+            playButton = itemView.getView("playButton")
+            button.create(playButton, -0.1 * i + 0.7, playClick)
+
+            backgroundView.click = function()
+            {
+                playClick()
+            }
 
             if(i % 2 == 0)
             {
-                itemView.color = itemView.color * 0.5
-                itemView.color.w = 0.1
+                backgroundView.color = backgroundView.color * 0.5
+                backgroundView.color.w = 0.1
             }
+            itemView.baseColor = backgroundView.color
 
             scrollView.insertRow(playlistScrollView, itemView)
+            table.insert(playlistViews, itemView)
         }
     }
+    else
+    {
+        noPlaylistsText.hidden = false
+    }      
 }
 
-playlists = file.loadBinary(playlistsPath)
-#print("playlists:", playlists)
-loadPlaylists(playlists)
+loadPlaylists()

@@ -1,7 +1,7 @@
-topStatusBarPadding = 50
-sidePadding = 30
-headerHeight = 140
-footerHeight = 160
+topStatusBarPadding = 40
+sidePadding = 20
+headerHeight = 100
+footerHeight = 140
 
 playlistsHeader = {
     id = "playlistsHeader"
@@ -30,6 +30,16 @@ playlistsHeader = {
             font = "blockheadsHue"
             additiveBlend = true
             fontSize = 24
+        }
+        {
+            id = "subtitle"
+            type = "text"
+            text = " "
+            font = "blockheadsHue"
+            additiveBlend = true
+            fontSize = 16
+            alignmentY = "below"
+            layoutParentID = "title"
         }
         {
             id = "addPlaylistButton"
@@ -139,19 +149,42 @@ addSongHeader = {
             alignmentX = "left"
         }
         {
-            id = "addSong"
+            id = "addSongTitleText"
             type = "text"
             text = "Add Songs"
             font = "blockheadsHue"
             additiveBlend = true
             fontSize = 24
-        } #todo add a subtitle with the playlist name
+        }
+        {
+            id = "addSongSubtitleText"
+            type = "text"
+            text = "Add Songs"
+            font = "blockheadsHue"
+            additiveBlend = true
+            fontSize = 16
+            alignmentY = "below"
+            layoutParentID = "addSongTitleText"
+        }
     }
 }
 
 playlistContent = {
     id = "playlistContent"
     type = "view"
+    subviews = {
+        {
+            id = "noPlaylistsText"
+            type = "text"
+            text = "Add playlists using the '+' button, top right"
+            font = "blockheadsHue"
+            fontSize = 18
+        }
+        {
+            id = "playlistScrollViewContainer"
+            type = "view"
+        }
+    }
 }
 
 settingsContent = {
@@ -180,6 +213,10 @@ editPlaylistContent = {
             text = "Add songs using the '+' button, top right"
             font = "blockheadsHue"
             fontSize = 18
+        }
+        {
+            id = "editPlaylistCurrentPlaylistContent"
+            type = "view"
         }
     }
 }
@@ -244,40 +281,34 @@ mainView = {
                     alignmentY = "top"
                 }
                 {
-                    id = "currentlyPlayingTitle"
+                    id = "statusText"
                     type = "text"
                     text = " "
                     font = "blockheadsHue"
                     additiveBlend = true
-                    fontSize = 20
+                    fontSize = 16
                     alignmentY = "below"
                     layoutParentID = "playPauseButton"
-                }
-                {
-                    id = "statusSubtitle"
-                    type = "text"
-                    text = "Connecting..."
-                    font = "blockheadsHue"
-                    additiveBlend = true
-                    alignmentY = "below"
-                    layoutParentID = "currentlyPlayingTitle"
-                    fontSize = 16
                 }
             }
         }
     }
 }
 
-playlistItemPlayMode = {
-    id = "playlistItemBackground"
-    type = "color"
-    color = vec4(0.04,0.12,0.15,0.1)
+mainPlaylistsPlaylistItem = {
+    id = "playlistItem"
+    type = "view"
     size = function(parentSize)
     {
         return vec2(parentSize.x - 20.0,60)
     }
 
     subviews = {
+        {
+            id = "playlistItemBackground"
+            type = "color"
+            color = vec4(0.04,0.12,0.15,0.1)
+        }
         {
             id = "playlistItemTitle"
             type = "text"
@@ -292,6 +323,15 @@ playlistItemPlayMode = {
             id = "dotDotDotButton"
             type = "image"
             path = "img/dotDotDot.png"
+            shader = "drawQuadTexturedHueShiftClip"
+            pos = vec3(-70,0, 0)
+            size = vec2(40,40)
+            alignmentX = "right"
+        }
+        {
+            id = "playButton"
+            type = "image"
+            path = "img/play.png"
             shader = "drawQuadTexturedHueShiftClip"
             pos = vec3(-20,0, 0)
             size = vec2(40,40)
