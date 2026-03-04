@@ -17,16 +17,18 @@ if(!file.fileExists(clientSitePath))
 }
 
 musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
-imagesDirectoryPath = clientSitePath + "/img"
-clientScriptsDirectoryPath = clientSitePath + "/scripts"
-clientFontsDirectoryPath = clientSitePath + "/fonts"
-sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists"
+imagesDirectoryPath = clientSitePath + "/img/"
+clientScriptsDirectoryPath = clientSitePath + "/scripts/"
+clientFontsDirectoryPath = clientSitePath + "/fonts/"
+sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists/"
+
+file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirectoryPath)
 
 availablePlaylists = {}
 songServerInfosBySongID = {}
 directoryTree = {}
 
-loadFilesFromDir = function(dirPath)
+loadFilesFromDir = function(dirPath, exportPrependPathOrNil)
 {
     files = {}
     contents = file.directoryContents(dirPath)
@@ -40,8 +42,13 @@ loadFilesFromDir = function(dirPath)
                 fileData = file.loadData(fullPath)
                 if(fileData)
                 {
+                    fileNameToUse = fileName
+                    if(exportPrependPathOrNil)
+                    {
+                        fileNameToUse = exportPrependPathOrNil + fileNameToUse
+                    }
                     fileDataWrapper = {
-                        fileName = fileName,
+                        fileName = fileNameToUse,
                         data = fileData
                     }
                     table.insert(files, fileDataWrapper)
@@ -139,12 +146,46 @@ getChecksum = function(path)
 }
 
 ### this function is called when clients query this site
-get = function(url, clientChecksum)
+get = function(url, clientData)
 {
-    print("in get. url:", url, " clientChecksum:", clientChecksum)
+    print("in get. url:", url, " clientData:", clientData)
     urlSplit = string.split(url, "/")
 
-    if(table.count(urlSplit) <= 1) #respond to get fileHost/
+    if(urlSplit[0] == "savePlaylist")
+    {
+        print("got savePlaylist:", clientData)
+
+        playlistID = clientData.playlistID
+        songs = clientData.songs
+        name = clientData.name
+        if(!playlistID or !name)
+        {
+            return {
+                status = "error"
+                message = "request missing required playlistID and name"
+            }
+        }
+
+        savePath = sharedPlaylistsDirectoryPath + playlistID + ".tuib"
+        if(table.count(songs) > 0)
+        {
+            saveData = {
+                playlistID = playlistID
+                name = name
+                songs = songs
+            }
+            file.saveBinary(savePath, saveData)
+        }
+        else
+        {
+            file.remove(savePath) #might be a good idea to also create a new currentPlaylistID?
+        }
+
+        return {
+            status = "ok"
+        }
+    }
+    else if(table.count(urlSplit) <= 1) #respond to get fileHost/
     {
         # if a clients simply enters "waraki" in the url, we end up here.
         # This is where we will load up and send all of the site's data in one big bundle
@@ -153,7 +194,7 @@ get = function(url, clientChecksum)
         # So clients will automatically download any updates to the site as an entire blob, but load from a cache otherwise
         
         checksum = getChecksum(clientSitePath)
-        if(clientChecksum == checksum)
+        if(clientData == checksum)
         {
             return {
                 status = "ok"
@@ -170,17 +211,26 @@ get = function(url, clientChecksum)
         }
         table.insert(files, directoryTreeWrapper)
 
+        clientSharedPlaylistsData = loadFilesFromDir(sharedPlaylistsDirectoryPath, "sharedPlaylists/")
+        if(clientSharedPlaylistsData)
+        {
+            for(file in clientSharedPlaylistsData)
+            {
+                table.insert(files, file)
+        print("adding:", file.fileName)
+            }
+        }
+
+
         #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
         clientImageData = loadFilesFromDir(imagesDirectoryPath)
         clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
         clientFontsData = loadFilesFromDir(clientFontsDirectoryPath)
-        clientSharedPlaylistsData = loadFilesFromDir(sharedPlaylistsDirectoryPath)
         
         clientSiteData = {
             images = clientImageData
             scripts = clientScriptsData
             fonts = clientFontsData
-            sharedPlaylists = clientSharedPlaylistsData
             files = files
             siteInfo = siteInfo
             siteImage = siteImage

@@ -10,8 +10,8 @@ retryDelay = 60.0 #attempts to download again every retryDelay seconds on failur
 
 #playlistsDiffPath = file.getSavePath("files/playlistsDiff.tuib")
 #playlistsPath = file.getSavePath("files/playlists.tuib")
-songsCachePath = file.getSavePath("songs/")
-sharedPlaylistsDirPath = file.getSavePath("sharedPlaylists/")
+songsCachePath = file.getSavePath("files/songs/")
+sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
 
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
@@ -19,69 +19,54 @@ file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirPath)
 
 print("songsCachePath:", songsCachePath)
 
-waitingForDownload = false
 hasStartedCache = false
 allSongsSuccessfullyCached = false
 
 paused = true
 
-songsToDownloadArray = {}
-songsInfosByID = {}
-queue = {}
+songDownloadArray = {}
+songsToDownloadByID = {}
+currentRequestedSongDownloadInfo = false
+
+playbackURLQueue = {}
 
 playlistContentView = false #create empty var
 playlistScrollViewContainer = false #create empty var
 playlistScrollView = false
 
-retryingAfterFailedToDownload = false
-retryTimer = 0
-retryCounter = 0
-
-getSongCallback = function(result, hostID, isCacheSync, playWhenDone)
+getSongCallback = function(result, hostID)
 {
-    .waitingForDownload = false
+    downloadInfo = currentRequestedSongDownloadInfo
+    .currentRequestedSongDownloadInfo = nil
     print("site code got result with status:", result.status, " message:", result.message, " hostID:", hostID)
     if(!result or result.status != "ok")
     {
-        if(isCacheSync)
+        if(result and result.message == "not connected")
         {
-            if(result and result.message == "not connected")
-            {
-                .retryingAfterFailedToDownload = true
-                .retryTimer = retryDelay
-                print("failed to download. trying again in ", retryDelay, " seconds")
-                statusSubtitleTextView.text = "Not connected"
-            }
-            else
-            {
-                print("failed to download. skipping file.") 
-                #cacheDownloadIndex++
-            }
+            statusSubtitleTextView.text = "Not connected"
+            #addDownload(downloadInfo.songInfo, downloadInfo.playWhenDone) #for now we just give up on this download and keep trying the rest. Restart the app to try again.
         }
         else
         {
-            #todo inform user
+            print("failed to download. skipping file.")
         }
     }
     else if(result.songID and result.fileData and result.fileName)
     {
         print("cache song downloaded: ", result.fileName)
 
-        songInfo = songsInfosByID[result.songID]
+        songInfo = downloadInfo.songInfo
         thisSongCachePath = songsCachePath + songInfo.localPath
         file.createDirectoriesIfNeededForFilePath(thisSongCachePath)
         file.saveData(thisSongCachePath, result.fileData)
 
-        if(isCacheSync)
-        {
-            cacheDownloadIndex++
-        }
+        statusSubtitleTextView.text = " "
         
-        if(playWhenDone)
+        if(downloadInfo.playWhenDone)
         {
-            table.insert(queue, 0, thisSongCachePath)
-            audio.queueSongs(queue)
-            print("playing when done:", queue)
+            table.insert(playbackURLQueue, 0, thisSongCachePath)
+            audio.queueSongs(playbackURLQueue)
+            print("playing when done:", playbackURLQueue)
             .paused = false
             updatePauseButton()
             audio.play()
@@ -91,58 +76,79 @@ getSongCallback = function(result, hostID, isCacheSync, playWhenDone)
     {
         error("unhandled result.")
     }
+    updateDownloads()
 }
 
-doDownload = function(songInfo, isCacheSync, playWhenDone)
+
+updateDownloads = function()
 {
-    print("downloading song:", songInfo.fileName, " playWhenDone:", playWhenDone)
-    statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-    .waitingForDownload = true
+    if(!currentRequestedSongDownloadInfo)
+    {
+        if(table.count(songDownloadArray) > 0)
+        {
+            downloadInfo = songDownloadArray[0]
+            table.remove(songDownloadArray, 0)
 
-    innerCallback = function(result, hostID) {
-        print("calling song callback:", songInfo.fileName, " playWhenDone:", playWhenDone)
-        getSongCallback(result, hostID, isCacheSync, playWhenDone)
+            songInfo = downloadInfo.songInfo
+            print("downloading song:", songInfo.fileName)
+            statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
+            .currentRequestedSongDownloadInfo = downloadInfo
+            
+            katipo.get("songs/" + songInfo.songID, getSongCallback)
+        }
     }
-    katipo.get("songs/" + songInfo.songID, innerCallback)
 }
 
-#downloadToCache = function(downloadSongIndex)
-#{
-#    songCount = table.count(songsToDownloadArray)
-#    if(downloadSongIndex >= songCount)
-#    {
-#        print("all files cached.")
-#        .allSongsSuccessfullyCached = true
-#        statusSubtitleTextView.text = "Sync complete"
-#        return
-#    }
-#
-#    songID = songsToDownloadArray[downloadSongIndex]
-#    songInfo = songsInfosByID[songID]
-#    
-#    thisSongCachePath = songsCachePath + songInfo.localPath
-#
-#    #print("songInfo:", songInfo)
-#    #print("thisSongCachePath:", thisSongCachePath)
-#
-#    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0) #todo != expectedSize
-#    {
-#        doDownload(songInfo, true, false)
-#    }
-#    else
-#    {
-#        //print("file exists:", songInfo.fileName)
-#        statusSubtitleTextView.text = "Ready"
-#        cacheDownloadIndex++
-#        #downloadToCache(downloadSongIndex + 1)
-#    }
-#}
+addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't exist
+{
+    if(currentRequestedSongDownloadInfo and currentRequestedSongDownloadInfo.songInfo.songID == songInfo.songID)
+    {
+        return #already requested
+    }
 
-#cacheDownloadIndex = 0
+    if(songsToDownloadByID[songInfo.songID])
+    {
+        if(playWhenDone) #prioritize if playWhenDone
+        {
+            if(songDownloadArray[0].songInfo.songID != songInfo.songID)
+            {
+                for(i,downloadInfo in songDownloadArray)
+                {
+                    if(downloadInfo.songInfo.songID == songInfo.songID)
+                    {
+                        table.remove(songDownloadArray, i)
+                        break
+                    }
+                }
+            }
+        }
+        else
+        {
+            return #already in download queue
+        }
+    }
+    
+    downloadInfo = {
+        songInfo = songInfo
+        playWhenDone = playWhenDone
+    }
+    
+    songsToDownloadByID[songInfo.songID] = downloadInfo
+
+    if(playWhenDone)
+    {
+        table.insert(songDownloadArray, 0, downloadInfo) #insert first
+    }
+    else
+    {
+        table.insert(songDownloadArray, downloadInfo) #insert last
+    }
+
+    updateDownloads()
+}
 
 katipo.update = function(dt) #called every tick
 {
-    #if(!hasStartedCache)
     #{
     #    .hasStartedCache = true
     #    for(playlist in playlists)
@@ -221,23 +227,20 @@ playPreview = function(songInfo)
 {
     thisSongCachePath = songsCachePath + songInfo.localPath
 
-    songsInfosByID[songInfo.songID] = songInfo
-
     if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
     {
-        doDownload(songInfo, false, true)
+        addDownload(songInfo, true)
     }
     else
     {
-        .queue = {}
-        table.insert(queue, thisSongCachePath)
-        audio.queueSongs(queue)
+        .playbackURLQueue = {}
+        table.insert(playbackURLQueue, thisSongCachePath)
+        audio.queueSongs(playbackURLQueue)
         .paused = false
         updatePauseButton()
         audio.play()
     }
 }
-editPlaylistUI.playPreview = playPreview
 
 addPlaylistClick = function()
 {
@@ -247,7 +250,7 @@ addPlaylistClick = function()
     editPlaylistHeader.hidden = false
     editPlaylistContent.hidden = false
 
-    editPlaylistUI.show(editPlaylistBackClick, nil)
+    editPlaylistUI.show(nil)
 }
 button.create(addPlaylistButton, -0.1, addPlaylistClick)
 
@@ -295,7 +298,6 @@ playPauseButtonClick = function()
 }
 
 button.create(playPauseButton, -0.1, playPauseButtonClick)
-editPlaylistUI.playPauseButtonClick = playPauseButtonClick
 
 nextButtonClick = function()
 {
@@ -303,49 +305,6 @@ nextButtonClick = function()
 }
 
 button.create(nextButton, -0.1, nextButtonClick)
-
-
-
-#loadFirstSongAndStartQueue = function()
-#{
-#    print("loadFirstSongAndStartQueue")
-#    .queue = {
-#    }
-#
-#    currentPlaylist = playlists[currentPlaylistIndex]
-#    for(songInfo in currentPlaylist.songs)
-#    {
-#        thisSongCachePath = songsCachePath + songInfo.localPath
-#        table.insert(queue, thisSongCachePath)
-#    }
-#
-#    firstItem = currentPlaylist.songs[0]
-#    print("firstItem:", firstItem)
-#    firstSongCachePath = songsCachePath + firstItem.localPath
-#    if(!file.fileExists(firstSongCachePath))
-#    {
-#        print("Need to download:", firstSongCachePath)
-#        statusSubtitleTextView.text = "Downloading: " + firstItem.fileName
-#
-#        audio.stop()
-#
-#        innerCallback = function(result, hostID) {
-#            getSongCallback(result, hostID, true, true)
-#        }
-#
-#        katipo.get("songs/" + firstItem.songID, innerCallback)
-#        
-#        doDownload(firstItem, true, true)
-#
-#    }
-#    else
-#    {
-#        audio.queueSongs(queue)
-#        .paused = false
-#        updatePauseButton()
-#    }
-#}
-#
 
 playlistViews = {}
 selectedPlaylistView = false
@@ -367,6 +326,8 @@ updateVisuals = function()
     }
 }
 
+selectedPlaylist = false
+
 playSelectedPlaylist = function()
 {
     if(!selectedPlaylistView)
@@ -383,20 +344,41 @@ playSelectedPlaylist = function()
             return
         }
     }
-    selectedPlaylist = selectedPlaylistView.playlist
-    queue = {}
-    .queue = queue
-    for(songInfo in selectedPlaylist.songs)
+
+    if(selectedPlaylist == selectedPlaylistView.playlist)
     {
-        thisSongCachePath = songsCachePath + songInfo.localPath
-        table.insert(queue, thisSongCachePath)
+        .paused = false
+        updatePauseButton()
+        audio.play()
     }
-    table.shuffle(queue)
-    print("queue:", queue)
-    audio.queueSongs(queue)
-    .paused = false
-    updatePauseButton()
-    audio.play()
+    else
+    {
+        .selectedPlaylist = selectedPlaylistView.playlist
+        .playbackURLQueue = {}
+
+        for(songInfo in selectedPlaylist.songs)
+        {
+            thisSongCachePath = songsCachePath + songInfo.localPath
+            if(file.fileExists(thisSongCachePath))
+            {
+                table.insert(playbackURLQueue, thisSongCachePath)
+            }
+            else
+            {
+                print("error, file not found:", thisSongCachePath)
+            }
+        }
+
+        if(table.count(playbackURLQueue) > 0)
+        {
+            table.shuffle(playbackURLQueue)
+            print("playbackURLQueue:", playbackURLQueue)
+            audio.queueSongs(playbackURLQueue)
+            .paused = false
+            updatePauseButton()
+            audio.play()
+        }
+    }
 }
 
 audio.playingSongChanged = function(title, artist, duration)
@@ -413,6 +395,22 @@ audio.playingSongPausedChanged = function(newPaused)
     updatePauseButton()
 }
 
+addSongsToDownloadQueueForPlaylist = function(playlist)
+{
+    if(playlist and playlist.songs)
+    {
+        for(songInfo in playlist.songs)
+        {
+            thisSongCachePath = songsCachePath + songInfo.localPath
+
+            if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
+            {
+                addDownload(songInfo, false)
+            }
+        }
+    }
+}
+
 loadPlaylists = function()
 {
     sharedPlaylists = {}
@@ -427,6 +425,12 @@ loadPlaylists = function()
         }
     }
 
+    compareFunction = function(a,b)
+    {
+        return a.name < b.name
+    }
+    table.sort(sharedPlaylists, compareFunction)
+
     if(playlistScrollView)
     {
         .playlistViews = {}
@@ -436,13 +440,9 @@ loadPlaylists = function()
 
     noPlaylistsText = scene.getView("noPlaylistsText")
 
-    #todo sort sharedPlaylists alphabetically
-
     if(table.count(sharedPlaylists) > 0)
     {
         noPlaylistsText.hidden = true
-
-        playlistScrollViewContainer
 
         .playlistScrollView = scrollView.create(playlistScrollViewContainer)
 
@@ -450,6 +450,8 @@ loadPlaylists = function()
 
         for(i,playlist in sharedPlaylists)
         {
+            addSongsToDownloadQueueForPlaylist(playlist)
+
             itemView = playlistScrollView.addView(viewTable)
             titleTextView = itemView.getView("playlistItemTitle")
             titleTextView.text = playlist.name
@@ -464,7 +466,7 @@ loadPlaylists = function()
                 
                 editPlaylistHeader.hidden = false
                 editPlaylistContent.hidden = false
-                editPlaylistUI.show(editPlaylistBackClick, playlist)
+                editPlaylistUI.show(playlist)
             }
 
             dotDotDotButton = itemView.getView("dotDotDotButton")
@@ -479,7 +481,7 @@ loadPlaylists = function()
             }
 
             playButton = itemView.getView("playButton")
-            button.create(playButton, -0.1 * i + 0.7, playClick)
+            button.create(playButton, -0.1 * i + 0.2, playClick)
 
             backgroundView.click = function()
             {
@@ -504,3 +506,9 @@ loadPlaylists = function()
 }
 
 loadPlaylists()
+
+editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "delegate"
+    playPreview = playPreview
+    playPauseButtonClick = playPauseButtonClick
+    backButtonClicked = editPlaylistBackClick
+}

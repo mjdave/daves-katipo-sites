@@ -3,8 +3,8 @@ fileBrowser = require("app/common/fileBrowser.tui")
 scrollView = require("app/common/scrollView.tui")
 button = require("app/common/button.tui")
 
-songsCachePath = file.getSavePath("songs/")
-sharedPlaylistsDirPath = file.getSavePath("sharedPlaylists/")
+songsCachePath = file.getSavePath("files/songs/")
+sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
 
 directoryTreePath = file.getSavePath("files/directoryTree.tuib")
 
@@ -18,27 +18,29 @@ playlistTitleTextEntry = false
 
 addAndPlayButtonSize = vec2(30,30)
 
-playButtonLayout = {
-    id = "playButton"
-    type = "image"
-    path = "img/play.png"
-    shader = "drawQuadTexturedHueShiftClip"
-    pos = vec3(-50,0, 0)
-    size = addAndPlayButtonSize
-    alignmentX = "right"
-}
-
-table.insert(fileBrowser.fileItemLayout.subviews, playButtonLayout)
 
 table.insert(fileBrowser.fileItemLayout.subviews, {
     id = "addButton"
     type = "image"
     path = "img/add.png"
     shader = "drawQuadTexturedHueShiftClip"
-    pos = vec3(-10,0, 0)
+    pos = vec3(-50,0, 0)
     size = addAndPlayButtonSize
     alignmentX = "right"
 })
+
+playButtonLayout = {
+    id = "playButton"
+    type = "image"
+    path = "img/play.png"
+    shader = "drawQuadTexturedHueShiftClip"
+    pos = vec3(-10,0, 0)
+    size = addAndPlayButtonSize
+    alignmentX = "right"
+}
+
+table.insert(fileBrowser.fileItemLayout.subviews, playButtonLayout)
+
 
 
 currentPreviewPlayingButtonSongID = false
@@ -48,7 +50,7 @@ playPreviewInternal = function(buttonView, songInfo) #todo this downloads the so
     {
         if(currentPreviewPlayingButtonSongID == songInfo.songID) #todo this will fail if song has finished or in other cases probably
         {
-            playPauseButtonClick()
+            delegate.playPauseButtonClick()
             return
         }
         print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
@@ -66,7 +68,7 @@ playPreviewInternal = function(buttonView, songInfo) #todo this downloads the so
     .currentPreviewPlayingButtonSongID = songInfo.songID
     .currentPreviewPlayingButtonSongView = buttonView
 
-    playPreview(songInfo) #calls out to code.tui
+    delegate.playPreview(songInfo)
 
 }
 
@@ -74,7 +76,7 @@ saveCurrentPlaylist = function()
 {
     if(currentPlaylistID)
     {
-        savePath = sharedPlaylistsDirPath + currentPlaylistID + "_" + playlistTitle + ".tuib"
+        savePath = sharedPlaylistsDirPath + currentPlaylistID + ".tuib"
         if(table.count(playlistContent) > 0)
         {
             saveData = {
@@ -88,12 +90,24 @@ saveCurrentPlaylist = function()
         {
             file.remove(savePath) #might be a good idea to also create a new currentPlaylistID?
         }
-        #todo send to server
+
+        saveCallback = function()
+        {
+            #todo really need to save the fact it has changed, send again in the future if this fails
+        }
+        
+        serverPlaylistInfo = {
+            playlistID = currentPlaylistID
+            name = playlistTitle
+            songs = playlistContent
+        }
+        katipo.get("savePlaylist", serverPlaylistInfo, saveCallback)
     }
 }
 
-toggleSongAddedToPlaylist = function(buttonView, songInfo)
+toggleSongAddedToPlaylist = function(buttonView, itemView)
 {
+    songInfo = itemView.fileInfo
     if(playlistAddedSongIDs[songInfo.songID])
     {
         playlistAddedSongIDs[songInfo.songID] = nil
@@ -107,12 +121,14 @@ toggleSongAddedToPlaylist = function(buttonView, songInfo)
             }
         }
         buttonView.path = "img/add.png"
+        itemView.highlight = nil
     }
     else
     {
         table.insert(playlistContent, songInfo)
         playlistAddedSongIDs[songInfo.songID] = true
         buttonView.path = "img/remove.png"
+        itemView.highlight = true
 
         if(!currentPlaylistID)
         {
@@ -124,7 +140,7 @@ toggleSongAddedToPlaylist = function(buttonView, songInfo)
         saveCurrentPlaylist()
     }
 
-    print("playlistContent:", playlistContent)
+    #print("playlistContent:", playlistContent)
 }
 
 onBrowserItemCreate = function(itemView, index)
@@ -150,14 +166,62 @@ onBrowserItemCreate = function(itemView, index)
     {
         buttonCallback = function()
         {
-            toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo)
+            toggleSongAddedToPlaylist(addButtonView, itemView)
+            fileBrowser.updateVisuals(addSongFileBrowser.fileBrowserViewData) #because we changed itemView.highlight
         }
-        button.create(addButtonView, -0.1 * index + 0.05, buttonCallback)
+        button.create(addButtonView, -0.1 * index, buttonCallback)
 
         if(playlistAddedSongIDs[itemView.fileInfo.songID])
         {
             addButtonView.path = "img/remove.png"
+            itemView.highlight = true
         }
+    }
+}
+
+
+onMainPlaylistItemCreate = function(itemView, index)
+{
+    playButtonView = itemView.getView("playButton")
+    if(playButtonView)
+    {
+        buttonCallback = function()
+        {
+            playPreviewInternal(playButtonView, itemView.fileInfo)
+        }
+        button.create(playButtonView, -0.1 * index, buttonCallback)
+
+        if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
+        {
+            playButtonView.path = "img/pause.png"
+            .currentPreviewPlayingButtonSongView = itemView
+        }
+    }
+
+    addButtonView = itemView.getView("addButton")
+    if(addButtonView)
+    {
+        updateVisualsForThisItem = function()
+        {
+            if(playlistAddedSongIDs[itemView.fileInfo.songID])
+            {
+                addButtonView.path = "img/remove.png"
+                itemView.color = itemView.baseColor
+            }
+            else
+            {
+                addButtonView.path = "img/add.png"
+                itemView.color = itemView.baseColor + vec4(0.4,0.0,0.0,0.3)
+            }
+        }
+
+        buttonCallback = function()
+        {
+            toggleSongAddedToPlaylist(addButtonView, itemView)
+            updateVisualsForThisItem()
+        }
+        button.create(addButtonView, -0.1 * index, buttonCallback)
+        updateVisualsForThisItem()
     }
 }
 
@@ -184,11 +248,22 @@ loadPlaylistContent = function()
     {
         noSongsText.hidden = true
         .playlistScrollView = scrollView.create(editPlaylistCurrentPlaylistContent)
-        playlistScrollView = .playlistScrollView #tui bug  maybe
+        #playlistScrollView = .playlistScrollView #tui bug  maybe
 
         itemLayout = fileBrowser.fileItemLayout #this is a bit cheeky
 
+        compareFunction = function(a,b)
+        {
+            return a.fileName < b.fileName
+        }
+        sortedFiles = {}
         for(i,songInfo in playlistContent)
+        {
+            table.insert(sortedFiles, songInfo)
+        }
+        table.sort(sortedFiles, compareFunction)
+
+        for(i,songInfo in sortedFiles)
         {
             itemView = playlistScrollView.addView(itemLayout)
             itemView.fileInfo = songInfo
@@ -204,6 +279,9 @@ loadPlaylistContent = function()
             itemView.baseColor = itemView.color
 
             scrollView.insertRow(playlistScrollView, itemView)
+
+            onMainPlaylistItemCreate(itemView, i)
+
             #table.insert(songItemViews, itemView)
         }
     }
@@ -221,7 +299,7 @@ updatePlaylistTitle = function()
     textEntry.setText(playlistTitleTextEntry, playlistTitle)
 }
 
-show = function(backFunction, playlistOrNil)
+show = function(playlistOrNil)
 {
     if(playlistOrNil)
     {
@@ -262,7 +340,7 @@ show = function(backFunction, playlistOrNil)
         fileBrowser.onBrowserItemCreate = onBrowserItemCreate
         fileBrowser.onBrowserContentChange = onBrowserContentChange
         .addSongFileBrowser = fileBrowser.create(addSongContent)
-        addSongFileBrowser = .addSongFileBrowser #tui bug
+        #addSongFileBrowser = .addSongFileBrowser #tui bug
         directoryTree = file.loadBinary(directoryTreePath)
         fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
 
@@ -273,7 +351,7 @@ show = function(backFunction, playlistOrNil)
         titleLayout = {font = "blockheadsHue", fontSize = 20, backgroundColor = vec4(0.0,0.2,0.0,0.2)}
         .playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer, titleLayout)
 
-        button.create(editPlaylistBackButton, -0.1, backFunction)
+        button.create(editPlaylistBackButton, -0.1, delegate.backButtonClicked)
 
         editPlaylistAddSongClick = function()
         {
@@ -299,7 +377,7 @@ show = function(backFunction, playlistOrNil)
         button.create(addSongBackButton, -0.1, addSongBackClick)
 
         textChangeCallback = function(textValue, confirmChanges){
-            if(confirmChanges and string.length(textValue) > 0)
+            if(confirmChanges and string.length(textValue) > 0 and playlistTitle != textValue)
             {
                 prevSavePath = sharedPlaylistsDirPath + currentPlaylistID + "_" + playlistTitle + ".tuib"
 
