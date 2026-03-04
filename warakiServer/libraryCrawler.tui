@@ -4,7 +4,7 @@ fileCount = 0
 m3uPlaylistInfosByPlaylistID = {}
 songServerInfosBySongID = {}
 directoryTree = {}
-availablePlaylists = {}
+importedPlaylists = {}
 
 loadFile = function(path, fileName, localPath)
 {
@@ -216,11 +216,9 @@ addm3uPlaylists = function()
                 songs = foundSongs
             }
 
-            table.insert(availablePlaylists, importedPlaylist)
+            table.insert(importedPlaylists, importedPlaylist)
         }
     }
-
-    #print("availablePlaylists:", availablePlaylists)
 }
 
 
@@ -237,7 +235,7 @@ runCrawl = function(directoryPath)
     }
 
     playlistSongCount = 0
-    for(playlist in availablePlaylists)
+    for(playlist in importedPlaylists)
     {
         playlistSongCount += table.count(playlist.songs)
     }

@@ -24,7 +24,6 @@ sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists/"
 
 file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirectoryPath)
 
-availablePlaylists = {}
 songServerInfosBySongID = {}
 directoryTree = {}
 
@@ -74,10 +73,21 @@ doCrawl = function()
 
     if(importM3UPlaylists)
     {
-        for(newPlaylist in libraryCrawler.availablePlaylists)
+        for(newPlaylist in libraryCrawler.importedPlaylists)
         {
-            error("todo, we need to convert these to individual playlist files")
-            #table.insert(availablePlaylists, newPlaylist)
+            playlistID = string.sha1(newPlaylist.title + math.random()) #todo tui needs a random sha1 function
+            playlistID = string.subString(playlistID, 0, 8)
+
+            if(table.count(newPlaylist.songs) > 0)
+            {
+                savePath = sharedPlaylistsDirectoryPath + playlistID + ".tuib"
+                saveData = {
+                    playlistID = playlistID
+                    name = newPlaylist.title
+                    songs = newPlaylist.songs
+                }
+                file.saveBinary(savePath, saveData)
+            }
         }
     }
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
@@ -217,7 +227,6 @@ get = function(url, clientData)
             for(file in clientSharedPlaylistsData)
             {
                 table.insert(files, file)
-        print("adding:", file.fileName)
             }
         }
 
@@ -283,11 +292,8 @@ if(!doCrawlOnLaunch and file.fileExists(musicLibraryPath))
     print("Loading cache...")
     cacheData = file.loadBinary(musicLibraryPath)
 
-    .availablePlaylists = cacheData.availablePlaylists
     .songServerInfosBySongID = cacheData.songServerInfosBySongID
     .directoryTree = cacheData.directoryTree
-
-    print("found ", table.count(availablePlaylists), " playlists")
 }
 else
 {
