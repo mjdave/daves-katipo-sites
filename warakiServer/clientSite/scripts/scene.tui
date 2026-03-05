@@ -307,7 +307,7 @@ mainPlaylistsPlaylistItem = {
         {
             id = "playlistItemBackground"
             type = "color"
-            color = vec4(0.04,0.12,0.15,0.1)
+            color = vec4(0.04,0.12,0.15,0.3)
         }
         {
             id = "playlistItemTitle"

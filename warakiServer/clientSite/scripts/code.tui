@@ -23,6 +23,7 @@ hasStartedCache = false
 allSongsSuccessfullyCached = false
 
 paused = true
+connected = false
 
 songDownloadArray = {}
 songsToDownloadByID = {}
@@ -44,6 +45,7 @@ getSongCallback = function(result, hostID)
         if(result and result.message == "not connected")
         {
             statusSubtitleTextView.text = "Not connected"
+            .connected = false
             #addDownload(downloadInfo.songInfo, downloadInfo.playWhenDone) #for now we just give up on this download and keep trying the rest. Restart the app to try again.
         }
         else
@@ -144,6 +146,15 @@ addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't e
         table.insert(songDownloadArray, downloadInfo) #insert last
     }
 
+    if(connected)
+    {
+        updateDownloads()
+    }
+}
+
+katipo.onConnect = function(wasNewDownload) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    .connected = true
     updateDownloads()
 }
 
@@ -491,7 +502,6 @@ loadPlaylists = function()
             if(i % 2 == 0)
             {
                 backgroundView.color = backgroundView.color * 0.5
-                backgroundView.color.w = 0.1
             }
             itemView.baseColor = backgroundView.color
 
