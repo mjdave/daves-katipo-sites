@@ -12,86 +12,105 @@ blocksView = scene.getView("blocks")
 ballView = scene.getView("ball")
 scoreView = scene.getView("score")
 
-blockSize = vec2(90,10)
-padding = vec2(10,10)
+viewSize = false
+blockSize = false
+padding = false
 
 ballVelocity = vec3((math.random() - 0.5) * 0.02, 0.2, 0)
 
-fieldWidth = 0
-fieldHeight = table.count(level)
+blocksView.size = function(parentSize)
+{
+    .viewSize = parentSize
+    return parentSize
+}
+
+
+fieldWidthInBricks = 0
+fieldHeightInBricks = 0
 
 loadedBrickInfos = {}
 totalBrickCount = 0
 hitCount = 0
 
+fieldOffsetPixels = vec2(0,0)
+
+
+centerOffsetFromBlockIndexes = function(blockX, blockY) #block center from screen center
+{
+    return vec2(fieldOffsetPixels.x + (blockX + 0.5) * (blockSize.x + padding.x * 2),
+                fieldOffsetPixels.y + (blockY + 0.5) * (blockSize.y + padding.y * 2))
+}
+
+
+blockIndexesFromCenterOffset = function(centerOffset) #block lowerLeft from screen center
+{
+    result = vec2((centerOffset.x - fieldOffsetPixels.x) / (blockSize.x + padding.x * 2),
+                (centerOffset.y - fieldOffsetPixels.y) /  (blockSize.y + padding.y * 2))
+    return vec2(math.floor(result.x), math.floor(result.y))
+}
 
 loadLevel = function()
 {
-    maxWidth = 0
     .totalBrickCount = 0
     .hitCount = 0
 
-    yOffset = 0
+    .blockSize = vec2(viewSize.x / 20, viewSize.x / 100)
+    .padding = vec2(blockSize.y / 10, blockSize.y / 10)
+
+    .fieldHeightInBricks = table.count(level)
+    .fieldWidthInBricks = 0
     for(row in level)
+    {
+        .fieldWidthInBricks = math.max(table.count(row), fieldWidthInBricks)
+    }
+
+    fieldSizeInPixels = vec2(fieldWidthInBricks * (blockSize.x + padding.x * 2), 
+        fieldHeightInBricks * (blockSize.y + padding.y * 2))
+
+    .fieldOffsetPixels = vec2(-fieldSizeInPixels.x * 0.5, 0)
+
+    yOffset = 0
+    for(yIndex, row in level)
     {
         loadedBrickRow = {}
         table.insert(loadedBrickInfos, loadedBrickRow)
-        xOffset = 0
-        for(value in row)
+        for(xIndex, value in row)
         {
             blockView = nil
             if(value == 1)
             {
+                centerOffset = centerOffsetFromBlockIndexes(xIndex, fieldHeightInBricks - yIndex - 1) #flip y, we read from the top
                 viewTable = {
                     type = "color"
-                    color = vec4(1,1,1,1)
+                    color = vec4(math.random(),math.random(),math.random(),0.8)
                     size = blockSize
-                    alignmentY = "top"
-                    alignmentX = "left"
-                    pos = vec3(xOffset * (blockSize.x + padding.x) + padding.x, -yOffset * (blockSize.y + padding.y) - padding.y, 0)
+                    pos = vec3(centerOffset.x, centerOffset.y, 0)
                 }
                 blockView = blocksView.addView(viewTable)
                 .totalBrickCount++
             }
 
-            #brickInfo = { ##todo tui bug
-            #    value = value
-            #}
-
-            brickInfo = {}
-            brickInfo.value = value
-            brickInfo.blockView = blockView
+            brickInfo = {
+                value = value
+                blockView = blockView
+            }
 
             table.insert(loadedBrickRow, brickInfo)
-
-            xOffset++
         }
-        if(xOffset > maxWidth)
-        {
-            maxWidth = xOffset
-        }
-        yOffset++
     }
-    blocksView.size = vec2(maxWidth * (blockSize.x + padding.x) + padding.x, table.count(level) * (blockSize.y + padding.y) + padding.y)
-
-    .fieldWidth = maxWidth
 }
 
 
 loadLevel()
 
-print("fieldWidth:", fieldWidth)
-print("fieldHeight:", fieldHeight)
-print("totalBrickCount:", totalBrickCount)
-
 scoreView.text =  "hello:" + totalBrickCount
 
 ballSpeed = 3000
 paddleSpeed = 800
-halfBounds = vec2(1920/2,1080/2)
 
 katipo.update = function(dt) #called every tick
 {
+    halfBounds = viewSize / 2
     ballView.pos += ballVelocity * dt * ballSpeed
 
     if(ballView.pos.x > halfBounds.x)
@@ -133,16 +152,15 @@ katipo.update = function(dt) #called every tick
         }
     }
 
-    fieldRelativePosX = (ballView.pos.x - blocksView.pos.x + blocksView.size.x * 0.5) / (blockSize.x + padding.x)
-    fieldRelativePosY = (ballView.pos.y - blocksView.pos.y + blocksView.size.y * 0.5) / (blockSize.y + padding.y)
+    fieldRelativePos = blockIndexesFromCenterOffset(ballView.pos)
 
-    if(fieldRelativePosX >= 0 and fieldRelativePosX < fieldWidth)
+    if(fieldRelativePos.x >= 0 and fieldRelativePos.x < fieldWidthInBricks)
     {
-        if(fieldRelativePosY >= 0 and fieldRelativePosY < fieldHeight)
+        if(fieldRelativePos.y >= 0 and fieldRelativePos.y < fieldHeightInBricks)
         {
-            blockX = math.floor(fieldRelativePosX)
-            blockY = math.floor(fieldRelativePosY)
-            blockY = fieldHeight - blockY - 1
+            blockX = math.floor(fieldRelativePos.x)
+            blockY = math.floor(fieldRelativePos.y)
+            blockY = fieldHeightInBricks - blockY - 1
             
             row = loadedBrickInfos[blockY]
             if(row)
@@ -155,10 +173,10 @@ katipo.update = function(dt) #called every tick
                         blocksView.removeView(brickInfo.blockView)
                         brickInfo.blockView = nil
 
-                        xDistanceFromCenter = fieldRelativePosX - blockSize.x * 0.5
+                        xDistanceFromCenter = fieldRelativePos.y - blockSize.x * 0.5
                         xEdgeDistance = math.abs(xDistanceFromCenter) - blockSize.x * 0.5
 
-                        yDistanceFromCenter = fieldRelativePosY - blockSize.y * 0.5
+                        yDistanceFromCenter = fieldRelativePos.y - blockSize.y * 0.5
                         yEdgeDistance = math.abs(yDistanceFromCenter) - blockSize.y * 0.5
 
                         if(xEdgeDistance > yEdgeDistance)
@@ -198,8 +216,6 @@ rightArrowFunction = function(isDown, code, mod, isRepeat)
 {
     .rightKeyDown = isDown
 }
-
-print("eventManager:", eventManager)
 
 eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)

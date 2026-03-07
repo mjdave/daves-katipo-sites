@@ -4,9 +4,7 @@ mainView = {
         {
             id = "blocks"
             type = "color"
-            color = vec4(0.1,0.2,0.3,1)
-            size = vec2(800,200)
-            pos = vec3(0,200, 0)
+            color = vec4(0.1,0.2,0.3,0.1)
         },
         {
             id = "paddle"
@@ -30,7 +28,7 @@ mainView = {
             pos = vec3(-10,-10, 0)
             text = "0-0"
             font = "roboto"
-            fontSize = 64
+            fontSize = 32
             color = vec4(0.2,0.4,1.0,1.5)
             additiveBlend = true
         }
