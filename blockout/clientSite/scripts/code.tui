@@ -5,7 +5,6 @@
 # this is very rough and unfinished still, just shows what can be done.
 
 keys = require("app/common/keys.tui")
-level = require("scripts/level1.tui")
 
 paddleView = scene.getView("paddle")
 blocksView = scene.getView("blocks")
@@ -49,8 +48,24 @@ blockIndexesFromCenterOffset = function(centerOffset) #block lowerLeft from scre
     return vec2(math.floor(result.x), math.floor(result.y))
 }
 
-loadLevel = function()
+levelView = false
+
+loadLevel = function(levelName)
 {
+    if(levelView)
+    {
+        blocksView.removeView(levelView)
+    }
+
+    .loadedBrickInfos = {}
+
+    levelViewTable = {type = "view"}
+    .levelView = blocksView.addView(levelViewTable)
+
+    .ballVelocity = vec3((math.random() - 0.5) * 0.02, 0.2, 0)
+    ballView.pos = vec3(0,-100,0)
+
+    level = require("scripts/" + levelName)
     .totalBrickCount = 0
     .hitCount = 0
 
@@ -86,7 +101,7 @@ loadLevel = function()
                     size = blockSize
                     pos = vec3(centerOffset.x, centerOffset.y, 0)
                 }
-                blockView = blocksView.addView(viewTable)
+                blockView = levelView.addView(viewTable)
                 .totalBrickCount++
             }
 
@@ -100,10 +115,7 @@ loadLevel = function()
     }
 }
 
-
-loadLevel()
-
-scoreView.text =  "hello:" + totalBrickCount
+loadLevel("level1.tui")
 
 ballSpeed = 3000
 paddleSpeed = 800
@@ -170,7 +182,7 @@ katipo.update = function(dt) #called every tick
                 {
                     if(brickInfo.blockView)
                     {
-                        blocksView.removeView(brickInfo.blockView)
+                        levelView.removeView(brickInfo.blockView)
                         brickInfo.blockView = nil
 
                         xDistanceFromCenter = fieldRelativePos.y - blockSize.x * 0.5
@@ -204,6 +216,11 @@ katipo.update = function(dt) #called every tick
     else if(rightKeyDown)
     {
         paddleView.pos.x += dt * paddleSpeed
+    }
+
+    if(hitCount >= totalBrickCount)
+    {
+        loadLevel("level2.tui")
     }
 }
 
