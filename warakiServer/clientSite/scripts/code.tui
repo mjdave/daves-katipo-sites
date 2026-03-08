@@ -71,7 +71,7 @@ getSongCallback = function(result, hostID)
             print("playing when done:", playbackURLQueue)
             .paused = false
             updatePauseButton()
-            audio.play()
+            audio.playSongs()
         }
     }
     else
@@ -249,7 +249,7 @@ playPreview = function(songInfo)
         audio.queueSongs(playbackURLQueue)
         .paused = false
         updatePauseButton()
-        audio.play()
+        audio.playSongs()
     }
 }
 
@@ -360,7 +360,7 @@ playSelectedPlaylist = function()
     {
         .paused = false
         updatePauseButton()
-        audio.play()
+        audio.playSongs()
     }
     else
     {
@@ -387,7 +387,7 @@ playSelectedPlaylist = function()
             audio.queueSongs(playbackURLQueue)
             .paused = false
             updatePauseButton()
-            audio.play()
+            audio.playSongs()
         }
     }
 }

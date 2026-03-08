@@ -10,12 +10,19 @@ paddleView = scene.getView("paddle")
 blocksView = scene.getView("blocks")
 ballView = scene.getView("ball")
 scoreView = scene.getView("score")
+livesView = scene.getView("lives")
+
+totalLevels = 3
+currentLevelIndex = 0
+
+lives = 3
+livesView.text = string.format("%d", lives)
 
 viewSize = false
 blockSize = false
 padding = false
 
-ballVelocity = vec3((math.random() - 0.5) * 0.02, 0.2, 0)
+ballVelocity = vec3(0.0, 0.0, 0)
 
 blocksView.size = function(parentSize)
 {
@@ -28,11 +35,15 @@ fieldWidthInBricks = 0
 fieldHeightInBricks = 0
 
 loadedBrickInfos = {}
-totalBrickCount = 0
-hitCount = 0
+levelTotalBrickCount = 0
+levelBrickRemovedCount = 0
+
+totalScore = 0
 
 fieldOffsetPixels = vec2(0,0)
 
+ballSpeed = 0
+paddleSpeed = 0
 
 centerOffsetFromBlockIndexes = function(blockX, blockY) #block center from screen center
 {
@@ -50,11 +61,27 @@ blockIndexesFromCenterOffset = function(centerOffset) #block lowerLeft from scre
 
 levelView = false
 
-loadLevel = function(levelName)
+slowSpeedTimer = 0
+
+animatingOutViews = {}
+
+resetBall = function()
 {
+    .ballVelocity = vec3(0.0, 0.2, 0)
+    ballView.pos = vec3(0,-100,0)
+    .slowSpeedTimer = 1.0
+}
+
+loadNextLevel = function()
+{
+    .currentLevelIndex++
+    currentLevelIndex = math.min(currentLevelIndex, totalLevels)
+    levelName = string.format("level%d.tui", currentLevelIndex)
+
     if(levelView)
     {
         blocksView.removeView(levelView)
+        .animatingOutViews = {}
     }
 
     .loadedBrickInfos = {}
@@ -62,15 +89,20 @@ loadLevel = function(levelName)
     levelViewTable = {type = "view"}
     .levelView = blocksView.addView(levelViewTable)
 
-    .ballVelocity = vec3((math.random() - 0.5) * 0.02, 0.2, 0)
-    ballView.pos = vec3(0,-100,0)
+    resetBall()
 
     level = require("scripts/" + levelName)
-    .totalBrickCount = 0
-    .hitCount = 0
+    .levelTotalBrickCount = 0
+    .levelBrickRemovedCount = 0
+
+    .ballSpeed = viewSize.x * 1.5
+    .paddleSpeed = ballSpeed / 5
 
     .blockSize = vec2(viewSize.x / 20, viewSize.x / 100)
     .padding = vec2(blockSize.y / 10, blockSize.y / 10)
+    ballView.size = vec2(blockSize.y,blockSize.y)
+
+    paddleView.size = vec2(blockSize.x * 2.5,blockSize.y)
 
     .fieldHeightInBricks = table.count(level)
     .fieldWidthInBricks = 0
@@ -97,12 +129,13 @@ loadLevel = function(levelName)
                 centerOffset = centerOffsetFromBlockIndexes(xIndex, fieldHeightInBricks - yIndex - 1) #flip y, we read from the top
                 viewTable = {
                     type = "color"
-                    color = vec4(math.random(),math.random(),math.random(),0.8)
+                    color = vec4(math.random(),math.random(),math.random(),0.5)
                     size = blockSize
+                    shader = "colorViewHueShift"
                     pos = vec3(centerOffset.x, centerOffset.y, 0)
                 }
                 blockView = levelView.addView(viewTable)
-                .totalBrickCount++
+                .levelTotalBrickCount++
             }
 
             brickInfo = {
@@ -115,15 +148,20 @@ loadLevel = function(levelName)
     }
 }
 
-loadLevel("level1.tui")
+loadNextLevel()
 
-ballSpeed = 3000
-paddleSpeed = 800
 
 katipo.update = function(dt) #called every tick
 {
+
+
+    if(slowSpeedTimer > 0)
+    {
+        .slowSpeedTimer -= dt * 0.25
+    }
+
     halfBounds = viewSize / 2
-    ballView.pos += ballVelocity * dt * ballSpeed
+    ballView.pos += ballVelocity * dt * ballSpeed * (1.0 - slowSpeedTimer)
 
     if(ballView.pos.x > halfBounds.x)
     {
@@ -160,7 +198,43 @@ katipo.update = function(dt) #called every tick
             ballVelocity.x = prevBallVelocity.x * math.cos(hitAngle) - prevBallVelocity.y * math.sin(hitAngle)
             ballVelocity.y = prevBallVelocity.x * math.sin(hitAngle) + prevBallVelocity.y * math.cos(hitAngle)
 
+            ballVelocity.y = math.abs(ballVelocity.y) #just to be sure
+
+            if(ballVelocity.x > ballVelocity.y)
+            {
+                .ballVelocity = vec3(0.141, 0.141, 0)
+            }
+            else if(ballVelocity.x < -ballVelocity.y)
+            {
+                .ballVelocity = vec3(-0.141, 0.141, 0)
+            }
+
             ballView.pos.y = paddleTop + (paddleTop - ballView.pos.y)
+
+            audio.playSound("sounds/increment.ogg")
+        }
+    }
+
+    deathZone = -halfBounds.y + 20
+
+    if(ballView.pos.y < deathZone)
+    {
+        .lives = lives - 1
+        if(lives < 1)
+        {
+            .lives = 3
+            .currentLevelIndex = 0
+            loadNextLevel()
+            
+            livesView.text = string.format("%d", lives)
+            .totalScore = 0
+            scoreView.text = string.format("%d", totalScore)
+            return
+        }
+        else
+        {
+            livesView.text = string.format("%d", lives)
+            resetBall()
         }
     }
 
@@ -182,7 +256,10 @@ katipo.update = function(dt) #called every tick
                 {
                     if(brickInfo.blockView)
                     {
-                        levelView.removeView(brickInfo.blockView)
+                        table.insert(animatingOutViews, brickInfo.blockView)
+                        brickInfo.blockView.initialSize = brickInfo.size
+                        audio.playSound("sounds/timeTick.ogg")
+                        #levelView.removeView(brickInfo.blockView)
                         brickInfo.blockView = nil
 
                         xDistanceFromCenter = fieldRelativePos.y - blockSize.x * 0.5
@@ -200,11 +277,49 @@ katipo.update = function(dt) #called every tick
                             ballVelocity.y = -ballVelocity.y
                         }
 
-                        .hitCount++
+                        .levelBrickRemovedCount++
+                        .totalScore++
 
-                        scoreView.text = "" + hitCount + ":" + totalBrickCount
+                        scoreView.text = string.format("%d", totalScore)
                     }
                 }
+            }
+        }
+    }
+
+    viewsToRemove = {}
+
+    for(i, animatingView in animatingOutViews)
+    {
+        if(!animatingView.animatingOut)
+        {
+            animatingView.color.w += dt * 256.0
+            animatingView.size += vec2(100,100) * (dt * 1.0)
+            if(animatingView.color.w >= 1.2)
+            {
+                animatingView.animatingOut = true
+            }
+        }
+        else
+        {
+            animatingView.color.w *= (1.0 - dt * 32.0)
+            animatingView.size += vec2(100,100) * (dt * 4.0)
+            if(animatingView.color.w <= 0.01)
+            {
+                table.insert(viewsToRemove, animatingView)
+            }
+        }
+    }
+
+    for(removeView in viewsToRemove)
+    {
+        levelView.removeView(removeView)
+        for(i,otherView in animatingOutViews)
+        {
+            if(otherView == removeView)
+            {
+                table.remove(animatingOutViews, i)
+                break
             }
         }
     }
@@ -218,9 +333,9 @@ katipo.update = function(dt) #called every tick
         paddleView.pos.x += dt * paddleSpeed
     }
 
-    if(hitCount >= totalBrickCount)
+    if(levelBrickRemovedCount >= levelTotalBrickCount)
     {
-        loadLevel("level2.tui")
+        loadNextLevel()
     }
 }
 
@@ -236,3 +351,9 @@ rightArrowFunction = function(isDown, code, mod, isRepeat)
 
 eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
+
+skipLevelFunction = function(isDown, code, mod, isRepeat)
+{
+    loadNextLevel()
+}
+eventManager.addKeyEventListener(keys.keyCodes.p, skipLevelFunction)

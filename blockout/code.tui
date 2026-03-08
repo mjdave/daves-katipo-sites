@@ -12,6 +12,8 @@ if(!file.fileExists(clientSitePath))
 }
 
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
+imagesDirectoryPath = clientSitePath + "/img/"
+soundsDirectoryPath = clientSitePath + "/sounds/"
 
 loadFilesFromDir = function(dirPath)
 {
@@ -117,10 +119,10 @@ get = function(url, clientChecksum)
         print("sending site data")
 
         #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
-        clientScriptsData = loadFilesFromDir(clientScriptsDirectoryPath)
-        
         clientSiteData = {
-            scripts = clientScriptsData
+            scripts = loadFilesFromDir(clientScriptsDirectoryPath)
+            images = loadFilesFromDir(imagesDirectoryPath)
+            sounds = loadFilesFromDir(soundsDirectoryPath)
             siteInfo = siteInfo
             #siteImage = siteImage
             checksum = checksum
