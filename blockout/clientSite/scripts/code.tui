@@ -20,7 +20,13 @@ livesView.text = string.format("%d", lives)
 
 viewSize = false
 blockSize = false
+paddleSize = false
 padding = false
+
+leftKeyDown = false
+rightKeyDown = false
+leftScreenMouseDown = false
+rightScreenMouseDown = false
 
 ballVelocity = vec3(0.0, 0.0, 0)
 
@@ -102,7 +108,8 @@ loadNextLevel = function()
     .padding = vec2(blockSize.y / 10, blockSize.y / 10)
     ballView.size = vec2(blockSize.y,blockSize.y)
 
-    paddleView.size = vec2(blockSize.x * 2.5,blockSize.y)
+    .paddleSize = vec2(blockSize.x * 2.5,blockSize.y)
+    paddleView.size = paddleSize
 
     .fieldHeightInBricks = table.count(level)
     .fieldWidthInBricks = 0
@@ -185,10 +192,10 @@ katipo.update = function(dt) #called every tick
         ballView.pos.y = -halfBounds.y
     }
 
-    paddleTop = paddleView.pos.y + 10
-    if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - 10)
+    paddleTop = paddleView.pos.y + paddleSize.y
+    if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - paddleSize.y) #subtracted to provide double sized hitbox below
     {
-        if(ballView.pos.x < paddleView.pos.x + 80 and ballView.pos.x > paddleView.pos.x - 80)
+        if(ballView.pos.x < paddleView.pos.x + paddleSize.x * 0.5 and ballView.pos.x > paddleView.pos.x - paddleSize.x * 0.5)
         {
             ballVelocity.y = math.abs(ballVelocity.y)
 
@@ -324,11 +331,11 @@ katipo.update = function(dt) #called every tick
         }
     }
 
-    if(leftKeyDown)
+    if(leftKeyDown or leftScreenMouseDown)
     {
         paddleView.pos.x -= dt * paddleSpeed
     }
-    else if(rightKeyDown)
+    else if(rightKeyDown or rightScreenMouseDown)
     {
         paddleView.pos.x += dt * paddleSpeed
     }
@@ -349,6 +356,47 @@ rightArrowFunction = function(isDown, code, mod, isRepeat)
     .rightKeyDown = isDown
 }
 
+blocksView.mouseDown = function(buttonIndex, pos)
+{
+    if(buttonIndex == 0)
+    {
+        if(pos.x > viewSize.x * 0.5)
+        {
+            .rightScreenMouseDown = true
+        }
+        else
+        {
+            .leftScreenMouseDown = true
+        }
+    }
+}
+
+blocksView.mouseDragged = function(buttonIndex, pos)
+{
+    if(buttonIndex == 0)
+    {
+        if(pos.x > viewSize.x * 0.5)
+        {
+            .leftScreenMouseDown = false
+            .rightScreenMouseDown = true
+        }
+        else
+        {
+            .leftScreenMouseDown = true
+            .rightScreenMouseDown = false
+        }
+    }
+}
+
+blocksView.mouseUp = function(buttonIndex, pos)
+{
+    if(buttonIndex == 0)
+    {
+        .leftScreenMouseDown = false
+        .rightScreenMouseDown = false
+    }
+}
+
 eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
 
@@ -356,4 +404,4 @@ skipLevelFunction = function(isDown, code, mod, isRepeat)
 {
     loadNextLevel()
 }
-eventManager.addKeyEventListener(keys.keyCodes.p, skipLevelFunction)
+eventManager.addKeyEventListener(keys.keyCodes.period, skipLevelFunction)
