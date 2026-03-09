@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "snake" #used to uniquely identify this site
+title = "Snake" #displayed name
+keywords = { "snake", "game" } #used for search
+description = "A very basic example of a game in katipo" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

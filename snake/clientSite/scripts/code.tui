@@ -1,0 +1,589 @@
+# clientSite/scripts/code.tui
+# this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
+# It handles the user interface and all client interactions, and runs the game loop
+
+# this is very rough and unfinished still, just shows what can be done.
+
+keys = require("app/common/keys.tui")
+
+gameView = scene.getView("gameView")
+scoreView = scene.getView("score")
+scoreView.text = "Welcome to SNAkf3"
+
+viewSize = false
+blockSize = false
+
+leftKeyDown = false
+rightKeyDown = false
+leftScreenMouseDown = false
+rightScreenMouseDown = false
+
+levelViewLayout = {
+    type = "view"
+}
+levelView = false
+
+blocksView.size = function(parentSize)
+{
+    .viewSize = parentSize
+    return parentSize
+}
+
+borderColor = vec4(0.7,0.7,0.0,1.0)
+
+playerSnake = false
+aiSnakes = {}
+
+maxApples = 10
+appleCount = 0
+apples = {}
+
+levelSize = 32
+squareSize = 20
+levelOffset = vec3(1.0,1.0,0.0) * levelSize * squareSize * -0.5
+levelGrid = {}
+
+square_empty = 0
+square_playerHead = 1
+square_body = 2
+square_apple = 3
+square_aiHead = 4
+
+colors = {}
+
+direction_up = 0
+direction_down = 1
+direction_left = 2
+direction_right = 3
+
+cameraPos = vec2(0,0)
+
+delay = 0.5
+
+getSquare = function(pos)
+{
+    column = levelGrid[pos.x]
+    square = column[pos.y]
+    return square
+}
+
+updateSquare = function(pos, type)
+{
+    colors[1] = vec4(1.0,0.0,0.6,0.7)
+    colors[2] = vec4(0.0,0.3,1.0,0.7)
+    colors[3] = vec4(0.2,1.0,0.0,0.7)
+    colors[4] = vec4(1.0,0.2,0.0,0.7)
+
+    #print("update square:", pos, " type:", type)
+
+    column = levelGrid[pos.x]
+    square = column[pos.y]
+
+    square.type = type
+
+
+    if(type == square_empty)
+    {
+        if(square.view)
+        {
+            levelView.removeView(square.view)
+            square.view = nil
+        }
+    }
+    else
+    {
+        if(square.view)
+        {
+            square.view.color = colors[type]
+        }
+        else
+        {
+            squareViewTable = {
+                type = "color"
+                size = vec2(squareSize,squareSize)
+                additiveBlend = true
+            }
+            square.view = levelView.addView(squareViewTable)
+            square.view.color = colors[type]
+            square.view.pos = levelOffset + vec3(pos.x + 0.5,pos.y + 0.5,0) * squareSize
+        }
+    }
+}
+
+
+
+loadLevel = function()
+{
+    .delay = 0.5
+    .appleCount = 0
+    if(levelView)
+    {
+        gameView.removeView(levelView)
+    }
+    .levelView = gameView.addView(levelViewLayout)
+    leftBorderViewLayout = {
+        type = "color"
+        color = borderColor
+        shader = "colorViewHueShift"
+        additiveBlend = true
+        size = vec2(squareSize, squareSize * levelSize)
+        pos = vec3(-(levelSize * squareSize + squareSize) * 0.5,0,0)
+    }
+
+    borderViewLeft = levelView.addView(leftBorderViewLayout)
+
+    rightBorderViewLayout = {
+        type = "color"
+        color = borderColor
+        shader = "colorViewHueShift"
+        additiveBlend = true
+        size = vec2(squareSize, squareSize * levelSize)
+        pos = vec3((levelSize * squareSize + squareSize) * 0.5,0,0)
+    }
+
+    borderViewRight = levelView.addView(rightBorderViewLayout)
+
+    topBorderViewLayout = {
+        type = "color"
+        color = borderColor
+        shader = "colorViewHueShift"
+        additiveBlend = true
+        size = vec2(squareSize * (levelSize + 2), squareSize)
+        pos = vec3(0,(levelSize * squareSize + squareSize) * 0.5,0)
+    }
+
+    borderViewTop = levelView.addView(topBorderViewLayout)
+
+    bottomBorderViewLayout = {
+        type = "color"
+        color = borderColor
+        shader = "colorViewHueShift"
+        additiveBlend = true
+        size = vec2(squareSize * (levelSize + 2), squareSize)
+        pos = vec3(0,-(levelSize * squareSize + squareSize) * 0.5,0)
+    }
+
+    borderViewBottom = levelView.addView(bottomBorderViewLayout)
+
+    .levelGrid = {}
+    for(c=0, c < levelSize, c++)
+    {
+        levelColumn = {}
+        levelGrid[c] = levelColumn
+        for(r=0, r < levelSize, r++)
+        {
+            levelColumn[r] = {
+                type = square_empty
+            }
+        }
+    }
+
+    .playerSnake ={
+        head = vec2(math.randomInt(levelSize - 8) + 4, math.randomInt(levelSize - 8) + 4)
+        headType = square_playerHead
+        bodySegments = {}
+        bodyLength = 1
+        direction = "down"
+    }
+
+    scoreView.text = string.format("%d", playerSnake.bodyLength)
+
+    updateSquare(playerSnake.head, playerSnake.headType)
+}
+
+loadLevel()
+
+
+addApple = function(locationOrNil)
+{
+    location = locationOrNil
+    if(!location)
+    {
+        location = vec2(math.randomInt(levelSize), math.randomInt(levelSize))
+    }
+    appleSquare = getSquare(location)
+    if(appleSquare.type == square_empty)
+    {
+        appleInfo = {
+            square = appleSquare
+            pos = location
+        }
+        updateSquare(location, square_apple)
+        .appleCount = appleCount + 1
+        table.insert(apples,appleInfo)
+    }
+}
+
+killSnake = function(snake)
+{
+    updateSquare(snake.head, square_empty)
+    addFood = true
+    for(segment in snake.bodySegments)
+    {
+        updateSquare(segment, square_empty)
+        if(addFood)
+        {
+            addApple(segment)
+        }
+        addFood = !addFood
+    }
+
+    if(snake == playerSnake)
+    {
+        newPos = vec2(math.randomInt(levelSize - 8) + 4, math.randomInt(levelSize - 8) + 4)
+        while(getSquare(newPos).type != square_empty)
+        {
+            newPos = vec2(math.randomInt(levelSize - 8) + 4, math.randomInt(levelSize - 8) + 4)
+        }
+        snake.head = newPos
+        snake.bodyLength = 1
+        snake.bodySegments = {}
+        snake.direction = "down"
+        updateSquare(newPos, snake.headType)
+    }
+    else
+    {
+        for(i,otherSnake in aiSnakes)
+        {
+            if(otherSnake == snake)
+            {
+                table.remove(aiSnakes, i)
+                break
+            }
+        }
+    }
+}
+
+timer = 0.0
+
+updateHeadPos = function(snake, newPos)
+{
+    if(newPos.y >= levelSize or newPos.y < 0 or newPos.x >= levelSize or newPos.x < 0)
+    {
+        killSnake(snake)
+        return
+    }
+
+    headSquare = getSquare(newPos)
+
+    if(headSquare.type == square_body)
+    {
+        killSnake(snake)
+        return
+    }
+
+    if(headSquare.type == square_playerHead)
+    {
+        killSnake(playerSnake)
+        killSnake(snake)
+        return
+    }
+
+    if(headSquare.type == square_aiHead)
+    {
+        killSnake(snake)
+        return
+    }
+
+    if(headSquare.type == square_apple)
+    {
+        for(i, apple in apples)
+        {
+            if(apple.square == headSquare)
+            {
+                table.remove(apples, i)
+                break
+            }
+        }
+        snake.bodyLength = snake.bodyLength + 1
+        .appleCount = appleCount - 1
+        scoreView.text = string.format("%d", snake.bodyLength)
+    }
+
+    snake.head = newPos
+    updateSquare(newPos, snake.headType)
+}
+
+
+directions = {
+    "left"
+    "right"
+    "down"
+    "up"
+}
+
+positionFunctions = { #these match the directions list above
+    function(wallOffset){ return vec2(levelSize -1, wallOffset) } # going left, start right
+    function(wallOffset){ return vec2(0, wallOffset) } # going right, start left
+    function(wallOffset){ return vec2(wallOffset, levelSize -1) } # going down, start top
+    function(wallOffset){ return vec2(wallOffset, 0) } # going up, start bottom
+}
+
+directionFunctions = { #these match the directions list above
+    function(){ return vec2(-1,0) } # going left
+    function(){ return vec2(1,0) } # going right
+    function(){ return vec2(0,-1) } # going down
+    function(){ return vec2(0,1) } # going up
+}
+
+addAISnake = function()
+{
+    wallIndex = math.randomInt(4)
+    wallOffset = math.randomInt(levelSize - 8) + 4
+    direction = directions[wallIndex]
+
+    posFunc = positionFunctions[wallIndex]
+    snakePos = posFunc(wallOffset)
+    snakeSquare = getSquare(snakePos)
+    if(snakeSquare.type == square_empty)
+    {
+        aiSnake ={
+            head = snakePos
+            headType = square_aiHead
+            bodySegments = {}
+            bodyLength = 1
+            direction = direction
+        }
+        table.insert(aiSnakes, aiSnake)
+        updateSquare(snakePos, aiSnake.headType)
+    }
+}
+
+updateSnake = function(snake)
+{
+    headPos = snake.head
+    updateSquare(headPos, square_body)
+    table.insert(snake.bodySegments, 0, headPos)
+
+    #print("snake.bodySegments:", snake.bodySegments)
+    bodySegmentCount = table.count(snake.bodySegments)
+    if(bodySegmentCount > snake.bodyLength)
+    {
+    #print("removing:", snake)
+        updateSquare(snake.bodySegments[bodySegmentCount - 1], square_empty)
+        table.remove(snake.bodySegments, bodySegmentCount - 1)
+    }
+
+    if(snake.direction == "up")
+    {
+        updateHeadPos(snake, vec2(snake.head.x, snake.head.y + 1))
+    }
+    else if(snake.direction == "down")
+    {
+        updateHeadPos(snake, vec2(snake.head.x, snake.head.y - 1))
+    }
+    else if(snake.direction == "left")
+    {
+        updateHeadPos(snake, vec2(snake.head.x - 1, snake.head.y))
+    }
+    else if(snake.direction == "right")
+    {
+        updateHeadPos(snake, vec2(snake.head.x + 1, snake.head.y))
+    }
+}
+
+setSnakeDirection = function(snake, direction)
+{
+    nextSquare = false
+    if(direction == "up")
+    {
+        nextSquare = getSquare(vec2(snake.head.x, snake.head.y + 1))
+    }
+    else if(direction == "down")
+    {
+        nextSquare = getSquare(vec2(snake.head.x, snake.head.y - 1))
+    }
+    else if(direction == "left")
+    {
+        nextSquare = getSquare(vec2(snake.head.x - 1, snake.head.y))
+    }
+    else if(direction == "right")
+    {
+        nextSquare = getSquare(vec2(snake.head.x + 1, snake.head.y))
+    }
+
+    type = nextSquare.type
+    if(type != square_playerHead and type != square_body and type != square_aiHead)
+    {
+        snake.direction = direction
+    }
+}
+
+updateAISnake = function(snake)
+{
+    if(math.random() < 0.9) # sometimes make mistakes by skipping
+    {
+        minDistance = 99
+        closestApple = false
+        for(apple in apples)
+        {
+            if(apple.pos.x > 1 and apple.pos.x < levelSize - 2 and apple.pos.y > 1 and apple.pos.y < levelSize - 2)
+            {
+                distance = math.length2(apple.pos - snake.head)
+                if(distance < minDistance)
+                {
+                    closestApple = apple
+                }
+            }
+        }
+
+        if(closestApple)
+        {
+            distanceVec = closestApple.pos - snake.head
+            if(math.abs(distanceVec.x) > math.abs(distanceVec.y) and (snake.direction == "up" or snake.direction == "down"))
+            {
+                if(distanceVec.x > 0)
+                {
+                    setSnakeDirection(snake, "right")
+                }
+                else if(distanceVec.x < 0)
+                {
+                    setSnakeDirection(snake, "left")
+                }
+            }
+            else
+            {
+                if(distanceVec.y > 0)
+                {
+                    setSnakeDirection(snake, "up")
+                }
+                else if(distanceVec.y < 0)
+                {
+                    setSnakeDirection(snake, "down")
+                }
+            }
+        }
+    }
+
+    if(snake.direction == "up")
+    {
+        if(snake.head.y >= levelSize - 2)
+        {
+            if(snake.head.x >= levelSize - 2 or (snake.head.x > 1 and math.randomInt(2) == 0))
+            {
+                setSnakeDirection(snake, "left")
+            }
+            else
+            {
+                setSnakeDirection(snake, "right")
+            }
+        }
+    }
+    else if(snake.direction == "down")
+    {
+        if(snake.head.y < 1)
+        {
+            if(snake.head.x >= levelSize - 1 or (snake.head.x > 0 and math.randomInt(2) == 0))
+            {
+                setSnakeDirection(snake, "left")
+            }
+            else
+            {
+                setSnakeDirection(snake, "right")
+            }
+        }
+    }
+    else if(snake.direction == "right")
+    {
+        if(snake.head.x >= levelSize - 1)
+        {
+            if(snake.head.y >= levelSize - 1 or (snake.head.y > 0 and math.randomInt(2) == 0))
+            {
+                setSnakeDirection(snake, "down")
+            }
+            else
+            {
+                setSnakeDirection(snake, "up")
+            }
+        }
+    }
+    else if(snake.direction == "left")
+    {
+        if(snake.head.x < 1)
+        {
+            if(snake.head.y >= levelSize - 1 or (snake.head.y > 0 and math.randomInt(2) == 0))
+            {
+                setSnakeDirection(snake, "down")
+            }
+            else
+            {
+                setSnakeDirection(snake, "up")
+            }
+        }
+    }
+
+
+    updateSnake(snake)
+}
+
+katipo.update = function(dt) #called every tick
+{
+    timer += dt
+    .delay = delay * (1.0 - dt * 0.01)
+    if(timer > delay)
+    {
+        timer -= delay
+
+        if(appleCount < maxApples)
+        {
+            if(math.random() > 0.5 + ((appleCount / maxApples)) * 0.5)
+            {
+                addApple()
+            }
+        }
+
+        if(table.count(aiSnakes) < 2)
+        {
+            if(math.random() > 0.9)
+            {
+                addAISnake()
+            }
+        }
+        
+        updateSnake(playerSnake)
+
+        for(aiSnake in aiSnakes)
+        {
+            updateAISnake(aiSnake)
+        }
+        
+    }
+}
+
+leftArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    if(isDown and !isRepeat and playerSnake.direction != "right")
+    {
+        setSnakeDirection(playerSnake, "left")
+    }
+}
+
+rightArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    if(isDown and !isRepeat and playerSnake.direction != "left")
+    {
+        setSnakeDirection(playerSnake, "right")
+    }
+}
+
+upArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    if(isDown and !isRepeat and playerSnake.direction != "down")
+    {
+        setSnakeDirection(playerSnake, "up")
+    }
+}
+
+downArrowFunction = function(isDown, code, mod, isRepeat)
+{
+    if(isDown and !isRepeat and playerSnake.direction != "up")
+    {
+        setSnakeDirection(playerSnake, "down")
+    }
+}
+
+
+eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
+eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
+eventManager.addKeyEventListener(keys.keyCodes.up, upArrowFunction)
+eventManager.addKeyEventListener(keys.keyCodes.down, downArrowFunction)

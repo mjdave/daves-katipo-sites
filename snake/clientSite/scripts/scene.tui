@@ -1,0 +1,21 @@
+mainView = {
+    type = "view"
+    subviews = {
+        {
+            id = "gameView"
+            type = "view"
+        }
+        {
+            id = "score"
+            type = "text"
+            alignmentX = "right"
+            alignmentY = "top"
+            pos = vec3(-10,-10, 0)
+            text = "0-0"
+            font = "roboto"
+            fontSize = 32
+            color = vec4(0.2,0.4,1.0,0.6)
+            additiveBlend = true
+        },
+    }
+}
