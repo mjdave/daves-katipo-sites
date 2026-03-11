@@ -11,11 +11,44 @@ mainView = {
             alignmentX = "right"
             alignmentY = "top"
             pos = vec3(-10,-10, 0)
-            text = "0-0"
-            font = "roboto"
-            fontSize = 32
-            color = vec4(0.2,0.4,1.0,0.6)
+            font = "blockheadsHue"
+            fontSize = 48
+            color = vec4(0.2,0.4,1.0,1.0)
             additiveBlend = true
         },
+        {
+            id = "bestScore"
+            type = "text"
+            alignmentX = "right"
+            alignmentY = "below"
+            layoutParentID = "score"
+            pos = vec3(-10,-10, 0)
+            font = "blockheadsHue"
+            fontSize = 48
+            color = vec4(0.2,0.4,1.0,1.0)
+            additiveBlend = true
+        },
+        {
+            id = "highScores"
+            type = "view"
+            size = function(parentSize)
+            {
+                return parentSize / 2
+            }
+            hidden = true
+            subviews = {
+                {
+                    id = "highScore"
+                    type = "text"
+                    alignmentY = "top"
+                    pos = vec3(0,-10, 0)
+                    font = "blockheadsHue"
+                    fontSize = 22
+                    text = "High Scores"
+                    color = vec4(1.0,0.4,0.0,1.0)
+                    additiveBlend = true
+                }
+            }
+        }
     }
 }

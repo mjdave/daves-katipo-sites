@@ -14,6 +14,7 @@ if(!file.fileExists(clientSitePath))
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
 imagesDirectoryPath = clientSitePath + "/img/"
 soundsDirectoryPath = clientSitePath + "/sounds/"
+fontsDirectoryPath = clientSitePath + "/fonts/"
 
 loadFilesFromDir = function(dirPath)
 {
@@ -123,6 +124,7 @@ get = function(url, clientChecksum)
             scripts = loadFilesFromDir(clientScriptsDirectoryPath)
             images = loadFilesFromDir(imagesDirectoryPath)
             sounds = loadFilesFromDir(soundsDirectoryPath)
+            fonts = loadFilesFromDir(fontsDirectoryPath)
             siteInfo = siteInfo
             #siteImage = siteImage
             checksum = checksum
