@@ -5,6 +5,13 @@
 siteInfo = require(katipo.sitePath + "/site.tui")
 #siteImage = file.loadData(katipo.sitePath + "/site.png")
 
+scores = {}
+scoresFilePath = katipo.sitePath + "/scores.tui"
+if(file.fileExists(scoresFilePath))
+{
+    scores = file.loadBinary(scoresFilePath)
+}
+
 clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
 if(!file.fileExists(clientSitePath))
 {
@@ -12,8 +19,9 @@ if(!file.fileExists(clientSitePath))
 }
 
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
-imagesDirectoryPath = clientSitePath + "/img/"
+imagesDirectoryPath = clientSitePath + "/images/"
 soundsDirectoryPath = clientSitePath + "/sounds/"
+clientFontsDirectoryPath = clientSitePath + "/fonts/"
 
 loadFilesFromDir = function(dirPath)
 {
@@ -99,8 +107,14 @@ get = function(url, clientChecksum)
 {
     print("in get. url:", url, " clientChecksum:", clientChecksum)
     urlSplit = string.split(url, "/")
+    splitCount = table.count(urlSplit)
 
-    if(table.count(urlSplit) <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
+    if(splitCount > 0 and urlSplit[0] == "setScore") #waraki/songs/
+    {
+        scoreDict = clientData
+        print(scoreDict)
+    }
+    else if(splitCount <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
     {
         # if a clients simply enters "blockout" in the url, we end up here.
         # This is where we will load up and send all of the site's data in one big bundle
@@ -118,11 +132,20 @@ get = function(url, clientChecksum)
         }
         print("sending site data")
 
+        files = {}
+
+        scoresWrapper = {
+            fileName = "scores.tuib"
+            data = scores
+        }
+        table.insert(files, scoresWrapper)
+
         #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
         clientSiteData = {
             scripts = loadFilesFromDir(clientScriptsDirectoryPath)
             images = loadFilesFromDir(imagesDirectoryPath)
             sounds = loadFilesFromDir(soundsDirectoryPath)
+            files = files
             siteInfo = siteInfo
             #siteImage = siteImage
             checksum = checksum

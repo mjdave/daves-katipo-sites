@@ -281,11 +281,11 @@ updatePauseButton = function()
 {
     if(paused)
     {
-        playPauseButton.path = "img/play.png"
+        playPauseButton.path = "images/play.png"
     }
     else
     {
-        playPauseButton.path = "img/pause.png"
+        playPauseButton.path = "images/pause.png"
     }
 
     editPlaylistUI.updatePauseButtons(paused)

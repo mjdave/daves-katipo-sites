@@ -12,7 +12,7 @@ if(!file.fileExists(clientSitePath))
 }
 
 clientScriptsDirectoryPath = clientSitePath + "/scripts"
-imagesDirectoryPath = clientSitePath + "/img/"
+imagesDirectoryPath = clientSitePath + "/images/"
 soundsDirectoryPath = clientSitePath + "/sounds/"
 fontsDirectoryPath = clientSitePath + "/fonts/"
 

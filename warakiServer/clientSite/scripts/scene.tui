@@ -17,7 +17,7 @@ playlistsHeader = {
         {
             id = "settingsButton"
             type = "image"
-            path = "img/settings.png"
+            path = "images/settings.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
@@ -44,7 +44,7 @@ playlistsHeader = {
         {
             id = "addPlaylistButton"
             type = "image"
-            path = "img/add.png"
+            path = "images/add.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(-40,0, 0)
             size = vec2(40,40)
@@ -68,7 +68,7 @@ settingsHeader = {
         {
             id = "settingsBackButton"
             type = "image"
-            path = "img/back.png"
+            path = "images/back.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
@@ -100,7 +100,7 @@ editPlaylistHeader = {
         {
             id = "editPlaylistBackButton"
             type = "image"
-            path = "img/back.png"
+            path = "images/back.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
@@ -117,7 +117,7 @@ editPlaylistHeader = {
         {
             id = "editPlaylistAddSongButton"
             type = "image"
-            path = "img/add.png"
+            path = "images/add.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(-40,0, 0)
             size = vec2(40,40)
@@ -142,7 +142,7 @@ addSongHeader = {
         {
             id = "addSongBackButton"
             type = "image"
-            path = "img/back.png"
+            path = "images/back.png"
             shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
@@ -265,7 +265,7 @@ mainView = {
                 {
                     id = "playPauseButton"
                     type = "image"
-                    path = "img/play.png"
+                    path = "images/play.png"
                     shader = "drawQuadTexturedHueShift"
                     pos = vec3(0, -10, 0)
                     size = vec2(40,40)
@@ -274,7 +274,7 @@ mainView = {
                 {
                     id = "nextButton"
                     type = "image"
-                    path = "img/next.png"
+                    path = "images/next.png"
                     shader = "drawQuadTexturedHueShift"
                     pos = vec3(60, -10, 0)
                     size = vec2(40,40)
@@ -322,7 +322,7 @@ mainPlaylistsPlaylistItem = {
         {
             id = "dotDotDotButton"
             type = "image"
-            path = "img/dotDotDot.png"
+            path = "images/dotDotDot.png"
             shader = "drawQuadTexturedHueShiftClip"
             pos = vec3(-70,0, 0)
             size = vec2(40,40)
@@ -331,7 +331,7 @@ mainPlaylistsPlaylistItem = {
         {
             id = "playButton"
             type = "image"
-            path = "img/play.png"
+            path = "images/play.png"
             shader = "drawQuadTexturedHueShiftClip"
             pos = vec3(-20,0, 0)
             size = vec2(40,40)

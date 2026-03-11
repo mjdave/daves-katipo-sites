@@ -17,7 +17,7 @@ if(!file.fileExists(clientSitePath))
 }
 
 musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
-imagesDirectoryPath = clientSitePath + "/img/"
+imagesDirectoryPath = clientSitePath + "/images/"
 clientScriptsDirectoryPath = clientSitePath + "/scripts/"
 clientFontsDirectoryPath = clientSitePath + "/fonts/"
 sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists/"

@@ -17,7 +17,7 @@ mainView = {
         {
             id = "ball"
             type = "image"
-            path = "img/ball.png"
+            path = "images/ball.png"
             shader = "drawQuadTexturedHueShift"
             color = vec4(math.random(),math.random(),math.random(),0.7)
             size = vec2(10,10)

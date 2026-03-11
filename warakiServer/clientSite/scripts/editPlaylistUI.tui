@@ -22,7 +22,7 @@ addAndPlayButtonSize = vec2(30,30)
 table.insert(fileBrowser.fileItemLayout.subviews, {
     id = "addButton"
     type = "image"
-    path = "img/add.png"
+    path = "images/add.png"
     shader = "drawQuadTexturedHueShiftClip"
     pos = vec3(-50,0, 0)
     size = addAndPlayButtonSize
@@ -32,7 +32,7 @@ table.insert(fileBrowser.fileItemLayout.subviews, {
 playButtonLayout = {
     id = "playButton"
     type = "image"
-    path = "img/play.png"
+    path = "images/play.png"
     shader = "drawQuadTexturedHueShiftClip"
     pos = vec3(-10,0, 0)
     size = addAndPlayButtonSize
@@ -56,14 +56,14 @@ playPreviewInternal = function(buttonView, songInfo) #todo this downloads the so
         print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
         if(currentPreviewPlayingButtonSongView)
         {
-            currentPreviewPlayingButtonSongView.path = "img/play.png"
+            currentPreviewPlayingButtonSongView.path = "images/play.png"
             .currentPreviewPlayingButtonSongView = false
         }
 
         .currentPreviewPlayingButtonSongID = false
     }
 
-    buttonView.path = "img/pause.png"
+    buttonView.path = "images/pause.png"
 
     .currentPreviewPlayingButtonSongID = songInfo.songID
     .currentPreviewPlayingButtonSongView = buttonView
@@ -120,14 +120,14 @@ toggleSongAddedToPlaylist = function(buttonView, itemView)
                 break
             }
         }
-        buttonView.path = "img/add.png"
+        buttonView.path = "images/add.png"
         itemView.highlight = nil
     }
     else
     {
         table.insert(playlistContent, songInfo)
         playlistAddedSongIDs[songInfo.songID] = true
-        buttonView.path = "img/remove.png"
+        buttonView.path = "images/remove.png"
         itemView.highlight = true
 
         if(!currentPlaylistID)
@@ -156,7 +156,7 @@ onBrowserItemCreate = function(itemView, index)
 
         if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
         {
-            playButtonView.path = "img/pause.png"
+            playButtonView.path = "images/pause.png"
             .currentPreviewPlayingButtonSongView = itemView
         }
     }
@@ -173,7 +173,7 @@ onBrowserItemCreate = function(itemView, index)
 
         if(playlistAddedSongIDs[itemView.fileInfo.songID])
         {
-            addButtonView.path = "img/remove.png"
+            addButtonView.path = "images/remove.png"
             itemView.highlight = true
         }
     }
@@ -193,7 +193,7 @@ onMainPlaylistItemCreate = function(itemView, index)
 
         if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
         {
-            playButtonView.path = "img/pause.png"
+            playButtonView.path = "images/pause.png"
             .currentPreviewPlayingButtonSongView = itemView
         }
     }
@@ -205,12 +205,12 @@ onMainPlaylistItemCreate = function(itemView, index)
         {
             if(playlistAddedSongIDs[itemView.fileInfo.songID])
             {
-                addButtonView.path = "img/remove.png"
+                addButtonView.path = "images/remove.png"
                 itemView.color = itemView.baseColor
             }
             else
             {
-                addButtonView.path = "img/add.png"
+                addButtonView.path = "images/add.png"
                 itemView.color = itemView.baseColor + vec4(0.4,0.0,0.0,0.3)
             }
         }
@@ -409,11 +409,11 @@ updatePauseButtons = function(paused)
     {
         if(paused)
         {
-            currentPreviewPlayingButtonSongView.path = "img/play.png"
+            currentPreviewPlayingButtonSongView.path = "images/play.png"
         }
         else
         {
-            currentPreviewPlayingButtonSongView.path = "img/pause.png"
+            currentPreviewPlayingButtonSongView.path = "images/pause.png"
         }
     }
 }
