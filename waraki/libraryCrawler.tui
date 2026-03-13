@@ -52,14 +52,14 @@ loadFile = function(path, fileName, localPath)
                     hasQuotes = (string.find(path, "'") != nil)
                     fileCopied = false
                     inputFilePath = path
-                    outputFilePath = "/tmp/warakiServerSongConvertTo.tmp"
+                    outputFilePath = "/tmp/warakiSongConvertTo.tmp"
                     if(file.fileExists(outputFilePath))
                     {
                         file.remove(outputFilePath)
                     }
                     if(hasQuotes)
                     {
-                        inputFilePath = "/tmp/warakiServerSongConvertFrom.tmp"
+                        inputFilePath = "/tmp/warakiSongConvertFrom.tmp"
                         if(file.fileExists(inputFilePath))
                         {
                             file.remove(inputFilePath)

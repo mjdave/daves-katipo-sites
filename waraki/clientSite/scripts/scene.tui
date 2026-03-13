@@ -1,3 +1,8 @@
+viewTypes = { #can be added to at any time
+    button = require("app/common/button.tui")
+    #scrollView = require("app/common/scrollView.tui")
+}
+
 topStatusBarPadding = 40
 sidePadding = 20
 headerHeight = 100
@@ -16,9 +21,9 @@ playlistsHeader = {
     subviews = {
         {
             id = "settingsButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/settings.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
@@ -43,9 +48,9 @@ playlistsHeader = {
         }
         {
             id = "addPlaylistButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/add.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(-40,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
@@ -67,9 +72,9 @@ settingsHeader = {
     subviews = {
         {
             id = "settingsBackButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/back.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
@@ -99,9 +104,9 @@ editPlaylistHeader = {
     subviews = {
         {
             id = "editPlaylistBackButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/back.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
@@ -116,9 +121,9 @@ editPlaylistHeader = {
         }
         {
             id = "editPlaylistAddSongButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/add.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(-40,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
@@ -141,9 +146,9 @@ addSongHeader = {
     subviews = {
         {
             id = "addSongBackButton"
-            type = "image"
+            type = "button"
+            buttonType = "imageHueShift"
             path = "images/back.png"
-            shader = "drawQuadTexturedHueShift"
             pos = vec3(40,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
@@ -264,18 +269,18 @@ mainView = {
             subviews = {
                 {
                     id = "playPauseButton"
-                    type = "image"
+                    type = "button"
+                    buttonType = "imageHueShift"
                     path = "images/play.png"
-                    shader = "drawQuadTexturedHueShift"
                     pos = vec3(0, -10, 0)
                     size = vec2(40,40)
                     alignmentY = "top"
                 }
                 {
                     id = "nextButton"
-                    type = "image"
+                    type = "button"
+                    buttonType = "imageHueShift"
                     path = "images/next.png"
-                    shader = "drawQuadTexturedHueShift"
                     pos = vec3(60, -10, 0)
                     size = vec2(40,40)
                     alignmentY = "top"
@@ -321,18 +326,20 @@ mainPlaylistsPlaylistItem = {
         }
         {
             id = "dotDotDotButton"
-            type = "image"
+            type = "button"
+            clip = true
+            buttonType = "imageHueShift"
             path = "images/dotDotDot.png"
-            shader = "drawQuadTexturedHueShiftClip"
             pos = vec3(-70,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
         {
             id = "playButton"
-            type = "image"
+            type = "button"
+            clip = true
+            buttonType = "imageHueShift"
             path = "images/play.png"
-            shader = "drawQuadTexturedHueShiftClip"
             pos = vec3(-20,0, 0)
             size = vec2(40,40)
             alignmentX = "right"

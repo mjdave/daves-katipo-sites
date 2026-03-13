@@ -1,4 +1,4 @@
-# warakiServer/code.tui
+# code.tui
 # this is run on the host, it handles get requests, as well as crawling for music
 
 #config = require(katipo.sitePath + "/config.tui")

@@ -21,9 +21,9 @@ addAndPlayButtonSize = vec2(30,30)
 
 table.insert(fileBrowser.fileItemLayout.subviews, {
     id = "addButton"
-    type = "image"
+    type = "button"
+    buttonType = "imageHueShift"
     path = "images/add.png"
-    shader = "drawQuadTexturedHueShiftClip"
     pos = vec3(-50,0, 0)
     size = addAndPlayButtonSize
     alignmentX = "right"
@@ -31,9 +31,9 @@ table.insert(fileBrowser.fileItemLayout.subviews, {
 
 playButtonLayout = {
     id = "playButton"
-    type = "image"
+    type = "button"
+    buttonType = "imageHueShift"
     path = "images/play.png"
-    shader = "drawQuadTexturedHueShiftClip"
     pos = vec3(-10,0, 0)
     size = addAndPlayButtonSize
     alignmentX = "right"
@@ -148,11 +148,11 @@ onBrowserItemCreate = function(itemView, index)
     playButtonView = itemView.getView("playButton")
     if(playButtonView)
     {
-        buttonCallback = function()
+        playButtonView.click = function()
         {
             playPreviewInternal(playButtonView, itemView.fileInfo)
         }
-        button.create(playButtonView, -0.1 * index, buttonCallback)
+        playButtonView.hueOffset = -0.1 * index
 
         if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
         {
@@ -164,12 +164,12 @@ onBrowserItemCreate = function(itemView, index)
     addButtonView = itemView.getView("addButton")
     if(addButtonView)
     {
-        buttonCallback = function()
+        addButtonView.click = function()
         {
             toggleSongAddedToPlaylist(addButtonView, itemView)
             fileBrowser.updateVisuals(addSongFileBrowser.fileBrowserViewData) #because we changed itemView.highlight
         }
-        button.create(addButtonView, -0.1 * index, buttonCallback)
+        addButtonView.hueOffset = -0.1 * index
 
         if(playlistAddedSongIDs[itemView.fileInfo.songID])
         {
@@ -185,11 +185,11 @@ onMainPlaylistItemCreate = function(itemView, index)
     playButtonView = itemView.getView("playButton")
     if(playButtonView)
     {
-        buttonCallback = function()
+        playButtonView.click = function()
         {
             playPreviewInternal(playButtonView, itemView.fileInfo)
         }
-        button.create(playButtonView, -0.1 * index, buttonCallback)
+        playButtonView.hueOffset = -0.1 * index
 
         if(itemView.fileInfo.songID == currentPreviewPlayingButtonSongID)
         {
@@ -215,12 +215,13 @@ onMainPlaylistItemCreate = function(itemView, index)
             }
         }
 
-        buttonCallback = function()
+        addButtonView.click = function()
         {
             toggleSongAddedToPlaylist(addButtonView, itemView)
             updateVisualsForThisItem()
         }
-        button.create(addButtonView, -0.1 * index, buttonCallback)
+        addButtonView.hueOffset = -0.1 * index
+
         updateVisualsForThisItem()
     }
 }
@@ -351,9 +352,9 @@ show = function(playlistOrNil)
         titleLayout = {font = "blockheadsHue", fontSize = 20, backgroundColor = vec4(0.0,0.2,0.0,0.2)}
         .playlistTitleTextEntry = textEntry.create(playlistTitleTextEntryContainer, titleLayout)
 
-        button.create(editPlaylistBackButton, -0.1, delegate.backButtonClicked)
+        editPlaylistBackButton.click = delegate.backButtonClicked
 
-        editPlaylistAddSongClick = function()
+        editPlaylistAddSongButton.click = function()
         {
             addSongHeader.hidden = false
             addSongContent.hidden = false
@@ -361,10 +362,8 @@ show = function(playlistOrNil)
             editPlaylistHeader.hidden = true
             editPlaylistContent.hidden = true
         }
-        button.create(editPlaylistAddSongButton, -0.1, editPlaylistAddSongClick)
 
-
-        addSongBackClick = function()
+        addSongBackButton.click = function()
         {
             editPlaylistHeader.hidden = false
             editPlaylistContent.hidden = false
@@ -374,7 +373,6 @@ show = function(playlistOrNil)
             addSongHeader.hidden = true
             addSongContent.hidden = true
         }
-        button.create(addSongBackButton, -0.1, addSongBackClick)
 
         textChangeCallback = function(textValue, confirmChanges){
             if(confirmChanges and string.length(textValue) > 0 and playlistTitle != textValue)

@@ -28,10 +28,10 @@ cd daves-katipo-sites/
 git submodule update --init --recursive
 ```
 
-Edit the config.tui file to point to your music directory. The music directory can contain nested directories filled with mp3s, m4As, oggs, flac files, but not all formats will be supported on all platforms, YMMV. It will also read in .m3u playlist files, though it will not support every different type of .m3u file either. Feel free to edit warakiServer/libraryCrawler to parse your specific files, it's pretty simple code, or file an issue on github. But ultimately this will be a one step thing to bring in old playlists. In the future they will be exported out to .tuib files or to a database.
+Edit the config.tui file to point to your music directory. The music directory can contain nested directories filled with mp3s, m4As, oggs, flac files, but not all formats will be supported on all platforms, YMMV. It will also read in .m3u playlist files, though it will not support every different type of .m3u file either. Feel free to edit waraki/libraryCrawler to parse your specific files, it's pretty simple code, or file an issue on github. But ultimately this will be a one step thing to bring in old playlists.
 
 ```
-nano warakiServer/config.tui
+nano waraki/config.tui
 ```
 
 Build and start the tracker and then the host
