@@ -1,5 +1,6 @@
 viewTypes = { #can be added to at any time
     button = require("app/common/button.tui")
+    textEntry = require("app/common/textEntry.tui")
     #scrollView = require("app/common/scrollView.tui")
 }
 
@@ -113,7 +114,10 @@ editPlaylistHeader = {
         }
         {
             id = "playlistTitleTextEntry"
-            type = "view"
+            type = "textEntry"
+            font = "blockheadsHue"
+            fontSize = 20
+            backgroundColor = vec4(0.0,0.2,0.0,0.2)
             size = function(parentSize)
             {
                 return vec2(parentSize.x - 240, 40)
