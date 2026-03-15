@@ -1,7 +1,7 @@
 viewTypes = { #can be added to at any time
     button = require("app/common/button.tui")
     textEntry = require("app/common/textEntry.tui")
-    #scrollView = require("app/common/scrollView.tui")
+    scrollView = require("app/common/scrollView.tui")
 }
 
 topStatusBarPadding = 40
@@ -190,8 +190,8 @@ playlistContent = {
             fontSize = 18
         }
         {
-            id = "playlistScrollViewContainer"
-            type = "view"
+            id = "playlistScrollView"
+            type = "scrollView"
         }
     }
 }
@@ -224,8 +224,8 @@ editPlaylistContent = {
             fontSize = 18
         }
         {
-            id = "editPlaylistCurrentPlaylistContent"
-            type = "view"
+            id = "editPlaylistCurrentPlaylistScrollView"
+            type = "scrollView"
         }
     }
 }

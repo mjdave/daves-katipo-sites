@@ -1,6 +1,4 @@
 fileBrowser = require("app/common/fileBrowser.tui")
-scrollView = require("app/common/scrollView.tui")
-button = require("app/common/button.tui")
 
 songsCachePath = file.getSavePath("files/songs/")
 sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
@@ -230,26 +228,16 @@ onBrowserContentChange = function()
     .currentPreviewPlayingButtonSongView = false
 }
 
-playlistScrollView = false
-
 loadPlaylistContent = function()
 {
-    editPlaylistCurrentPlaylistContent = scene.getView("editPlaylistCurrentPlaylistContent")
-
-    if(playlistScrollView)
-    {
-        editPlaylistCurrentPlaylistContent.removeView(playlistScrollView)
-    }
-    .playlistScrollView = false
+    playlistScrollView = scene.getView("editPlaylistCurrentPlaylistScrollView")
+    playlistScrollView.removeAllRows()
 
     noSongsText = scene.getView("noSongsText")
 
     if(table.count(playlistContent) > 0)
     {
         noSongsText.hidden = true
-        .playlistScrollView = scrollView.create(editPlaylistCurrentPlaylistContent)
-        #playlistScrollView = .playlistScrollView #tui bug  maybe
-
         itemLayout = fileBrowser.fileItemLayout #this is a bit cheeky
 
         compareFunction = function(a,b)
@@ -278,7 +266,7 @@ loadPlaylistContent = function()
             
             itemView.baseColor = itemView.color
 
-            scrollView.insertRow(playlistScrollView, itemView)
+            playlistScrollView.insertRow(itemView)
 
             onMainPlaylistItemCreate(itemView, i)
 

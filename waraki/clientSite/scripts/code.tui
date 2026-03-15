@@ -2,8 +2,6 @@
 # this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
 # It handles the user interface and all client interactions, as well as requesting music from the host
 
-scrollView = require("app/common/scrollView.tui")
-button = require("app/common/button.tui")
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
 
 retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
@@ -30,10 +28,6 @@ songsToDownloadByID = {}
 currentRequestedSongDownloadInfo = false
 
 playbackURLQueue = {}
-
-playlistContentView = false #create empty var
-playlistScrollViewContainer = false #create empty var
-playlistScrollView = false
 
 getSongCallback = function(result, hostID)
 {
@@ -195,7 +189,7 @@ subtitleView = scene.getView("subtitle")
 
 statusSubtitleTextView = scene.getView("statusText")
 playlistContentView = scene.getView("playlistContent")
-playlistScrollViewContainer = scene.getView("playlistScrollViewContainer")
+playlistScrollView = scene.getView("playlistScrollView")
 
 settingsButton = scene.getView("settingsButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
@@ -437,20 +431,14 @@ loadPlaylists = function()
     }
     table.sort(sharedPlaylists, compareFunction)
 
-    if(playlistScrollView)
-    {
-        .playlistViews = {}
-        playlistScrollViewContainer.removeView(playlistScrollView)
-    }
-    .playlistScrollView = false
+    .playlistViews = {}
+    playlistScrollView.removeAllRows()
 
     noPlaylistsText = scene.getView("noPlaylistsText")
 
     if(table.count(sharedPlaylists) > 0)
     {
         noPlaylistsText.hidden = true
-
-        .playlistScrollView = scrollView.create(playlistScrollViewContainer)
 
         viewTable = scene.mainPlaylistsPlaylistItem
 
@@ -498,7 +486,7 @@ loadPlaylists = function()
             }
             itemView.baseColor = backgroundView.color
 
-            scrollView.insertRow(playlistScrollView, itemView)
+            playlistScrollView.insertRow(itemView)
             table.insert(playlistViews, itemView)
         }
     }
