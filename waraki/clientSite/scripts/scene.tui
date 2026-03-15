@@ -2,6 +2,7 @@ viewTypes = { #can be added to at any time
     button = require("app/common/button.tui")
     textEntry = require("app/common/textEntry.tui")
     scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
 }
 
 topStatusBarPadding = 40
@@ -233,7 +234,7 @@ editPlaylistContent = {
 
 addSongContent = {
     id = "addSongContent"
-    type = "view"
+    type = "fileBrowser"
     hidden = true
 }
 

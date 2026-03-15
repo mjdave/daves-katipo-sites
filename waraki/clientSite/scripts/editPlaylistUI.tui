@@ -1,9 +1,9 @@
-fileBrowser = require("app/common/fileBrowser.tui")
-
 songsCachePath = file.getSavePath("files/songs/")
 sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
 
 directoryTreePath = file.getSavePath("files/directoryTree.tuib")
+
+fileBrowser = scene.viewTypes.fileBrowser
 
 playlistTitle = "New Playlist"
 playlistContent = {}
@@ -20,6 +20,7 @@ table.insert(fileBrowser.fileItemLayout.subviews, {
     id = "addButton"
     type = "button"
     buttonType = "imageHueShift"
+    clip = true
     path = "images/add.png"
     pos = vec3(-50,0, 0)
     size = addAndPlayButtonSize
@@ -30,6 +31,7 @@ playButtonLayout = {
     id = "playButton"
     type = "button"
     buttonType = "imageHueShift"
+    clip = true
     path = "images/play.png"
     pos = vec3(-10,0, 0)
     size = addAndPlayButtonSize
@@ -50,7 +52,7 @@ playPreviewInternal = function(buttonView, songInfo) #todo this downloads the so
             delegate.playPauseButtonClick()
             return
         }
-        print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
+        #print("currentPreviewPlayingButtonSongView:", currentPreviewPlayingButtonSongView)
         if(currentPreviewPlayingButtonSongView)
         {
             currentPreviewPlayingButtonSongView.path = "images/play.png"
@@ -164,7 +166,7 @@ onBrowserItemCreate = function(itemView, index)
         addButtonView.click = function()
         {
             toggleSongAddedToPlaylist(addButtonView, itemView)
-            fileBrowser.updateVisuals(addSongFileBrowser.fileBrowserViewData) #because we changed itemView.highlight
+            fileBrowser.updateVisuals(addSongFileBrowser) #because we changed itemView.highlight
         }
         addButtonView.hueOffset = -0.1 * index
 
@@ -315,19 +317,19 @@ show = function(playlistOrNil)
 
     if(!addSongFileBrowser)
     {
+        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
+        fileBrowser.onBrowserContentChange = onBrowserContentChange
+
         editPlaylistBackButton = scene.getView("editPlaylistBackButton")
         editPlaylistAddSongButton = scene.getView("editPlaylistAddSongButton")
 
         addSongBackButton = scene.getView("addSongBackButton")
 
         addSongHeader = scene.getView("addSongHeader")
-        addSongContent = scene.getView("addSongContent")
+        .addSongFileBrowser = scene.getView("addSongContent")
 
         .addSongSubtitleText = addSongHeader.getView("addSongSubtitleText")
 
-        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
-        fileBrowser.onBrowserContentChange = onBrowserContentChange
-        .addSongFileBrowser = fileBrowser.create(addSongContent)
         #addSongFileBrowser = .addSongFileBrowser #tui bug
         directoryTree = file.loadBinary(directoryTreePath)
         fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
@@ -342,7 +344,7 @@ show = function(playlistOrNil)
         editPlaylistAddSongButton.click = function()
         {
             addSongHeader.hidden = false
-            addSongContent.hidden = false
+            addSongFileBrowser.hidden = false
 
             editPlaylistHeader.hidden = true
             editPlaylistContent.hidden = true
@@ -356,7 +358,7 @@ show = function(playlistOrNil)
             loadPlaylistContent()
 
             addSongHeader.hidden = true
-            addSongContent.hidden = true
+            addSongFileBrowser.hidden = true
         }
 
         textChangeCallback = function(textValue, confirmChanges){
