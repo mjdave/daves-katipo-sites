@@ -467,17 +467,19 @@ loadPlaylists = function()
 
             playButton = itemView.getView("playButton")
             playButton.hueOffset = -0.1 * i + 0.2
-            playButton.click = function()
+
+            playFunc = function()
             {
                 .selectedPlaylistView = itemView
                 playSelectedPlaylist()
                 updateVisuals()
 
             }
+            playButton.click = playFunc
 
             backgroundView.click = function()
             {
-                playClick()
+                playFunc()
             }
 
             if(i % 2 == 0)
