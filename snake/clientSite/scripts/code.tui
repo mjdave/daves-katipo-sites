@@ -1,20 +1,65 @@
 # clientSite/scripts/code.tui
 # this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the client "app"
 # It handles the user interface and all client interactions, and runs the game loop
-
 # this is very rough and unfinished still, just shows what can be done.
-
-#credits:
-#crunch 8.wav by theplax -- https://freesound.org/s/608643/ -- License: Attribution 4.0
 
 keys = require("app/common/keys.tui")
 
 gameView = scene.getView("gameView")
 scoreView = scene.getView("score")
 bestScoreView = scene.getView("bestScore")
+
+highScoresView = scene.getView("highScores")
+playButton = highScoresView.getView("playButton")
+
+crossFade = function(viewFrom, viewTo, completionFunction)
+{
+    if(viewFrom)
+    {
+        fadeOutTimer = 1.0
+        viewFrom.update = function(dt)
+        {
+            fadeOutTimer -= dt
+            viewFrom.alpha = fadeOutTimer
+            if(fadeOutTimer <= 0)
+            {
+                viewFrom.hidden = true
+                viewFrom.alpha = 1.0
+                viewFrom.update = nil
+            }
+        }
+    }
+    viewTo.hidden = false
+    viewTo.alpha = 0.0
+    fadeInTimer = 0.0
+    viewTo.update = function(dt)
+    {
+        fadeInTimer += dt
+        viewTo.alpha = fadeInTimer
+        if(fadeInTimer >= 1.0)
+        {
+            viewTo.alpha = 1.0
+            viewTo.update = nil
+            if(completionFunction)
+            {
+                completionFunction()
+            }
+        }
+    }
+}
+
+
+playButton.click = function()
+{
+    if(!highScoresView.update and !highScoresView.hidden)
+    {
+        crossFade(highScoresView, gameView)
+        loadLevel()
+    }
+}
+
 scoreView.text = "0"
 
-viewSize = false #creating an empty variable to store viewSize, we set it later from within a function with .viewSize =
 blockSize = false
 
 leftKeyDown = false
@@ -29,27 +74,25 @@ levelViewLayout = {
 }
 levelView = false
 
-blocksView.size = function(parentSize)
-{
-    .viewSize = parentSize
-    return parentSize
-}
-
 borderColor = vec4(0.7,0.7,0.0,1.0)
 
 playerSnake = false
 aiSnakes = {}
 killAISnakesDueToPlayerDeath = false
+postDeathFadeTimer = false
 
-maxApples = 100
+maxApples = 200
 maxAISnakes = 10
 appleCount = 0
 apples = {}
 
 bestScore = 0
 
-levelSize = 40
-squareSize = 12
+levelSize = 100
+squareSize = 30
+
+cameraPos = vec3(0,0,0)
+offsetPos = vec3(0,0,0)
 
 levelOffset = vec3(1.0,1.0,0.0) * levelSize * squareSize * -0.5
 levelGrid = {}
@@ -57,16 +100,21 @@ levelGrid = {}
 squareTypes = {
     empty = {}
     playerHead = {
-        color = vec4(1.0,0.0,0.6,0.7)
+        color = vec4(0.2,1.0,1.0,0.9)
     }
     body = {
-        color = vec4(0.0,0.3,1.0,0.7)
+        color = vec4(0.0,0.3,1.0,0.5)
+        isSnakeBody = true
     }
     apple = {
         color = vec4(0.2,1.0,0.0,0.7)
     }
     aiHead = {
-        color = vec4(1.0,0.2,0.0,0.7)
+        color = vec4(1.0,0.2,0.0,0.9)
+    }
+    aiBody = {
+        color = vec4(1.0,0.2,0.0,0.5)
+        isSnakeBody = true
     }
 }
 
@@ -98,6 +146,29 @@ movementDirections = {
     }
 }
 
+movementDirections.left.movementOptions = {
+    movementDirections.left,
+    movementDirections.down,
+    movementDirections.up,
+}
+
+movementDirections.right.movementOptions = {
+    movementDirections.right,
+    movementDirections.up,
+    movementDirections.down,
+}
+
+movementDirections.up.movementOptions = {
+    movementDirections.up,
+    movementDirections.left,
+    movementDirections.right,
+}
+
+movementDirections.down.movementOptions = {
+    movementDirections.down,
+    movementDirections.right,
+    movementDirections.left,
+}
 
 directionKeysArray = {}
 for(k,v in movementDirections)
@@ -112,7 +183,6 @@ getRandomDirection = function()
     return movementDirections[directionKey]
 }
 
-cameraPos = vec2(0,0) #not used yet
 
 getSquare = function(pos)
 {
@@ -163,10 +233,13 @@ updateParticles = function(dt) #dt means "delta time" the change in time since t
 
 updateSquare = function(pos, squareType)
 {
-    #print("update square:", pos, " type:", type)
-
     column = levelGrid[pos.x]
     square = column[pos.y]
+
+    if(square.type == squareType)
+    {
+        return
+    }
 
     square.type = squareType
 
@@ -218,16 +291,23 @@ updateScore = function(bodyLength)
     }
 }
 
-
-loadLevel = function()
+unloadLevel = function()
 {
-    audio.playSound("sounds/am7.ogg", crunchVolume)
-    .appleCount = 0
     if(levelView)
     {
         gameView.removeView(levelView)
         .particles = {}
+        .levelView = false
     }
+}
+
+
+loadLevel = function()
+{
+    unloadLevel()
+    audio.playSound("sounds/am7.ogg", crunchVolume)
+    .appleCount = 0
+    .postDeathFadeTimer = false
     .levelView = gameView.addView(levelViewLayout)
     leftBorderViewLayout = {
         type = "color"
@@ -288,20 +368,25 @@ loadLevel = function()
 
     direction = getRandomDirection()
     snakePos = direction.getStartPos()
-    .playerSnake ={
+    .playerSnake = {
         head = snakePos
         headType = squareTypes.playerHead
+        bodyType = squareTypes.body
         bodySegments = {}
         bodyLength = 1
         direction = direction
         delayTimer = 0.0
     }
 
+
     updateScore(playerSnake.bodyLength)
     updateSquare(playerSnake.head, playerSnake.headType)
+
+    .cameraPos = vec3(playerSnake.head.x, playerSnake.head.y, 0) * squareSize + levelOffset
+    .offsetPos = vec3(playerSnake.direction.directionVec.x * 300, playerSnake.direction.directionVec.y * 200, 0)
 }
 
-loadLevel()
+#loadLevel()
 
 
 addApple = function(locationOrNil)
@@ -343,28 +428,33 @@ killSnake = function(snake)
         {
             addApple(segment)
         }
-        addFood = !addFood
+        .addFood = !addFood
     }
 
     if(snake == playerSnake)
     {
         addParticle(snake.head, snake.headType.color, 2.0)
 
-        direction = getRandomDirection()
-        snakePos = direction.getStartPos()
-        while(getSquare(snakePos).type != squareTypes.empty)
-        {
-            direction = getRandomDirection()
-            snakePos = direction.getStartPos()
-        }
-        snake.head = snakePos
-        snake.bodyLength = 1
-        snake.bodySegments = {}
-        snake.direction = direction
-        updateSquare(snakePos, snake.headType)
-        updateScore(playerSnake.bodyLength)
-        audio.playSound("sounds/death.ogg", 1.0)
+        .postDeathFadeTimer = 1.0
+        #to reset:
+        #direction = getRandomDirection()
+        #snakePos = direction.getStartPos()
+        #while(getSquare(snakePos).type != squareTypes.empty)
+        #{
+        #    .direction = getRandomDirection()
+        #    .snakePos = direction.getStartPos()
+        #}
+        #snake.head = snakePos
+#
+        #.cameraPos = vec3(playerSnake.head.x, playerSnake.head.y, 0) * squareSize + levelOffset
+        #.offsetPos = vec3(playerSnake.direction.directionVec.x * 300, playerSnake.direction.directionVec.y * 200, 0)
+        #snake.bodyLength = 1
+        #snake.bodySegments = {}
+        #snake.direction = direction
+        #updateSquare(snakePos, snake.headType)
+        #updateScore(playerSnake.bodyLength)
 
+        audio.playSound("sounds/death.ogg", 1.0)
         .killAISnakesDueToPlayerDeath = true
     }
     else
@@ -405,12 +495,6 @@ updateHeadPos = function(snake, newPos)
 
     headSquare = getSquare(newPos)
 
-    if(headSquare.type == squareTypes.body)
-    {
-        killSnake(snake)
-        return
-    }
-
     if(headSquare.type == squareTypes.playerHead)
     {
         killSnake(playerSnake)
@@ -419,6 +503,12 @@ updateHeadPos = function(snake, newPos)
     }
 
     if(headSquare.type == squareTypes.aiHead)
+    {
+        killSnake(snake)
+        return
+    }
+
+    if(headSquare.type.isSnakeBody)
     {
         killSnake(snake)
         return
@@ -471,6 +561,7 @@ addAISnake = function()
         aiSnake ={
             head = snakePos
             headType = squareTypes.aiHead
+            bodyType = squareTypes.aiBody
             bodySegments = {}
             bodyLength = 1
             direction = direction
@@ -493,7 +584,7 @@ updateSnake = function(snake, dt)
     snake.delayTimer += 0.3 #base time delay roughly
 
     headPos = snake.head
-    updateSquare(headPos, squareTypes.body)
+    updateSquare(headPos, snake.bodyType)
     table.insert(snake.bodySegments, 0, headPos)
 
     bodySegmentCount = table.count(snake.bodySegments)
@@ -504,6 +595,33 @@ updateSnake = function(snake, dt)
     }
 
     updateHeadPos(snake, snake.head + snake.direction.directionVec)
+
+    if(snake != playerSnake)
+    {
+        movementOptions = snake.direction.movementOptions
+        foundApple = false
+        for(i = 1, i < 16, i++)
+        {
+            for(movementDirection in movementOptions)
+            {
+                pos = snake.head + movementDirection.directionVec * i
+                square = getSquare(pos)
+                if(square and square.type == squareTypes.apple)
+                {
+                    if(setSnakeDirection(snake, movementDirection))
+                    {
+                        .foundApple = true
+                        break
+                    }
+                }
+            }
+
+            if(foundApple)
+            {
+                break
+            }
+        }
+    }
 }
 
 setSnakeDirection = function(snake, direction)
@@ -513,59 +631,17 @@ setSnakeDirection = function(snake, direction)
     if(nextSquare)
     {
         type = nextSquare.type
-        if(type != squareTypes.playerHead and type != squareTypes.body and type != squareTypes.aiHead)
+        if(type != squareTypes.playerHead and !type.isSnakeBody and type != squareTypes.aiHead)
         {
             snake.direction = direction
+            return true
         }
     }
+    return false
 }
 
 updateAISnake = function(snake, dt)
 {
-    if(math.random() < 0.9) # sometimes make mistakes by skipping
-    {
-        minDistance = 99
-        closestApple = false
-        for(apple in apples)
-        {
-            if(apple.pos.x > 1 and apple.pos.x < levelSize - 2 and apple.pos.y > 1 and apple.pos.y < levelSize - 2)
-            {
-                distance = math.length2(apple.pos - snake.head)
-                if(distance < minDistance)
-                {
-                    closestApple = apple
-                }
-            }
-        }
-
-        if(closestApple)
-        {
-            distanceVec = closestApple.pos - snake.head
-            if(math.abs(distanceVec.x) > math.abs(distanceVec.y) and (snake.direction == movementDirections.up or snake.direction == movementDirections.down))
-            {
-                if(distanceVec.x > 0)
-                {
-                    setSnakeDirection(snake, movementDirections.right)
-                }
-                else if(distanceVec.x < 0)
-                {
-                    setSnakeDirection(snake, movementDirections.left)
-                }
-            }
-            else
-            {
-                if(distanceVec.y > 0)
-                {
-                    setSnakeDirection(snake, movementDirections.up)
-                }
-                else if(distanceVec.y < 0)
-                {
-                    setSnakeDirection(snake, movementDirections.down)
-                }
-            }
-        }
-    }
-
     if(snake.direction == movementDirections.up)
     {
         if(snake.head.y >= levelSize - 2)
@@ -629,6 +705,17 @@ updateAISnake = function(snake, dt)
 #this is the main update function, called every tick by katipo, usually 60 times a second.
 katipo.update = function(dt)
 {
+    if(!levelView)
+    {
+        return
+    }
+    goalCameraPos = vec3(playerSnake.head.x, playerSnake.head.y, 0) * squareSize + levelOffset
+    goalOffsetPos = vec3(playerSnake.direction.directionVec.x * 300, playerSnake.direction.directionVec.y * 200, 0)
+    .offsetPos = offsetPos + (goalOffsetPos - offsetPos) * dt * 0.4 * (1.0 + playerSnake.bodyLength)
+    goalCameraPos = goalCameraPos + offsetPos
+    .cameraPos = cameraPos + (goalCameraPos - cameraPos) * dt * 0.05 * (1.0 + playerSnake.bodyLength)
+    levelView.pos = -cameraPos
+
     timer += dt
     if(timer > 0.2)
     {
@@ -636,7 +723,7 @@ katipo.update = function(dt)
 
         if(appleCount < maxApples)
         {
-            if(math.random() > 0.5 + ((appleCount / maxApples)) * 0.5)
+            if(math.random() > ((appleCount / maxApples)) * 0.5)
             {
                 addApple()
             }
@@ -651,7 +738,6 @@ katipo.update = function(dt)
         }
     }
 
-    updateSnake(playerSnake, dt)
 
     if(killAISnakesDueToPlayerDeath)
     {
@@ -666,9 +752,24 @@ katipo.update = function(dt)
         }
     }
 
-    for(aiSnake in aiSnakes)
+    if(postDeathFadeTimer)
     {
-        updateAISnake(aiSnake, dt)
+        .postDeathFadeTimer = postDeathFadeTimer - dt * 2.0
+        if(postDeathFadeTimer <= 0.0)
+        {
+            if(highScoresView.hidden)
+            {
+                crossFade(gameView, highScoresView, unloadLevel)
+            }
+        }
+    }
+    else
+    {
+        updateSnake(playerSnake, dt)
+        for(aiSnake in aiSnakes)
+        {
+            updateAISnake(aiSnake, dt)
+        }
     }
 
     updateParticles(dt)
@@ -711,3 +812,5 @@ eventManager.addKeyEventListener(keys.keyCodes.left, leftArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.up, upArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.down, downArrowFunction)
+
+crossFade(nil, highScoresView)

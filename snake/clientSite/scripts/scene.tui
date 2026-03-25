@@ -1,52 +1,93 @@
+viewTypes = { #can be added to at any time
+    button = require("app/common/button.tui")
+    textEntry = require("app/common/textEntry.tui")
+    scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
+}
+
 mainView = {
     type = "view"
     subviews = {
         {
+            hidden = true
             id = "gameView"
             type = "view"
+            subviews = {
+                {
+                    id = "score"
+                    type = "text"
+                    alignmentX = "right"
+                    alignmentY = "top"
+                    pos = vec3(-10,-10, 0)
+                    font = "blockheadsHue"
+                    fontSize = 48
+                    color = vec4(0.2,0.4,1.0,1.0)
+                    additiveBlend = true
+                },
+                {
+                    id = "bestScore"
+                    type = "text"
+                    alignmentX = "right"
+                    alignmentY = "below"
+                    layoutParentID = "score"
+                    pos = vec3(-10,-10, 0)
+                    font = "blockheadsHue"
+                    fontSize = 48
+                    color = vec4(0.2,0.4,1.0,1.0)
+                    additiveBlend = true
+                }
+            }
         }
-        {
-            id = "score"
-            type = "text"
-            alignmentX = "right"
-            alignmentY = "top"
-            pos = vec3(-10,-10, 0)
-            font = "blockheadsHue"
-            fontSize = 48
-            color = vec4(0.2,0.4,1.0,1.0)
-            additiveBlend = true
-        },
-        {
-            id = "bestScore"
-            type = "text"
-            alignmentX = "right"
-            alignmentY = "below"
-            layoutParentID = "score"
-            pos = vec3(-10,-10, 0)
-            font = "blockheadsHue"
-            fontSize = 48
-            color = vec4(0.2,0.4,1.0,1.0)
-            additiveBlend = true
-        },
         {
             id = "highScores"
             type = "view"
-            size = function(parentSize)
+            hidden = true
+            onParentSizeChanged = function(parentSize)
             {
                 return parentSize / 2
             }
-            hidden = true
             subviews = {
                 {
-                    id = "highScore"
+                    id = "highScoresTitle"
                     type = "text"
                     alignmentY = "top"
                     pos = vec3(0,-10, 0)
                     font = "blockheadsHue"
-                    fontSize = 22
+                    fontSize = 48
                     text = "High Scores"
                     color = vec4(1.0,0.4,0.0,1.0)
                     additiveBlend = true
+                }
+                {
+                    id = "highScoreContent"
+                    type = "color"
+                    color = vec4(1.0,0.0,1.0,0.5)
+                    onParentSizeChanged = function(parentSize)
+                    {
+                        return vec2(parentSize.x, parentSize.y - 40)
+                    }
+                }
+                {
+                    id = "playButton"
+                    type = "button"
+                    layoutParentID = "highScoreContent"
+                    alignmentY = "below"
+                    buttonType = "colorHueShift"
+                    color = vec4(1.0,0.0,1.0,0.5)
+                    pos = vec3(0,-40,0)
+                    size = vec2(400, 60)
+                    subviews = {
+                        {
+                            id = "playButtonText"
+                            type = "text"
+                            font = "blockheadsHue"
+                            text = "Be A Snake"
+                            fontSize = 48
+                            color = vec4(0.2,0.4,1.0,1.0)
+                            pos = vec3(0,5,0)
+                            additiveBlend = true
+                        }
+                    }
                 }
             }
         }
