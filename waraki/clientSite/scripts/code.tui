@@ -146,7 +146,7 @@ addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't e
     }
 }
 
-katipo.onConnect = function(wasNewDownload) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+katipo.onConnected = function(wasNewDownload) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
     .connected = true
     updateDownloads()

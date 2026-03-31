@@ -5,7 +5,9 @@
 # this is very rough and unfinished still, just shows what can be done.
 
 keys = require("app/common/keys.tui")
+highScores = require("scripts/highScores.tui")
 
+gameView = scene.getView("gameView")
 paddleView = scene.getView("paddle")
 blocksView = scene.getView("blocks")
 ballView = scene.getView("ball")
@@ -15,9 +17,12 @@ livesView = scene.getView("lives")
 totalLevels = 3
 currentLevelIndex = 0
 
+increasingSpeedMultiplier = 1.0
+
 lives = 3
 livesView.text = string.format("%d", lives)
 
+gameRunning = false
 viewSize = false
 blockSize = false
 paddleSize = false
@@ -78,9 +83,17 @@ resetBall = function()
     .slowSpeedTimer = 1.0
 }
 
+#notes = {-12,-5,-3,-2,0,2,3,5,7,9,10,0,0,0,3,3,7}
+
+getNotePitch = function(offset)
+{
+    #offset = notes[math.randomInt(table.count(notes))]
+    return math.pow(2, (offset / 12))
+}
+
 loadNextLevel = function()
 {
-    .currentLevelIndex++
+    currentLevelIndex++
     currentLevelIndex = math.min(currentLevelIndex, totalLevels)
     levelName = string.format("level%d.tui", currentLevelIndex)
 
@@ -97,24 +110,28 @@ loadNextLevel = function()
     resetBall()
 
     level = require("scripts/" + levelName)
+    levelBricks = level.bricks
+    levelColors = level.colors
+    pitchOffsets = level.pitchOffsets
     .levelTotalBrickCount = 0
     .levelBrickRemovedCount = 0
 
-    .ballSpeed = viewSize.x * 1.5
-    .paddleSpeed = ballSpeed / 5
+    .ballSpeed = viewSize.y * 2.5
+    .paddleSpeed = ballSpeed / 4
 
-    .blockSize = vec2(viewSize.x / 20, viewSize.x / 100)
-    .padding = vec2(blockSize.y / 10, blockSize.y / 10)
+    .blockSize = vec2(math.floor(viewSize.x / 20), math.floor(viewSize.y / 60))
+    paddingX = math.floor(math.max(blockSize.x / 20, 2))
+    .padding = vec2(paddingX, paddingX)
     ballView.size = vec2(blockSize.y,blockSize.y)
 
-    .paddleSize = vec2(blockSize.x * 2.5,blockSize.y)
+    .paddleSize = vec2(math.floor(blockSize.x * 2.5),blockSize.y)
     paddleView.size = paddleSize
 
-    .fieldHeightInBricks = table.count(level)
+    .fieldHeightInBricks = table.count(levelBricks)
     .fieldWidthInBricks = 0
 
 #todo another capture corner case
-    for(row in level)
+    for(row in levelBricks)
     {
         debug.break()
         .fieldWidthInBricks = math.max(table.count(row), fieldWidthInBricks)
@@ -123,30 +140,32 @@ loadNextLevel = function()
     fieldSizeInPixels = vec2(fieldWidthInBricks * (blockSize.x + padding.x * 2), 
         fieldHeightInBricks * (blockSize.y + padding.y * 2))
 
-    .fieldOffsetPixels = vec2(-fieldSizeInPixels.x * 0.5, 0)
+    .fieldOffsetPixels = vec2(-fieldSizeInPixels.x * 0.5, math.floor(-viewSize.y * 0.05))
+    paddleView.pos.y = math.floor(-viewSize.y * 0.375)
 
     .loadedBrickInfos = {}
 
     yOffset = 0
         debug.break()
-    for(yIndex, row in level)
+    for(yIndex, row in levelBricks)
     {
         loadedBrickRow = {}
         table.insert(loadedBrickInfos, loadedBrickRow)
         for(xIndex, value in row)
         {
             blockView = nil
-            if(value == 1)
+            if(value != 0)
             {
                 centerOffset = centerOffsetFromBlockIndexes(xIndex, fieldHeightInBricks - yIndex - 1) #flip y, we read from the top
                 viewTable = {
                     type = "color"
-                    color = vec4(math.random(),math.random(),math.random(),0.5)
+                    additiveBlend = true
+                    color = levelColors[value - 1]
                     size = blockSize
-                    shader = "colorViewHueShift"
                     pos = vec3(centerOffset.x, centerOffset.y, 0)
                 }
                 blockView = levelView.addView(viewTable)
+                blockView.notePitch = getNotePitch(pitchOffsets[value - 1])
                 .levelTotalBrickCount++
             }
 
@@ -160,20 +179,32 @@ loadNextLevel = function()
     }
 }
 
-loadNextLevel()
 
-
-katipo.update = function(dt) #called every tick
+katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
+    print("in clientSite onConnected:", publicData)
+    if(publicData and publicData.highScores)
+    {
+        highScores.setFromHost(publicData.highScores)
+    }
+}
 
+katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
+{
+    if(!gameRunning)
+    {
+        return
+    }
 
     if(slowSpeedTimer > 0)
     {
         .slowSpeedTimer -= dt * 0.25
     }
 
+    increasingSpeedMultiplier += (dt / 180) 
+
     halfBounds = viewSize / 2
-    ballView.pos += ballVelocity * dt * ballSpeed * (1.0 - slowSpeedTimer)
+    ballView.pos += ballVelocity * dt * ballSpeed * (1.0 - slowSpeedTimer) * increasingSpeedMultiplier
 
     if(ballView.pos.x > halfBounds.x)
     {
@@ -212,13 +243,13 @@ katipo.update = function(dt) #called every tick
 
             ballVelocity.y = math.abs(ballVelocity.y) #just to be sure
 
-            if(ballVelocity.x > ballVelocity.y)
+            if(ballVelocity.x > 0.16)
             {
-                .ballVelocity = vec3(0.141, 0.141, 0)
+                .ballVelocity = math.normalize(vec3(0.16, 0.04, 0)) * 0.2
             }
-            else if(ballVelocity.x < -ballVelocity.y)
+            else if(ballVelocity.x < -0.16)
             {
-                .ballVelocity = vec3(-0.141, 0.141, 0)
+                .ballVelocity = math.normalize(vec3(-0.16, 0.04, 0)) * 0.2
             }
 
             ballView.pos.y = paddleTop + (paddleTop - ballView.pos.y)
@@ -235,8 +266,11 @@ katipo.update = function(dt) #called every tick
         if(lives < 1)
         {
             .lives = 3
+            .increasingSpeedMultiplier = 1.0
             .currentLevelIndex = 0
-            loadNextLevel()
+            #loadNextLevel()
+            highScores.showHighScoresAfterGame(totalScore, gameView)
+            .gameRunning = false
             
             livesView.text = string.format("%d", lives)
             .totalScore = 0
@@ -268,9 +302,12 @@ katipo.update = function(dt) #called every tick
                 {
                     if(brickInfo.blockView)
                     {
+
+                        pitch = brickInfo.blockView.notePitch
+
                         table.insert(animatingOutViews, brickInfo.blockView)
                         brickInfo.blockView.initialSize = brickInfo.size
-                        audio.playSound("sounds/timeTick.ogg")
+                        audio.playSound("sounds/timeTick.ogg", 1.0, pitch)
                         #levelView.removeView(brickInfo.blockView)
                         brickInfo.blockView = nil
 
@@ -338,11 +375,11 @@ katipo.update = function(dt) #called every tick
 
     if(leftKeyDown or leftScreenMouseDown)
     {
-        paddleView.pos.x -= dt * paddleSpeed
+        paddleView.pos.x -= dt * paddleSpeed * increasingSpeedMultiplier
     }
     else if(rightKeyDown or rightScreenMouseDown)
     {
-        paddleView.pos.x += dt * paddleSpeed
+        paddleView.pos.x += dt * paddleSpeed * increasingSpeedMultiplier
     }
 
     if(levelBrickRemovedCount >= levelTotalBrickCount)
@@ -407,6 +444,19 @@ eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
 
 skipLevelFunction = function(isDown, code, mod, isRepeat)
 {
-    loadNextLevel()
+    if(isDown and !isRepeat)
+    {
+        loadNextLevel()
+    }
 }
 eventManager.addKeyEventListener(keys.keyCodes.period, skipLevelFunction)
+
+
+highScores.onPlayClick = function()
+{
+    loadNextLevel()
+    highScores.fadeOut(gameView)
+    .gameRunning = true
+}
+
+highScores.fadeIn()

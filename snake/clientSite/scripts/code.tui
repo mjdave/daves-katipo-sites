@@ -4,59 +4,22 @@
 # this is very rough and unfinished still, just shows what can be done.
 
 keys = require("app/common/keys.tui")
+highScores = require("scripts/highScores.tui")
 
 gameView = scene.getView("gameView")
 scoreView = scene.getView("score")
 bestScoreView = scene.getView("bestScore")
 
-highScoresView = scene.getView("highScores")
-playButton = highScoresView.getView("playButton")
+#highScoresView = scene.getView("highScores")
+#highScoreContentView = highScoresView.getView("highScoreContent")
+#enterHighScoreText = highScoresView.getView("enterHighScoreText")
+#highScoresTitle = highScoresView.getView("highScoresTitle")
+#playButton = highScoresView.getView("playButton")
 
-crossFade = function(viewFrom, viewTo, completionFunction)
-{
-    if(viewFrom)
-    {
-        fadeOutTimer = 1.0
-        viewFrom.update = function(dt)
-        {
-            fadeOutTimer -= dt
-            viewFrom.alpha = fadeOutTimer
-            if(fadeOutTimer <= 0)
-            {
-                viewFrom.hidden = true
-                viewFrom.alpha = 1.0
-                viewFrom.update = nil
-            }
-        }
-    }
-    viewTo.hidden = false
-    viewTo.alpha = 0.0
-    fadeInTimer = 0.0
-    viewTo.update = function(dt)
-    {
-        fadeInTimer += dt
-        viewTo.alpha = fadeInTimer
-        if(fadeInTimer >= 1.0)
-        {
-            viewTo.alpha = 1.0
-            viewTo.update = nil
-            if(completionFunction)
-            {
-                completionFunction()
-            }
-        }
-    }
-}
+#highScoresPath = file.getSavePath("highScores.tui")
+#print("highScoresPath:", highScoresPath)
 
 
-playButton.click = function()
-{
-    if(!highScoresView.update and !highScoresView.hidden)
-    {
-        crossFade(highScoresView, gameView)
-        loadLevel()
-    }
-}
 
 scoreView.text = "0"
 
@@ -574,7 +537,7 @@ addAISnake = function()
 
 updateSnake = function(snake, dt)
 {
-    snakeDelayMultiplier = 1.0 + snake.bodyLength * 0.1
+    snakeDelayMultiplier = 1.0 + math.min(snake.bodyLength, 50) * 0.1
     snake.delayTimer -= dt * snakeDelayMultiplier
     if(snake.delayTimer > 0.0)
     {
@@ -606,12 +569,30 @@ updateSnake = function(snake, dt)
             {
                 pos = snake.head + movementDirection.directionVec * i
                 square = getSquare(pos)
-                if(square and square.type == squareTypes.apple)
+                if(square)
                 {
-                    if(setSnakeDirection(snake, movementDirection))
+                    if(square.type == squareTypes.apple)
                     {
-                        .foundApple = true
-                        break
+                        if(setSnakeDirection(snake, movementDirection))
+                        {
+                            .foundApple = true
+                            break
+                        }
+                    }
+                    else if(i < 3 and movementDirection == snake.direction)
+                    {
+                        if(square.type.isSnakeBody)
+                        {
+                            randomValue = math.randomInt(3)
+                            if(randomValue == 0)
+                            {
+                                setSnakeDirection(snake, movementOptions[1])
+                            }
+                            else if(randomValue == 1)
+                            {
+                                setSnakeDirection(snake, movementOptions[2])
+                            }
+                        }
                     }
                 }
             }
@@ -702,6 +683,15 @@ updateAISnake = function(snake, dt)
     updateSnake(snake, dt)
 }
 
+katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    print("in clientSite onConnected:", publicData)
+    if(publicData and publicData.highScores)
+    {
+        highScores.setFromHost(publicData.highScores)
+    }
+}
+
 #this is the main update function, called every tick by katipo, usually 60 times a second.
 katipo.update = function(dt)
 {
@@ -757,9 +747,14 @@ katipo.update = function(dt)
         .postDeathFadeTimer = postDeathFadeTimer - dt * 2.0
         if(postDeathFadeTimer <= 0.0)
         {
-            if(highScoresView.hidden)
+            if(highScores.getHidden())
             {
-                crossFade(gameView, highScoresView, unloadLevel)
+                score = playerSnake.bodyLength
+                completionFunction = function()
+                {
+                    unloadLevel()
+                }
+                highScores.showHighScoresAfterGame(score, gameView, completionFunction)
             }
         }
     }
@@ -813,4 +808,10 @@ eventManager.addKeyEventListener(keys.keyCodes.right, rightArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.up, upArrowFunction)
 eventManager.addKeyEventListener(keys.keyCodes.down, downArrowFunction)
 
-crossFade(nil, highScoresView)
+highScores.onPlayClick = function()
+{
+    highScores.fadeOut(gameView)
+    loadLevel()
+}
+
+highScores.fadeIn()

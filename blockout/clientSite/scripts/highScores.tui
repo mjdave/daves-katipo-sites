@@ -1,0 +1,198 @@
+maxHighScores = 10
+
+highScoresView = scene.getView("highScores")
+highScoreContentView = highScoresView.getView("highScoreContent")
+enterHighScoreText = highScoresView.getView("enterHighScoreText")
+highScoresTitle = highScoresView.getView("highScoresTitle")
+playButton = highScoresView.getView("playButton")
+
+enterHighScoreName = "Dad"
+scores = database.get("highScores")
+print("loaded high scores:", scores)
+if(!scores)
+{
+    scores = {}
+}
+
+onPlayClick = false
+
+crossFade = function(viewFrom, viewTo, completionFunction)
+{
+    if(viewFrom)
+    {
+        viewFrom.update = function(dt)
+        {
+            viewFrom.alpha -= dt
+            if(viewFrom.alpha <= 0)
+            {
+                viewFrom.hidden = true
+                viewFrom.alpha = 1.0
+                viewFrom.update = nil
+            }
+        }
+    }
+    viewTo.hidden = false
+    viewTo.alpha = 0.0
+    viewTo.update = function(dt)
+    {
+        viewTo.alpha += dt
+        if(viewTo.alpha >= 1.0)
+        {
+            viewTo.alpha = 1.0
+            viewTo.update = nil
+            if(completionFunction)
+            {
+                completionFunction()
+            }
+        }
+    }
+}
+
+updateHighScores = function()
+{
+    if(highScoreContentView.listView)
+    {
+        highScoreContentView.removeView(highScoreContentView.listView)
+    }
+
+    if(table.count(scores) > 0)
+    {
+        listView = highScoreContentView.addView({type = "view"})
+        highScoreContentView.listView = listView
+        for(i, scoreInfo in scores)
+        {
+            numberTextView = listView.addView(scene.highScoreText)
+            numberTextView.text = (i + 1) + ". "
+            numberTextView.alignmentX = "right"
+
+            rowHeight = 40
+
+            yOffset = -rowHeight -i * rowHeight - 100
+
+            numberTextView.onParentSizeChanged = function(parentSize) #this sucks, need a better solution
+            {
+                numberTextView.pos = vec3(-parentSize.x / 2, yOffset, 0)
+                return vec2(parentSize.x / 2, rowHeight)
+            }
+
+            scoreTextView = listView.addView(scene.highScoreText)
+            scoreTextView.text = string.upper(scoreInfo.name) + " " + scoreInfo.score
+            scoreTextView.alignmentX = "left"
+            scoreTextView.onParentSizeChanged = function(parentSize)
+            {
+                scoreTextView.pos = vec3(parentSize.x / 2, yOffset, 0)
+                return vec2(parentSize.x / 2, rowHeight)
+            }
+
+            if(i == maxHighScores - 1)
+            {
+                break
+            }
+        }
+    }
+}
+
+
+fadeIn = function(fadeFromView, completionFunction)
+{
+    updateHighScores()
+    crossFade(fadeFromView, highScoresView, completionFunction)
+}
+
+fadeOut = function(fadeToView, completionFunction)
+{
+    crossFade(highScoresView, fadeToView, completionFunction)
+}
+
+playButton.click = function()
+{
+    if(!highScoresView.update and !highScoresView.hidden)
+    {
+        if(onPlayClick)
+        {
+            onPlayClick()
+        }
+    }
+}
+
+showHighScoresAfterGame = function(newScore, fadeFromView)
+{
+    isHighScore = false
+    score = newScore
+    if(table.count(scores) < maxHighScores or newScore >= scores[maxHighScores - 1].score)
+    {
+        isHighScore = true
+    }
+
+    if(isHighScore)
+    {
+        playButton.hidden = true
+        enterHighScoreText.hidden = false
+        enterHighScoreText.textEntryClickFunction()
+        highScoresTitle.text = "New High Score!"
+        highScoreContentView.hidden = true
+        enterHighScoreText.maxChars = 3
+        enterHighScoreText.onChange = function(textValue, confirmChanges)
+        {
+            addIndex = 0
+            for(i, scoreInfo in scores)
+            {
+                .addIndex = i
+                if(scoreInfo.score <= newScore)
+                {
+                    break
+                }
+            }
+
+            name = textValue
+            if(!name or name == "")
+            {
+                name = "bob"
+            }
+
+            newScoreInfo = {
+                score = newScore,
+                name = textValue
+            }
+            table.insert(scores, addIndex, newScoreInfo)
+            if(table.count(scores) > maxHighScores)
+            {
+                table.remove(scores, table.count(scores) - 1)
+            }
+
+            print("new high scores:", scores)
+
+            database.set("highScores", scores)
+
+            katipo.get("setScore", newScoreInfo)
+
+            playButton.hidden = false
+            enterHighScoreText.hidden = true
+
+            updateHighScores()
+
+            highScoreContentView.hidden = false
+        }
+    }
+    else
+    {
+        highScoresTitle.text = "High Scores"
+        highScoreContentView.hidden = false
+    }
+
+    fadeIn(fadeFromView)
+}
+
+
+setFromHost = function(incomingScores)
+{
+    .scores = incomingScores
+    database.set("highScores", scores)
+    updateHighScores()
+}
+
+
+getHidden = function()
+{
+    return highScoresView.hidden
+}
