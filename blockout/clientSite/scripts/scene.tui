@@ -43,8 +43,7 @@ highScoresView = {
         }
         {
             id = "highScoreContent"
-            type = "color"
-            color = vec4(1.0,0.0,1.0,0.5)
+            type = "view"
         }
         {
             id = "playButton"
@@ -60,7 +59,7 @@ highScoresView = {
                     type = "text"
                     alignmentY = "bottom"
                     font = "robotoBold"
-                    text = "Play"
+                    text = "Be A Paddle"
                     fontSize = 48
                     color = vec4(0.2,0.4,1.0,1.0)
                     #pos = vec3(0,5,0)

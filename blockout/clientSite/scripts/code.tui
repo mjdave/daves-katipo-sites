@@ -121,7 +121,7 @@ loadNextLevel = function()
     .levelBrickRemovedCount = 0
 
     .ballSpeed = viewSize.y * 2.5
-    .paddleSpeed = ballSpeed / 4
+    .paddleSpeed = ballSpeed / 3
 
     .blockSize = vec2(math.floor(viewSize.x / 20), math.floor(viewSize.y / 60))
     paddingX = math.floor(math.max(blockSize.x / 20, 2))
@@ -130,6 +130,9 @@ loadNextLevel = function()
 
     .paddleSize = vec2(math.floor(blockSize.x * 2.5),blockSize.y)
     paddleView.size = paddleSize
+
+    paddleView.goalX = 0.0
+    paddleView.pos.x = paddleView.goalX
 
     paddleView.color = levelColors[1]
     paddleView.notePitch = getNotePitch(levelPitchOffsets[0])
@@ -238,6 +241,18 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
     }
 
+
+    if(leftKeyDown or leftScreenMouseDown)
+    {
+        paddleView.goalX -= dt * paddleSpeed * increasingSpeedMultiplier
+    }
+    else if(rightKeyDown or rightScreenMouseDown)
+    {
+        paddleView.goalX += dt * paddleSpeed * increasingSpeedMultiplier
+    }
+
+    paddleView.pos.x += (paddleView.goalX - paddleView.pos.x) * math.min(dt * 20.0, 1.0)
+
     paddleTop = paddleView.pos.y + paddleSize.y
     if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - paddleSize.y) #subtracted to provide double sized hitbox below
     {
@@ -245,7 +260,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         {
             ballVelocity.y = math.abs(ballVelocity.y)
 
-            hitAngle = (ballView.pos.x - paddleView.pos.x) * -0.01
+            hitAngle = (ballView.pos.x - paddleView.pos.x) * -0.015
 
             prevBallVelocity = ballVelocity
             ballVelocity.x = prevBallVelocity.x * math.cos(hitAngle) - prevBallVelocity.y * math.sin(hitAngle)
@@ -390,15 +405,6 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
                 break
             }
         }
-    }
-
-    if(leftKeyDown or leftScreenMouseDown)
-    {
-        paddleView.pos.x -= dt * paddleSpeed * increasingSpeedMultiplier
-    }
-    else if(rightKeyDown or rightScreenMouseDown)
-    {
-        paddleView.pos.x += dt * paddleSpeed * increasingSpeedMultiplier
     }
 
     if(levelBrickRemovedCount >= levelTotalBrickCount)

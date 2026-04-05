@@ -700,10 +700,7 @@ katipo.update = function(dt)
         return
     }
     goalCameraPos = vec3(playerSnake.head.x, playerSnake.head.y, 0) * squareSize + levelOffset
-    goalOffsetPos = vec3(playerSnake.direction.directionVec.x * 300, playerSnake.direction.directionVec.y * 200, 0)
-    .offsetPos = offsetPos + (goalOffsetPos - offsetPos) * dt * 0.4 * (1.0 + playerSnake.bodyLength)
-    goalCameraPos = goalCameraPos + offsetPos
-    .cameraPos = cameraPos + (goalCameraPos - cameraPos) * dt * 0.05 * (1.0 + playerSnake.bodyLength)
+    .cameraPos = cameraPos + (goalCameraPos - cameraPos) * dt * 0.1 * (1.0 + playerSnake.bodyLength)
     levelView.pos = -cameraPos
 
     timer += dt

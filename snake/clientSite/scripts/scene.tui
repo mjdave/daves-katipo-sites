@@ -65,11 +65,6 @@ mainView = {
                 {
                     id = "highScoreContent"
                     type = "view"
-                    #color = vec4(1.0,0.0,1.0,0.5)
-                    #onParentSizeChanged = function(parentSize)
-                    #{
-                    #    return vec2(parentSize.x, parentSize.y )
-                    #}
                 }
                 {
                     id = "playButton"

@@ -125,7 +125,6 @@ playButton.click = function()
 showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
 {
     isHighScore = false
-    score = newScore
     if(table.count(scores) < maxHighScores or newScore >= scores[maxHighScores - 1].score)
     {
         isHighScore = true
@@ -141,14 +140,18 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
         enterHighScoreText.maxChars = 3
         enterHighScoreText.onChange = function(textValue, confirmChanges)
         {
-            addIndex = 0
+            addIndex = false
             for(i, scoreInfo in scores)
             {
-                .addIndex = i
                 if(scoreInfo.score <= newScore)
                 {
+                    .addIndex = i
                     break
                 }
+            }
+            if(!addIndex)
+            {
+                addIndex = table.count(scores)
             }
 
             name = textValue
