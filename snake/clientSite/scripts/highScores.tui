@@ -15,6 +15,7 @@ if(!scores)
 }
 
 onPlayClick = false
+mostRecentScoreIndex = false
 
 crossFade = function(viewFrom, viewTo, completionFunction)
 {
@@ -82,6 +83,12 @@ updateHighScores = function()
             {
                 scoreTextView.pos = vec3(parentSize.x / 2, yOffset, 0)
                 return vec2(parentSize.x / 2, rowHeight)
+            }
+
+            if(i == mostRecentScoreIndex)
+            {
+                scoreTextView.color = vec4(1.0,0.9,0.05,1.5)
+                numberTextView.color = vec4(1.0,0.9,0.05,1.5)
             }
 
             if(i == maxHighScores - 1)
@@ -155,6 +162,7 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
                 name = textValue
             }
             table.insert(scores, addIndex, newScoreInfo)
+            .mostRecentScoreIndex = addIndex
             if(table.count(scores) > maxHighScores)
             {
                 table.remove(scores, table.count(scores) - 1)

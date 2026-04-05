@@ -16,6 +16,7 @@ livesView = scene.getView("lives")
 
 totalLevels = 3
 currentLevelIndex = 0
+levelsCompleted = 0
 
 increasingSpeedMultiplier = 1.0
 
@@ -93,9 +94,12 @@ getNotePitch = function(offset)
 
 loadNextLevel = function()
 {
+    levelsCompleted++
     currentLevelIndex++
     currentLevelIndex = math.min(currentLevelIndex, totalLevels)
     levelName = string.format("level%d.tui", currentLevelIndex)
+
+    .increasingSpeedMultiplier = 1.0 + levelsCompleted * 0.2
 
     if(levelView)
     {
@@ -112,7 +116,7 @@ loadNextLevel = function()
     level = require("scripts/" + levelName)
     levelBricks = level.bricks
     levelColors = level.colors
-    pitchOffsets = level.pitchOffsets
+    levelPitchOffsets = level.pitchOffsets
     .levelTotalBrickCount = 0
     .levelBrickRemovedCount = 0
 
@@ -126,6 +130,10 @@ loadNextLevel = function()
 
     .paddleSize = vec2(math.floor(blockSize.x * 2.5),blockSize.y)
     paddleView.size = paddleSize
+
+    paddleView.color = levelColors[1]
+    paddleView.notePitch = getNotePitch(levelPitchOffsets[0])
+    ballView.color = paddleView.color
 
     .fieldHeightInBricks = table.count(levelBricks)
     .fieldWidthInBricks = 0
@@ -165,7 +173,7 @@ loadNextLevel = function()
                     pos = vec3(centerOffset.x, centerOffset.y, 0)
                 }
                 blockView = levelView.addView(viewTable)
-                blockView.notePitch = getNotePitch(pitchOffsets[value - 1])
+                blockView.notePitch = getNotePitch(levelPitchOffsets[value - 1])
                 .levelTotalBrickCount++
             }
 
@@ -201,8 +209,6 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         .slowSpeedTimer -= dt * 0.25
     }
 
-    increasingSpeedMultiplier += (dt / 180) 
-
     halfBounds = viewSize / 2
     ballView.pos += ballVelocity * dt * ballSpeed * (1.0 - slowSpeedTimer) * increasingSpeedMultiplier
 
@@ -210,22 +216,26 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
     {
         ballVelocity.x = -ballVelocity.x
         ballView.pos.x = halfBounds.x - (ballView.pos.x - halfBounds.x)
+        audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
     }
     else if(ballView.pos.x < -halfBounds.x)
     {
         ballVelocity.x = -ballVelocity.x
         ballView.pos.x = -halfBounds.x
+        audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
     }
 
     if(ballView.pos.y > halfBounds.y)
     {
         ballVelocity.y = -ballVelocity.y
         ballView.pos.y = halfBounds.y - (ballView.pos.y - halfBounds.y)
+        audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
     }
     else if(ballView.pos.y < -halfBounds.y)
     {
         ballVelocity.y = -ballVelocity.y
         ballView.pos.y = -halfBounds.y
+        audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
     }
 
     paddleTop = paddleView.pos.y + paddleSize.y
@@ -243,18 +253,18 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
 
             ballVelocity.y = math.abs(ballVelocity.y) #just to be sure
 
-            if(ballVelocity.x > 0.16)
+            if(ballVelocity.x > 0.15)
             {
-                .ballVelocity = math.normalize(vec3(0.16, 0.04, 0)) * 0.2
+                .ballVelocity = math.normalize(vec3(0.15, 0.055, 0)) * 0.2
             }
-            else if(ballVelocity.x < -0.16)
+            else if(ballVelocity.x < -0.15)
             {
-                .ballVelocity = math.normalize(vec3(-0.16, 0.04, 0)) * 0.2
+                .ballVelocity = math.normalize(vec3(-0.15, 0.055, 0)) * 0.2
             }
 
             ballView.pos.y = paddleTop + (paddleTop - ballView.pos.y)
 
-            audio.playSound("sounds/increment.ogg")
+            audio.playSound("sounds/timeTick.ogg", 1.0, paddleView.notePitch)
         }
     }
 
@@ -268,6 +278,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
             .lives = 3
             .increasingSpeedMultiplier = 1.0
             .currentLevelIndex = 0
+            .levelsCompleted = 0
             #loadNextLevel()
             highScores.showHighScoresAfterGame(totalScore, gameView)
             .gameRunning = false
@@ -280,6 +291,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         else
         {
             livesView.text = string.format("%d", lives)
+            .increasingSpeedMultiplier -= 0.2
             resetBall()
         }
     }
@@ -302,13 +314,20 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
                 {
                     if(brickInfo.blockView)
                     {
+                        increasingSpeedMultiplier += (1.0 / 300.0) 
 
-                        pitch = brickInfo.blockView.notePitch
+                        notePitch = brickInfo.blockView.notePitch
 
                         table.insert(animatingOutViews, brickInfo.blockView)
                         brickInfo.blockView.initialSize = brickInfo.size
-                        audio.playSound("sounds/timeTick.ogg", 1.0, pitch)
+                        audio.playSound("sounds/timeTick.ogg", 1.0, notePitch)
                         #levelView.removeView(brickInfo.blockView)
+                        
+
+                        paddleView.color = brickInfo.blockView.color
+                        paddleView.notePitch = notePitch
+                        ballView.color = paddleView.color
+
                         brickInfo.blockView = nil
 
                         xDistanceFromCenter = fieldRelativePos.y - blockSize.x * 0.5
