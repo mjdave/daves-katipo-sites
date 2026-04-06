@@ -71,7 +71,7 @@ get = function(url, clientData)
         }
 
         print("saving highScores:", highScores)
-        host.savePublicData("highScores", highScores)
+        host.setPublicData("highScores", highScores)
     }
     else 
     {

@@ -9,11 +9,8 @@ retryDelay = 60.0 #attempts to download again every retryDelay seconds on failur
 #playlistsDiffPath = file.getSavePath("files/playlistsDiff.tuib")
 #playlistsPath = file.getSavePath("files/playlists.tuib")
 songsCachePath = file.getSavePath("files/songs/")
-sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
-
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
-file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirPath)
 
 print("songsCachePath:", songsCachePath)
 
@@ -26,6 +23,8 @@ connected = false
 songDownloadArray = {}
 songsToDownloadByID = {}
 currentRequestedSongDownloadInfo = false
+sharedPlaylistsByPlaylistID = false
+directoryTree = false
 
 playbackURLQueue = {}
 
@@ -146,12 +145,6 @@ addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't e
     }
 }
 
-katipo.onConnected = function(wasNewDownload) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
-{
-    .connected = true
-    updateDownloads()
-}
-
 katipo.update = function(dt) #called every tick
 {
     #{
@@ -254,7 +247,7 @@ addPlaylistButton.click = function()
     editPlaylistHeader.hidden = false
     editPlaylistContent.hidden = false
 
-    editPlaylistUI.show(nil)
+    editPlaylistUI.show(directoryTree, nil)
 }
 
 settingsBackButton.click = function()
@@ -414,13 +407,11 @@ addSongsToDownloadQueueForPlaylist = function(playlist)
 loadPlaylists = function()
 {
     sharedPlaylists = {}
-    contents = file.directoryContents(sharedPlaylistsDirPath)
-    foundResult = false
-    for(fileOrDirectory in contents)
+
+    if(sharedPlaylistsByPlaylistID)
     {
-        if(string.find(fileOrDirectory, ".tuib") != nil)
+        for(playlistID,playlistData in sharedPlaylistsByPlaylistID)
         {
-            playlistData = file.loadBinary(sharedPlaylistsDirPath + fileOrDirectory)
             table.insert(sharedPlaylists, playlistData)
         }
     }
@@ -462,7 +453,7 @@ loadPlaylists = function()
                 
                 editPlaylistHeader.hidden = false
                 editPlaylistContent.hidden = false
-                editPlaylistUI.show(playlist)
+                editPlaylistUI.show(directoryTree, playlist)
             }
 
             playButton = itemView.getView("playButton")
@@ -488,7 +479,7 @@ loadPlaylists = function()
             }
             itemView.baseColor = backgroundView.color
 
-            playlistScrollView.insertRow(itemView)
+            #playlistScrollView.insertRow(itemView)
             table.insert(playlistViews, itemView)
         }
     }
@@ -498,10 +489,20 @@ loadPlaylists = function()
     }      
 }
 
-loadPlaylists()
 
 editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "delegate"
     playPreview = playPreview
     playPauseButtonClick = playPauseButtonClick
     backButtonClicked = editPlaylistBackClick
+}
+
+katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    .sharedPlaylistsByPlaylistID = publicData.sharedPlaylistsByPlaylistID
+    .directoryTree = publicData.directoryTree
+
+    loadPlaylists()
+
+    .connected = true
+    updateDownloads()
 }

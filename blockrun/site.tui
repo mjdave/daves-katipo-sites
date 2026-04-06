@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "blockrun" #used to uniquely identify this site
+title = "Blockrun" #displayed name
+keywords = { "blockrun", "game", "dash", "bricks", "runner" } #used for search
+description = "A very basic example of a game in katipo" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

@@ -14,7 +14,7 @@ ballView = scene.getView("ball")
 scoreView = scene.getView("score")
 livesView = scene.getView("lives")
 
-totalLevels = 3
+totalLevels = 4
 currentLevelIndex = 0
 levelsCompleted = 0
 
@@ -251,7 +251,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         paddleView.goalX += dt * paddleSpeed * increasingSpeedMultiplier
     }
 
-    paddleView.pos.x += (paddleView.goalX - paddleView.pos.x) * math.min(dt * 20.0, 1.0)
+    paddleView.pos.x = paddleView.goalX # += (paddleView.goalX - paddleView.pos.x) * math.min(dt * 20.0, 1.0)
 
     paddleTop = paddleView.pos.y + paddleSize.y
     if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - paddleSize.y) #subtracted to provide double sized hitbox below

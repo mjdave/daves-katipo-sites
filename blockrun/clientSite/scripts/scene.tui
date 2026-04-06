@@ -1,0 +1,116 @@
+viewTypes = { #can be added to at any time
+    button = require("app/common/button.tui")
+    textEntry = require("app/common/textEntry.tui")
+    scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
+}
+
+
+
+highScoreText = {
+    type = "text"
+    alignmentX = "left"
+    alignmentY = "top"
+    font = "robotoBold"
+    fontSize = 48
+    color = vec4(0.2,0.4,1.0,1.0)
+    additiveBlend = true
+}
+
+highScoresView = {
+    id = "highScores"
+    type = "view"
+    hidden = true
+    subviews = {
+        {
+            id = "highScoresTitle"
+            type = "text"
+            alignmentY = "top"
+            pos = vec3(0,-50, 0)
+            font = "robotoBold"
+            fontSize = 48
+            text = "High Scores"
+            color = vec4(1.0,0.4,0.0,1.0)
+            additiveBlend = true
+        }
+        {
+            id = "enterHighScoreText"
+            type = "textEntry"
+            font = "robotoBold"
+            fontSize = 48
+            size = vec2(400, 60)
+            hidden = true
+        }
+        {
+            id = "highScoreContent"
+            type = "view"
+        }
+        {
+            id = "playButton"
+            type = "button"
+            alignmentY = "bottom"
+            buttonType = "colorHueShift"
+            color = vec4(1.0,0.0,1.0,0.5)
+            pos = vec3(0,120,0)
+            size = vec2(400, 60)
+            subviews = {
+                {
+                    id = "playButtonText"
+                    type = "text"
+                    alignmentY = "bottom"
+                    font = "robotoBold"
+                    text = "Be A Fast"
+                    fontSize = 48
+                    color = vec4(0.2,0.4,1.0,1.0)
+                    #pos = vec3(0,5,0)
+                    additiveBlend = true
+                }
+            }
+        }
+    }
+}
+
+gameView = {
+    type = "view"
+    id = "gameView"
+    hidden = true
+    subviews = {
+        {
+            id = "tiles"
+            type = "color"
+            color = vec4(0.1,0.2,0.3,0.1)
+        },
+        {
+            id = "score"
+            type = "text"
+            alignmentX = "right"
+            alignmentY = "top"
+            pos = vec3(-10,-10, 0)
+            text = "0-0"
+            font = "robotoBold"
+            fontSize = 32
+            color = vec4(0.2,0.4,1.0,0.6)
+            additiveBlend = true
+        },
+        {
+            id = "lives"
+            type = "text"
+            alignmentX = "left"
+            alignmentY = "top"
+            pos = vec3(10,-10, 0)
+            text = "0-0"
+            font = "robotoBold"
+            fontSize = 32
+            color = vec4(1.0,0.1,0.2,0.6)
+            additiveBlend = true
+        }
+    }
+}
+
+mainView = {
+    type = "view"
+    subviews = {
+        highScoresView,
+        gameView,
+    }
+}

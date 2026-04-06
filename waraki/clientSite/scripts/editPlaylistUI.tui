@@ -1,8 +1,6 @@
 songsCachePath = file.getSavePath("files/songs/")
 sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
 
-directoryTreePath = file.getSavePath("files/directoryTree.tuib")
-
 fileBrowser = scene.viewTypes.fileBrowser
 
 playlistTitle = "New Playlist"
@@ -268,7 +266,7 @@ loadPlaylistContent = function()
             
             itemView.baseColor = itemView.color
 
-            playlistScrollView.insertRow(itemView)
+            #playlistScrollView.insertRow(itemView)
 
             onMainPlaylistItemCreate(itemView, i)
 
@@ -289,7 +287,7 @@ updatePlaylistTitle = function()
     playlistTitleTextEntry.setText(playlistTitle)
 }
 
-show = function(playlistOrNil)
+show = function(directoryTree, playlistOrNil)
 {
     if(playlistOrNil)
     {
@@ -330,8 +328,6 @@ show = function(playlistOrNil)
 
         .addSongSubtitleText = addSongHeader.getView("addSongSubtitleText")
 
-        #addSongFileBrowser = .addSongFileBrowser #tui bug
-        directoryTree = file.loadBinary(directoryTreePath)
         fileBrowser.setDirectoryTree(addSongFileBrowser, directoryTree)
 
         editPlaylistHeader = scene.getView("editPlaylistHeader")
