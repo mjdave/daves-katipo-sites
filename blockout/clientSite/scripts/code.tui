@@ -123,12 +123,12 @@ loadNextLevel = function()
     .ballSpeed = viewSize.y * 2.5
     .paddleSpeed = ballSpeed / 3
 
-    .blockSize = vec2(math.floor(viewSize.x / 20), math.floor(viewSize.y / 60))
+    .blockSize = vec2(math.floor(viewSize.x / 20), math.floor(viewSize.y / 72))
     paddingX = math.floor(math.max(blockSize.x / 20, 2))
     .padding = vec2(paddingX, paddingX)
     ballView.size = vec2(blockSize.y,blockSize.y)
 
-    .paddleSize = vec2(math.floor(blockSize.x * 2.5),blockSize.y)
+    .paddleSize = vec2(math.floor(blockSize.x * 3),blockSize.y)
     paddleView.size = paddleSize
 
     paddleView.goalX = 0.0
@@ -251,7 +251,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         paddleView.goalX += dt * paddleSpeed * increasingSpeedMultiplier
     }
 
-    paddleView.pos.x = paddleView.goalX # += (paddleView.goalX - paddleView.pos.x) * math.min(dt * 20.0, 1.0)
+    paddleView.pos.x += (paddleView.goalX - paddleView.pos.x) * math.min(dt * 50.0, 1.0)
 
     paddleTop = paddleView.pos.y + paddleSize.y
     if(ballView.pos.y < paddleTop and ballView.pos.y > paddleView.pos.y - paddleSize.y) #subtracted to provide double sized hitbox below

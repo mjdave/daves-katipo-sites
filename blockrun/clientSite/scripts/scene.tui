@@ -12,7 +12,7 @@ highScoreText = {
     alignmentX = "left"
     alignmentY = "top"
     font = "robotoBold"
-    fontSize = 48
+    fontSize = 30
     color = vec4(0.2,0.4,1.0,1.0)
     additiveBlend = true
 }

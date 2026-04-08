@@ -360,17 +360,10 @@ show = function(directoryTree, playlistOrNil)
         textChangeCallback = function(textValue, confirmChanges){
             if(confirmChanges and string.length(textValue) > 0 and playlistTitle != textValue)
             {
-                prevSavePath = sharedPlaylistsDirPath + currentPlaylistID + "_" + playlistTitle + ".tuib"
-
                 .playlistTitle = textValue
                 addSongSubtitleText.text = textValue
 
                 saveCurrentPlaylist()
-
-                if(file.fileExists(prevSavePath)) #bit of a hack, I want playlistTitle to be in the filename so it isn't impossible to know what is what
-                {
-                    file.remove(prevSavePath)
-                }
             }
         }
 

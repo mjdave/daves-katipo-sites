@@ -1,0 +1,14 @@
+viewTypes = {
+    markup = require("app/common/markupView.tui")
+    scrollView = require("app/common/scrollView.tui") #required by markupView
+}
+
+mainView = {
+    type = "view"
+    subviews = {
+        {
+            id = "pageBody"
+            type = "markup"
+        }
+    }
+}
