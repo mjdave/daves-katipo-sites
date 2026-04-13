@@ -21,12 +21,10 @@ musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
 imagesDirectoryPath = clientSitePath + "/images/"
 clientScriptsDirectoryPath = clientSitePath + "/scripts/"
 clientFontsDirectoryPath = clientSitePath + "/fonts/"
-sharedPlaylistsDirectoryPath = clientSitePath + "/sharedPlaylists/"
-
-file.createDirectoriesIfNeededForDirPath(sharedPlaylistsDirectoryPath)
 
 songServerInfosBySongID = {}
 directoryTree = {}
+sharedPlaylists = {}
 
 loadFilesFromDir = function(dirPath, exportPrependPathOrNil)
 {
@@ -72,13 +70,11 @@ doCrawl = function()
     libraryCrawler.importM3UPlaylists = importM3UPlaylists
     libraryCrawler.runCrawl(musicDirectoryPath)
 
-    sharedPlaylists = {}
-
     if(importM3UPlaylists)
     {
         for(newPlaylist in libraryCrawler.importedPlaylists)
         {
-            playlistID = string.sha1(newPlaylist.title + math.random()) #todo tui needs a random sha1 function
+            playlistID = string.sha1(newPlaylist.title)
             playlistID = string.subString(playlistID, 0, 8)
 
             if(table.count(newPlaylist.songs) > 0)
@@ -118,24 +114,24 @@ get = function(url, clientData)
         {
             return {
                 status = "error"
-                message = "request missing required playlistID and name"
+                message = "request missing required playlistID, name"
             }
         }
 
-        savePath = sharedPlaylistsDirectoryPath + playlistID + ".tuib"
-        if(table.count(songs) > 0)
+        if(songs and table.count(songs) > 0)
         {
-            saveData = {
+            sharedPlaylists[playlistID] = {
                 playlistID = playlistID
                 name = name
                 songs = songs
             }
-            file.saveBinary(savePath, saveData)
         }
         else
         {
-            file.remove(savePath) #might be a good idea to also create a new currentPlaylistID?
+            sharedPlaylists[playlistID] = nil
         }
+
+        host.setPublicData("sharedPlaylists", sharedPlaylists)
 
         return {
             status = "ok"

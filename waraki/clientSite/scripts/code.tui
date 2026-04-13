@@ -406,13 +406,13 @@ addSongsToDownloadQueueForPlaylist = function(playlist)
 
 loadPlaylists = function()
 {
-    sharedPlaylists = {}
+    sharedPlaylistsOrderedArray = {}
 
     if(sharedPlaylistsByPlaylistID)
     {
         for(playlistID,playlistData in sharedPlaylistsByPlaylistID)
         {
-            table.insert(sharedPlaylists, playlistData)
+            table.insert(sharedPlaylistsOrderedArray, playlistData)
         }
     }
 
@@ -420,20 +420,20 @@ loadPlaylists = function()
     {
         return a.name < b.name
     }
-    table.sort(sharedPlaylists, compareFunction)
+    table.sort(sharedPlaylistsOrderedArray, compareFunction)
 
     .playlistViews = {}
     playlistScrollView.removeAllRows()
 
     noPlaylistsText = scene.getView("noPlaylistsText")
 
-    if(table.count(sharedPlaylists) > 0)
+    if(table.count(sharedPlaylistsOrderedArray) > 0)
     {
         noPlaylistsText.hidden = true
 
         viewTable = scene.mainPlaylistsPlaylistItem
 
-        for(i,playlist in sharedPlaylists)
+        for(i,playlist in sharedPlaylistsOrderedArray)
         {
             addSongsToDownloadQueueForPlaylist(playlist)
 
@@ -489,17 +489,40 @@ loadPlaylists = function()
     }      
 }
 
+savePlaylist = function(serverPlaylistInfo)
+{
+    saveCallback = function()
+    {
+        #todo if this fails we need to save the fact it has changed in the database, send again in the future 
+    }
+
+    if(serverPlaylistInfo.songs and table.count(serverPlaylistInfo.songs) > 0)
+    {
+        sharedPlaylistsByPlaylistID[serverPlaylistInfo.playlistID] = serverPlaylistInfo
+    }
+    else
+    {
+        sharedPlaylistsByPlaylistID[serverPlaylistInfo.playlistID] = nil
+    }
+
+    database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
+    katipo.get("savePlaylist", serverPlaylistInfo, saveCallback)
+}
+
 
 editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "delegate"
     playPreview = playPreview
     playPauseButtonClick = playPauseButtonClick
     backButtonClicked = editPlaylistBackClick
+    savePlaylist = savePlaylist
 }
 
 katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
-    .sharedPlaylistsByPlaylistID = publicData.sharedPlaylistsByPlaylistID
+    .sharedPlaylistsByPlaylistID = publicData.sharedPlaylists
     .directoryTree = publicData.directoryTree
+
+    database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
 
     loadPlaylists()
 

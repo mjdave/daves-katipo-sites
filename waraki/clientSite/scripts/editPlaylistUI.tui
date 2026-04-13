@@ -1,5 +1,4 @@
 songsCachePath = file.getSavePath("files/songs/")
-sharedPlaylistsDirPath = file.getSavePath("files/sharedPlaylists/")
 
 fileBrowser = scene.viewTypes.fileBrowser
 
@@ -73,32 +72,13 @@ saveCurrentPlaylist = function()
 {
     if(currentPlaylistID)
     {
-        savePath = sharedPlaylistsDirPath + currentPlaylistID + ".tuib"
-        if(table.count(playlistContent) > 0)
-        {
-            saveData = {
-                playlistID = currentPlaylistID
-                name = playlistTitle
-                songs = playlistContent
-            }
-            file.saveBinary(savePath, saveData)
-        }
-        else
-        {
-            file.remove(savePath) #might be a good idea to also create a new currentPlaylistID?
-        }
-
-        saveCallback = function()
-        {
-            #todo really need to save the fact it has changed, send again in the future if this fails
-        }
-        
         serverPlaylistInfo = {
             playlistID = currentPlaylistID
             name = playlistTitle
             songs = playlistContent
         }
-        katipo.get("savePlaylist", serverPlaylistInfo, saveCallback)
+
+        delegate.savePlaylist(serverPlaylistInfo)
     }
 }
 
