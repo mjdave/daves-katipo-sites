@@ -7,20 +7,21 @@ tilesView = scene.getView("tiles")
 scoreView = scene.getView("score")
 livesView = scene.getView("lives")
 
-lives = 3
+lives = 1
 livesView.text = string.format("%d", lives)
 
 gameRunning = false
+editMode = true
 viewSize = false
 
 tileTypes = {
     empty = {}
     ground = {
-        color = vec4(0.2,0.5,0.9,0.9)
+        color = vec4(0.1,0.5,0.1,0.9)
     }
 }
 
-tileSize = 64
+tileSize = 96
 
 tileViewLayout = {
     type = "color"
@@ -42,94 +43,108 @@ tilesView.onParentSizeChanged = function(parentSize)
 levelView = false
 playerView = false
 
-groundLevel = 8
+groundLevel = 6
 levelLength = 1024
 
 playerPos = vec2(8,0)
 cameraPos = playerPos
 
-gravity = -50.0
+gravity = -60.0
 jumpSpeed = 20.0
-movementSpeed = 8.0
+movementSpeed = 13.0
 
 playerVerticalVelocity = 0
 
 windowHalfSizeBlocks = 12
 
-lastUpdatedPlayerX = nil
+
+worldPosToScreenPos = function(worldPos) #block center from screen center
+{
+    screenOffset = cameraPos * tileSize
+    return vec2(screenOffset.x - worldPos.x * tileSize + viewSize.x * 0.5, #this viewSize.x * 0.5 is untested
+                screenOffset.y - worldPos.y * tileSize + viewSize.y * 0.5)
+}
+
+
+screenPosToWorldPos = function(screenPos) #block lowerLeft from screen center
+{
+    screenOffset = cameraPos * tileSize
+    return vec2((screenPos.x + screenOffset.x - viewSize.x * 0.5) / tileSize,
+                (screenPos.y + screenOffset.y - viewSize.y * 0.5) / tileSize)
+}
+
+updateTileView = function(tile, column)
+{
+    if(tile.type)
+    {
+        if(tile.view)
+        {
+            tile.view.hidden = false
+        }
+        else if(column.view)
+        {
+            tileView = column.view.addView(tileViewLayout)
+            tile.view = tileView
+            tileView.color = tile.type.color * (0.9 + 0.2 * math.random())
+            tileView.pos = vec3(column.columnIndex * tileSize, tile.rowIndex * tileSize, 0)
+        }
+    }
+    else
+    {
+        if(tile.view)
+        {
+            tile.view.hidden = true
+        }
+    }
+}
+
+
+lastUpdatedCameraX = nil
 loadAndUnloadColumnViews = function()
 {
-    playerX = playerPos.x
-    if(lastUpdatedPlayerX != playerX)
+    cameraX = cameraPos.x
+    if(lastUpdatedCameraX != cameraX)
     {
-        .lastUpdatedPlayerX = playerX
+        .lastUpdatedCameraX = cameraX
         for(columnIndex, column in levelColumns)
         {
-            shouldBeVisible = (columnIndex > playerX - windowHalfSizeBlocks and columnIndex <= playerX + windowHalfSizeBlocks)
-            if(column.view and !shouldBeVisible)
+            shouldBeVisible = (columnIndex > cameraX - windowHalfSizeBlocks and columnIndex <= cameraX + windowHalfSizeBlocks)
+            columnView = column.view
+            if(columnView and !shouldBeVisible)
             {
-                levelView.removeView(column.view)
+                for(rowIndex, tile in column.rows)
+                {
+                    if(tile)
+                    {
+                        tile.view = nil
+                    }
+                }
+                levelView.removeView(columnView)
                 column.view = nil
             }
-            else if(!column.view and shouldBeVisible)
+            else if(!columnView and shouldBeVisible)
             {
                 column.view = levelView.addView({type="view"})
                 for(rowIndex, tile in column.rows)
                 {
-                    tileView = column.view.addView(tileViewLayout)
-                    tileView.color = tile.type.color * (0.9 + 0.2 * math.random())
-                    tileView.pos = vec3(column.columnIndex * tileSize, rowIndex * tileSize, 0)
+                    if(tile)
+                    {
+                        updateTileView(tile, column)
+                    }
                 }
             }
         }
     }
 }
 
-loadNextLevel = function()
+resetPlayer = function()
 {
-    levelHeight = 32
-
-    if(levelView)
-    {
-        tilesView.removeView(levelView)
-    }
-    .levelView = tilesView.addView({type="view"})
-
-    for(columnIndex = 0, columnIndex < levelLength, columnIndex++)
-    {
-        column = {
-            columnIndex = columnIndex
-            rows = {}
-        }
-        table.insert(levelColumns, column)
-        for(rowIndex = 0, rowIndex < groundLevel, rowIndex++)
-        {
-            tile = {
-                type = tileTypes.ground
-            }
-            table.insert(column.rows, tile)
-        }
-
-        if(math.randomInt(4) == 2)
-        {
-            if(math.randomInt(2) == 0)
-            {
-                groundLevel--
-            }
-            else
-            {
-                groundLevel++
-            }
-        }
-    }
-
-
     playerViewLayout = {
         id = "player"
         type = "image"
         path = "images/ball.png"
-        color = vec4(0.0,1.0,0.1,0.9)
-        size = vec2(tileSize,tileSize)
+        color = vec4(0.9,0.3,0.1,0.9)
+        size = vec2(80,80)
         alignmentX = "left"
         alignmentY = "bottom"
     }
@@ -142,6 +157,35 @@ loadNextLevel = function()
     playerView.pos = vec3(playerPos.x * tileSize, playerPos.y * tileSize, 0)
 
     .playerVerticalVelocity = 0
+}
+
+resetLevel = function()
+{
+    if(levelView)
+    {
+        tilesView.removeView(levelView)
+    }
+    .levelView = tilesView.addView({type="view"})
+
+    .levelColumns = {}
+
+    for(columnIndex = 0, columnIndex < levelLength, columnIndex++)
+    {
+        column = {
+            columnIndex = columnIndex
+            rows = {}
+        }
+        table.insert(levelColumns, column)
+        for(rowIndex = 0, rowIndex < groundLevel, rowIndex++)
+        {
+            tile = {
+                type = tileTypes.ground
+                rowIndex = rowIndex
+            }
+            table.insert(column.rows, tile)
+        }
+
+    }
 }
 
 katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
@@ -160,22 +204,27 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         return
     }
 
-    playerPos += vec2(movementSpeed * dt, 0)
-
-    playerPos.y += playerVerticalVelocity * dt
-    playerVerticalVelocity += dt * gravity
-
-    currentColumn = levelColumns[math.floor(playerPos.x)]
-    rowCount = table.count(currentColumn.rows)
-    if(rowCount > playerPos.y)
+    if(!editMode)
     {
-        playerPos.y = rowCount
-        .playerVerticalVelocity = 0.0
+        playerPos += vec2(movementSpeed * dt, 0)
+
+        playerPos.y += playerVerticalVelocity * dt
+        playerVerticalVelocity += dt * gravity
+
+        currentColumn = levelColumns[math.floor(playerPos.x)]
+        rowCount = table.count(currentColumn.rows)
+        if(rowCount > playerPos.y)
+        {
+            playerPos.y = rowCount
+            .playerVerticalVelocity = 0.0
+        }
+
+        .cameraPos = cameraPos + (playerPos - cameraPos) * (math.min(dt * 20, 1.0))
     }
 
     loadAndUnloadColumnViews()
 
-    .cameraPos = cameraPos + (playerPos - cameraPos) * (math.min(dt * 20, 1.0))
+
     levelView.pos = vec3(-cameraPos.x * tileSize + viewSize.x * 0.5, -cameraPos.y * tileSize + viewSize.y * 0.5, 0)
     playerView.pos = vec3(playerPos.x * tileSize, playerPos.y * tileSize, 0)
 }
@@ -198,19 +247,108 @@ spaceBarFunction = function(isDown, code, mod, isRepeat)
     }
 }
 
-
-blocksView.mouseDown = function(buttonIndex, pos)
+escapeFunction = function(isDown, code, mod, isRepeat)
 {
-    doJump()
+    if(isDown and !isRepeat)
+    {
+        .editMode = !editMode
+    }
+}
+
+lastMousePos = false
+dragging = false
+dragStartCameraPos = false
+
+gameView.mouseDragged = function(buttonIndex, pos)
+{
+    if(editMode)
+    {
+        difference = (pos - lastMousePos)
+        if(math.abs(difference.x) > 4 or math.abs(difference.y) > 4)
+        {
+            .dragging = true
+            .cameraPos = dragStartCameraPos - difference / tileSize
+        }
+    }
+}
+
+gameView.mouseDown = function(buttonIndex, pos)
+{
+    if(editMode)
+    {
+        .lastMousePos = pos
+        .dragStartCameraPos = cameraPos
+    }
+    else
+    {
+        doJump()
+    }
 }
 
 
+gameView.mouseUp = function(buttonIndex, pos)
+{
+    if(!dragging)
+    {
+        tilePos = screenPosToWorldPos(pos)
+        columnIndex = math.floor(tilePos.x)
+        if(columnIndex >= 0 and columnIndex < levelLength)
+        {
+            rowIndex = math.floor(tilePos.y)
+            if(rowIndex >= 0)
+            {
+                column = levelColumns[columnIndex]
+                tile = false
+                if(table.count(column.rows) > rowIndex)
+                {
+                    tile = column.rows[rowIndex]
+                    if(tile)
+                    {
+                        if(tile.type)
+                        {
+                            tile.type = nil
+                        }
+                        else
+                        {
+                            tile.type = tileTypes.ground
+                        }
+                    }
+                    else
+                    {
+                        tile = {
+                            type = tileTypes.ground
+                            rowIndex = rowIndex
+                        }
+                        column.rows[rowIndex] = tile
+                    }
+                }
+                else
+                {
+                    tile = {
+                        type = tileTypes.ground
+                        rowIndex = rowIndex
+                    }
+                    table.insert(column.rows, rowIndex, tile)
+                }
+
+                if(tile)
+                {
+                    updateTileView(tile, column)
+                }
+            }
+        }
+    }
+    .dragging = false
+}
+
 eventManager.addKeyEventListener(keys.keyCodes.space, spaceBarFunction)
+eventManager.addKeyEventListener(keys.keyCodes.escape, escapeFunction)
 
 
 highScores.onPlayClick = function()
 {
-    loadNextLevel()
+    resetLevel()
+    resetPlayer()
     highScores.fadeOut(gameView)
     .gameRunning = true
 }
