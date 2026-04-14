@@ -71,7 +71,6 @@ getSongCallback = function(result, hostID)
     {
         error("unhandled result.")
     }
-    updateDownloads()
 }
 
 
@@ -85,11 +84,24 @@ updateDownloads = function()
             table.remove(songDownloadArray, 0)
 
             songInfo = downloadInfo.songInfo
-            print("downloading song:", songInfo.fileName)
-            statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-            .currentRequestedSongDownloadInfo = downloadInfo
-            
-            katipo.get("songs/" + songInfo.songID, getSongCallback)
+            thisSongCachePath = songsCachePath + songInfo.localPath
+
+            if(file.fileExists(thisSongCachePath))
+            {
+                statusSubtitleTextView.text = "Syncing..." + songInfo.fileName
+            }
+            else
+            {
+                print("downloading song:", songInfo.fileName)
+                statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
+                .currentRequestedSongDownloadInfo = downloadInfo
+                
+                katipo.get("songs/" + songInfo.songID, getSongCallback)
+            }
+        }
+        else
+        {
+            statusSubtitleTextView.text = "Sync Complete."
         }
     }
 }
@@ -139,14 +151,14 @@ addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't e
         table.insert(songDownloadArray, downloadInfo) #insert last
     }
 
-    if(connected)
-    {
-        updateDownloads()
-    }
 }
 
 katipo.update = function(dt) #called every tick
 {
+    if(connected)
+    {
+        updateDownloads()
+    }
     #{
     #    .hasStartedCache = true
     #    for(playlist in playlists)
@@ -394,12 +406,7 @@ addSongsToDownloadQueueForPlaylist = function(playlist)
     {
         for(songInfo in playlist.songs)
         {
-            thisSongCachePath = songsCachePath + songInfo.localPath
-
-            if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
-            {
-                addDownload(songInfo, false)
-            }
+            addDownload(songInfo, false)
         }
     }
 }
