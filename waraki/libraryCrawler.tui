@@ -162,9 +162,9 @@ addm3uPlaylists = function()
         while(characterIndex)
         {
             #print("characterIndex a:", characterIndex)
-            lineStart = characterIndex + 1
+            .lineStart = characterIndex + 1
             #print("lineStart:", lineStart)
-            characterIndex = string.find(m3uData, "\n", lineStart)
+            .characterIndex = string.find(m3uData, "\n", lineStart)
             #print("characterIndex b:", characterIndex)
             if(characterIndex)
             {
@@ -177,8 +177,8 @@ addm3uPlaylists = function()
                     #print("base path:", normalizedSongPath)
                     while(string.subString(line, 0, 3) == "../")
                     {
-                        normalizedSongPath = file.removeLastPathComponent(normalizedSongPath)
-                        line = string.subString(line, 3)
+                        .normalizedSongPath = file.removeLastPathComponent(normalizedSongPath)
+                        .line = string.subString(line, 3)
                     }
                     #print("parent dirs removed:", normalizedSongPath)
                     normalizedSongPath = normalizedSongPath + line
