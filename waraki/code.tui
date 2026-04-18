@@ -24,7 +24,6 @@ clientFontsDirectoryPath = clientSitePath + "/fonts/"
 
 songServerInfosBySongID = {}
 directoryTree = {}
-sharedPlaylists = {}
 
 loadFilesFromDir = function(dirPath, exportPrependPathOrNil)
 {
@@ -183,6 +182,11 @@ init = function() #called just after katipo.init. The database is now ready to u
 {
     .directoryTree = host.getPublicData("directoryTree")
     .songServerInfosBySongID = host.getPrivateData("songServerInfosBySongID")
+    .sharedPlaylists = host.getPublicData("sharedPlaylists")
+    if(!sharedPlaylists)
+    {
+        .sharedPlaylists = {}
+    }
 
     print("loaded directory tree:", directoryTree)
 

@@ -234,13 +234,7 @@ runCrawl = function(directoryPath)
         addm3uPlaylists()
     }
 
-    playlistSongCount = 0
-    for(playlist in importedPlaylists)
-    {
-        playlistSongCount += table.count(playlist.songs)
-    }
-
-    print("Crawl complete. Found ", fileCount, " total songs, with ", playlistSongCount, " songs within playlists")
+    print("Crawl complete. Found ", fileCount, " songs.")
 }
 
 
