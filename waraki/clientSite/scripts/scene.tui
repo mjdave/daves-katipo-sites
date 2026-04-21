@@ -21,7 +21,7 @@ playlistsHeader = {
     alignmentX = "left"
     alignmentY = "top"
     subviews = {
-        {
+        /*{
             id = "settingsButton"
             type = "button"
             buttonType = "imageHueShift"
@@ -29,7 +29,7 @@ playlistsHeader = {
             pos = vec3(40,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
-        }
+        }*/
         {
             id = "title"
             type = "text"
@@ -118,11 +118,21 @@ editPlaylistHeader = {
             type = "textEntry"
             font = "blockheadsHue"
             fontSize = 20
-            backgroundColor = vec4(0.0,0.2,0.0,0.2)
+            backgroundColor = vec4(0.0,0.4,0.2,0.6)
             onParentSizeChanged = function(parentSize)
             {
-                return vec2(parentSize.x - 240, 40)
+                return vec2(parentSize.x - 240 - 53 - 10, 40)
             }
+            pos = vec3(-32,0,0)
+        }
+        {
+            id = "toggleDownloadButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/downloadOn.png"
+            pos = vec3(-40 - 40 - 10, 0, 0)
+            size = vec2(53,40)
+            alignmentX = "right"
         }
         {
             id = "editPlaylistAddSongButton"
@@ -316,7 +326,9 @@ mainPlaylistsPlaylistItem = {
     subviews = {
         {
             id = "playlistItemBackground"
-            type = "color"
+            type = "button"
+            buttonType = "color"
+            additiveBlend = true
             color = vec4(0.04,0.12,0.15,0.3)
         }
         {
@@ -335,18 +347,58 @@ mainPlaylistsPlaylistItem = {
             clip = true
             buttonType = "imageHueShift"
             path = "images/dotDotDot.png"
-            pos = vec3(-70,0, 0)
+            pos = vec3(-20,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
+    }
+}
+
+playlistSongItemHeight = 40
+addAndPlayButtonSize = vec2(30,30)
+
+playlistSongItem = {
+    id = "playlistSongItem"
+    type = "view"
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x - 20.0,playlistSongItemHeight)
+    }
+
+    subviews = {
         {
-            id = "playButton"
+            id = "playlistSongItemBackground"
             type = "button"
-            clip = true
+            buttonType = "color"
+            additiveBlend = true
+            color = vec4(0.04,0.12,0.15,0.3)
+        }
+        {
+            id = "playlistSongItemDeletionWarningRedBackground"
+            type = "color"
+            additiveBlend = true
+            hidden = true
+            masksEvents = false
+            color = vec4(0.5,0.0,0.0,0.5)
+        }
+        {
+            id = "songItemTitle"
+            type = "text"
+            text = "Title"
+            font = "roboto"
+            alignmentX = "left"
+            additiveBlend = true
+            pos = vec3(10,0,0)
+            fontSize = 14
+        }
+        {
+            id = "addButton"
+            type = "button"
             buttonType = "imageHueShift"
-            path = "images/play.png"
-            pos = vec3(-20,0, 0)
-            size = vec2(40,40)
+            clip = true
+            path = "images/add.png"
+            pos = vec3(-10,0, 0)
+            size = addAndPlayButtonSize
             alignmentX = "right"
         }
     }

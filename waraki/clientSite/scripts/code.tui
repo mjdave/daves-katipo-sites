@@ -4,25 +4,25 @@
 
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
 
-retryDelay = 60.0 #attempts to download again every retryDelay seconds on failure
-
-#playlistsDiffPath = file.getSavePath("files/playlistsDiff.tuib")
-#playlistsPath = file.getSavePath("files/playlists.tuib")
 songsCachePath = file.getSavePath("files/songs/")
 
 file.createDirectoriesIfNeededForDirPath(songsCachePath)
 
 print("songsCachePath:", songsCachePath)
 
-hasStartedCache = false
-allSongsSuccessfullyCached = false
-
 paused = true
 connected = false
+
+allRequiredSongPaths = {}
+filesToRemove = false
+fileRemoveComplete = false
+downloadsComplete = false
+cleanupComplete = false
 
 songDownloadArray = {}
 songsToDownloadByID = {}
 currentRequestedSongDownloadInfo = false
+
 sharedPlaylistsByPlaylistID = false
 directoryTree = false
 
@@ -73,6 +73,28 @@ getSongCallback = function(result, hostID)
     }
 }
 
+checkForNextFileAndDownloadIfNeeded = function()
+{
+    downloadInfo = songDownloadArray[0]
+    table.remove(songDownloadArray, 0)
+
+    songInfo = downloadInfo.songInfo
+    thisSongCachePath = songsCachePath + songInfo.localPath
+
+    if(file.fileExists(thisSongCachePath))
+    {
+        statusSubtitleTextView.text = "Syncing..."
+        return false
+    }
+    
+    print("downloading song:", songInfo.fileName)
+    statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
+    .currentRequestedSongDownloadInfo = downloadInfo
+    
+    katipo.get("songs/" + songInfo.songID, getSongCallback)
+    return true
+}
+
 
 updateDownloads = function()
 {
@@ -80,33 +102,88 @@ updateDownloads = function()
     {
         if(table.count(songDownloadArray) > 0)
         {
-            downloadInfo = songDownloadArray[0]
-            table.remove(songDownloadArray, 0)
-
-            songInfo = downloadInfo.songInfo
-            thisSongCachePath = songsCachePath + songInfo.localPath
-
-            if(file.fileExists(thisSongCachePath))
+            .downloadsComplete = false
+            
+            for(i = 0, i < 32, i++) #this limits the number of file operations per frame, should really be done on a background thread
             {
-                statusSubtitleTextView.text = "Syncing..." + songInfo.fileName
-            }
-            else
-            {
-                print("downloading song:", songInfo.fileName)
-                statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
-                .currentRequestedSongDownloadInfo = downloadInfo
-                
-                katipo.get("songs/" + songInfo.songID, getSongCallback)
+                startedDownload = checkForNextFileAndDownloadIfNeeded()
+                if(startedDownload or table.count(songDownloadArray) == 0)
+                {
+                    break
+                }
             }
         }
         else
         {
             statusSubtitleTextView.text = "Sync Complete."
+            .downloadsComplete = true
         }
     }
 }
 
-addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't exist
+recursivelyAddFilesToRemove = function(localPath)
+{
+    thisSongCachePath = songsCachePath
+    if(localPath)
+    {
+        thisSongCachePath += localPath
+    }
+    if(file.isDirectory(thisSongCachePath))
+    {
+        contents = file.directoryContents(thisSongCachePath)
+        for(fileName in contents)
+        {
+            fullLocalPath = fileName
+            if(localPath)
+            {
+                fullLocalPath = localPath + "/" + fileName
+            }
+            recursivelyAddFilesToRemove(fullLocalPath)
+        }
+    }
+    else
+    {
+        if(file.fileExists(thisSongCachePath))
+        {
+            if(!allRequiredSongPaths[localPath])
+            {
+                table.insert(filesToRemove, localPath)
+            }
+        }
+    }
+}
+
+updateCleanup = function()
+{
+    if(downloadsComplete and !cleanupComplete)
+    {
+        if(!filesToRemove)
+        {
+            .filesToRemove = {}
+            recursivelyAddFilesToRemove()
+            #print("filesToRemove:", filesToRemove)
+        }
+
+        removeCount = table.count(filesToRemove)
+        if(removeCount == 0)
+        {
+            .cleanupComplete = true
+        }
+        else
+        {
+            localPath = filesToRemove[removeCount - 1]
+            if(!allRequiredSongPaths[localPath])
+            {
+                fullPath = songsCachePath + localPath
+                print("removing file:", fullPath)
+                file.remove(fullPath)
+            }
+            table.remove(filesToRemove, removeCount - 1)
+        }
+    }
+}
+
+addDownload = function(songInfo, playWhenDone)
 {
     if(currentRequestedSongDownloadInfo and currentRequestedSongDownloadInfo.songInfo.songID == songInfo.songID)
     {
@@ -139,6 +216,9 @@ addDownload = function(songInfo, playWhenDone) #assumes only that file doesn't e
         songInfo = songInfo
         playWhenDone = playWhenDone
     }
+
+    songPath = songInfo.localPath
+    allRequiredSongPaths[songPath] = true
     
     songsToDownloadByID[songInfo.songID] = downloadInfo
 
@@ -159,34 +239,7 @@ katipo.update = function(dt) #called every tick
     {
         updateDownloads()
     }
-    #{
-    #    .hasStartedCache = true
-    #    for(playlist in playlists)
-    #    {
-    #        songs = playlist.songs
-    #        for(song in songs)
-    #        {
-    #            table.insert(songsToDownloadArray, song.songID)
-    #            songsInfosByID[song.songID] = song
-    #        }
-    #    }
-    #}
-#
-    #if(hasStartedCache and !waitingForDownload and !allSongsSuccessfullyCached)
-    #{
-    #    if(retryingAfterFailedToDownload)
-    #    {
-    #        .retryTimer = retryTimer - dt
-    #        if(retryTimer <= 0)
-    #        {
-    #            .retryingAfterFailedToDownload = false
-    #        }
-    #    }
-    #    else
-    #    {
-    #        downloadToCache(cacheDownloadIndex)
-    #    }
-    #}
+    updateCleanup()
 }
 
 titleView = scene.getView("title")
@@ -236,7 +289,7 @@ playPreview = function(songInfo)
 {
     thisSongCachePath = songsCachePath + songInfo.localPath
 
-    if(!file.fileExists(thisSongCachePath) or file.fileSize(thisSongCachePath) == 0)
+    if(!file.fileExists(thisSongCachePath))
     {
         addDownload(songInfo, true)
     }
@@ -283,8 +336,6 @@ updatePauseButton = function()
     {
         playPauseButton.path = "images/pause.png"
     }
-
-    editPlaylistUI.updatePauseButtons(paused)
 }
 
 playPauseButtonClick = function()
@@ -322,11 +373,11 @@ updateVisuals = function()
         backgroundView = itemView.getView("playlistItemBackground")
         if(itemView == selectedPlaylistView)
         {
-            backgroundView.color = itemView.baseColor + vec4(0.2,0.0,0.5,0.3)
+            backgroundView.setSelected(true)
         }
         else
         {
-            backgroundView.color = itemView.baseColor
+            backgroundView.setSelected(false)
         }
     }
 }
@@ -442,7 +493,16 @@ loadPlaylists = function()
 
         for(i,playlist in sharedPlaylistsOrderedArray)
         {
-            addSongsToDownloadQueueForPlaylist(playlist)
+            disabledKey = "disabled_" + playlist.playlistID
+            playlistDownloadDisabled = database.get(disabledKey)
+            if(!playlistDownloadDisabled)
+            {
+                addSongsToDownloadQueueForPlaylist(playlist)
+            }
+            else
+            {
+                print("skipping download of disabled playlist:", playlist.name)
+            }
 
             itemView = playlistScrollView.addView(viewTable)
             titleTextView = itemView.getView("playlistItemTitle")
@@ -452,7 +512,7 @@ loadPlaylists = function()
             backgroundView = itemView.getView("playlistItemBackground")
 
             dotDotDotButton = itemView.getView("dotDotDotButton")
-            dotDotDotButton.hueOffset = -0.1 * i + 0.2
+            dotDotDotButton.setHueOffset(-0.1 * i + 0.2)
             dotDotDotButton.click = function()
             {
                 playlistsHeader.hidden = true
@@ -463,9 +523,6 @@ loadPlaylists = function()
                 editPlaylistUI.show(directoryTree, playlist)
             }
 
-            playButton = itemView.getView("playButton")
-            playButton.hueOffset = -0.1 * i + 0.2
-
             playFunc = function()
             {
                 .selectedPlaylistView = itemView
@@ -473,7 +530,6 @@ loadPlaylists = function()
                 updateVisuals()
 
             }
-            playButton.click = playFunc
 
             backgroundView.click = function()
             {
@@ -484,7 +540,10 @@ loadPlaylists = function()
             {
                 backgroundView.color = backgroundView.color * 0.5
             }
+            backgroundView.baseColor = backgroundView.color
             itemView.baseColor = backgroundView.color
+
+            backgroundView.selectedColor = itemView.baseColor + vec4(0.2,0.0,0.5,0.3)
 
             #playlistScrollView.insertRow(itemView)
             table.insert(playlistViews, itemView)
@@ -512,7 +571,7 @@ savePlaylist = function(serverPlaylistInfo)
         sharedPlaylistsByPlaylistID[serverPlaylistInfo.playlistID] = nil
     }
 
-    database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
+    #database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
     katipo.get("savePlaylist", serverPlaylistInfo, saveCallback)
 }
 
@@ -524,15 +583,25 @@ editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "dele
     savePlaylist = savePlaylist
 }
 
-katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
-    .sharedPlaylistsByPlaylistID = publicData.sharedPlaylists
-    .directoryTree = publicData.directoryTree
+    #print("in katipo.onSiteLoad. database:", database)
+    if(publicData)
+    {
+        .connected = true
+        .sharedPlaylistsByPlaylistID = publicData.sharedPlaylists
+        .directoryTree = publicData.directoryTree
+        database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
+        database.set("directoryTree", directoryTree)
+    }
+    else
+    {
+        .connected = false
+        .sharedPlaylistsByPlaylistID = database.get("sharedPlaylists")
+        .directoryTree = database.get("directoryTree")
 
-    database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
+        #print("sharedPlaylistsByPlaylistID:", sharedPlaylistsByPlaylistID)
+    }
 
     loadPlaylists()
-
-    .connected = true
-    updateDownloads()
 }

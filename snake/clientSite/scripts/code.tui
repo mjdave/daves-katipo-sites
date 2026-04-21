@@ -683,7 +683,7 @@ updateAISnake = function(snake, dt)
     updateSnake(snake, dt)
 }
 
-katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
     print("in clientSite onConnected:", publicData)
     if(publicData and publicData.highScores)

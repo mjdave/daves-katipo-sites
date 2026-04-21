@@ -188,9 +188,9 @@ resetLevel = function()
     }
 }
 
-katipo.onConnected = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
-    print("in clientSite onConnected:", publicData)
+    print("in clientSite onSiteLoad:", publicData)
     if(publicData and publicData.highScores)
     {
         highScores.setFromHost(publicData.highScores)
