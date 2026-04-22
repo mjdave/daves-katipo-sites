@@ -3,6 +3,7 @@ viewTypes = { #can be added to at any time
     textEntry = require("app/common/textEntry.tui")
     scrollView = require("app/common/scrollView.tui")
     fileBrowser = require("app/common/fileBrowser.tui")
+    markup = require("app/common/markupView.tui")
 }
 
 topStatusBarPadding = 40
@@ -21,15 +22,15 @@ playlistsHeader = {
     alignmentX = "left"
     alignmentY = "top"
     subviews = {
-        /*{
-            id = "settingsButton"
+        {
+            id = "helpButton"
             type = "button"
             buttonType = "imageHueShift"
-            path = "images/settings.png"
-            pos = vec3(40,0, 0)
+            path = "images/help.png"
+            pos = vec3(30,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
-        }*/
+        }
         {
             id = "title"
             type = "text"
@@ -53,15 +54,15 @@ playlistsHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/add.png"
-            pos = vec3(-40,0, 0)
+            pos = vec3(-30,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
     }
 }
 
-settingsHeader = {
-    id = "settingsHeader"
+helpHeader = {
+    id = "helpHeader"
     type = "color"
     hidden = true
     color = vec4(0.3,0.2,0.0,0.2)
@@ -73,18 +74,18 @@ settingsHeader = {
     alignmentY = "top"
     subviews = {
         {
-            id = "settingsBackButton"
+            id = "helpBackButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(40,0, 0)
+            pos = vec3(30,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
         {
             id = "title"
             type = "text"
-            text = "Settings"
+            text = "Help"
             font = "blockheadsHue"
             additiveBlend = true
             fontSize = 24
@@ -109,7 +110,7 @@ editPlaylistHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(40,0, 0)
+            pos = vec3(30,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -130,7 +131,7 @@ editPlaylistHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/downloadOn.png"
-            pos = vec3(-40 - 40 - 10, 0, 0)
+            pos = vec3(-30 - 40 - 10, 0, 0)
             size = vec2(53,40)
             alignmentX = "right"
         }
@@ -139,7 +140,7 @@ editPlaylistHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/add.png"
-            pos = vec3(-40,0, 0)
+            pos = vec3(-30,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
@@ -164,7 +165,7 @@ addSongHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(40,0, 0)
+            pos = vec3(30,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -207,17 +208,14 @@ playlistContent = {
     }
 }
 
-settingsContent = {
-    id = "settingsContent"
+helpContent = {
+    id = "helpContent"
     hidden = true
     type = "view"
     subviews = {
         {
-            id = "ipTitle"
-            type = "text"
-            text = "No settings yet"
-            font = "blockheadsHue"
-            fontSize = 18
+            id = "helpMarkup"
+            type = "markup"
         }
     }
 }
@@ -252,7 +250,7 @@ mainView = {
     type = "view"
     subviews = {
         playlistsHeader
-        settingsHeader
+        helpHeader
         editPlaylistHeader
         addSongHeader
         {
@@ -266,7 +264,7 @@ mainView = {
             pos = vec3(0,1.0 - headerHeight, 0)
             subviews = {
                 playlistContent
-                settingsContent
+                helpContent
                 editPlaylistContent
                 addSongContent
             }
@@ -338,7 +336,7 @@ mainPlaylistsPlaylistItem = {
             font = "blockheadsHue"
             alignmentX = "left"
             additiveBlend = true
-            pos = vec3(20,0,0)
+            pos = vec3(30,0,0)
             fontSize = 18
         }
         {
@@ -347,7 +345,7 @@ mainPlaylistsPlaylistItem = {
             clip = true
             buttonType = "imageHueShift"
             path = "images/dotDotDot.png"
-            pos = vec3(-20,0, 0)
+            pos = vec3(-10,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }

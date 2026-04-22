@@ -249,29 +249,38 @@ statusSubtitleTextView = scene.getView("statusText")
 playlistContentView = scene.getView("playlistContent")
 playlistScrollView = scene.getView("playlistScrollView")
 
-settingsButton = scene.getView("settingsButton")
+helpButton = scene.getView("helpButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
 
-settingsBackButton = scene.getView("settingsBackButton")
+helpBackButton = scene.getView("helpBackButton")
 
 playPauseButton = scene.getView("playPauseButton")
 nextButton = scene.getView("nextButton")
 
 playlistsHeader = scene.getView("playlistsHeader")
-settingsHeader = scene.getView("settingsHeader")
+helpHeader = scene.getView("helpHeader")
 editPlaylistHeader = scene.getView("editPlaylistHeader")
 
-settingsContent = scene.getView("settingsContent")
+helpContent = scene.getView("helpContent")
 editPlaylistContent = scene.getView("editPlaylistContent")
 
+helpMarkupLoaded = false
 
-settingsButton.click = function()
+helpButton.click = function()
 {
     playlistsHeader.hidden = true
     playlistContentView.hidden = true
 
-    settingsHeader.hidden = false
-    settingsContent.hidden = false
+    helpHeader.hidden = false
+    helpContent.hidden = false
+
+    if(!helpMarkupLoaded)
+    {
+        helpMarkupView = scene.getView("helpMarkup")
+        helpPath = file.getResourcePath("help.tml")
+        helpMarkupData = file.loadData(helpPath)
+        helpMarkupView.setText(helpMarkupData)
+    }
 }
 
 editPlaylistBackClick = function()
@@ -315,13 +324,13 @@ addPlaylistButton.click = function()
     editPlaylistUI.show(directoryTree, nil)
 }
 
-settingsBackButton.click = function()
+helpBackButton.click = function()
 {
     playlistsHeader.hidden = false
     playlistContentView.hidden = false
 
-    settingsHeader.hidden = true
-    settingsContent.hidden = true
+    helpHeader.hidden = true
+    helpContent.hidden = true
 }
 
 

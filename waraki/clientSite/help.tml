@@ -1,0 +1,11 @@
+# Waraki music player
+
+Waraki lets you host your full music library on one device, which shares smaller playlists for playback from many other devices.
+
+If you're seeing this, you have a host running, you may also need to edit the config.tui file on the server to point it at your music library. 
+
+Once your music library has been scanned, you can then add a playlist with the '+' button, and add songs. You can tap a song to play it, which may take a while to buffer first.
+
+Once you have added songs to a playlist, you can tap it in the main list to shuffle play.
+
+Playlists are shared across all devices that connect to this host, edits are synchronized. However the download toggle is set per device.
