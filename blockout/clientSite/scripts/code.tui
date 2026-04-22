@@ -120,7 +120,7 @@ loadNextLevel = function()
     .levelTotalBrickCount = 0
     .levelBrickRemovedCount = 0
 
-    .ballSpeed = viewSize.y * 2.5
+    .ballSpeed = viewSize.x * 1.0
     .paddleSpeed = ballSpeed / 3
 
     .blockSize = vec2(math.floor(viewSize.x / 20), math.floor(viewSize.y / 72))
@@ -128,7 +128,7 @@ loadNextLevel = function()
     .padding = vec2(paddingX, paddingX)
     ballView.size = vec2(blockSize.y,blockSize.y)
 
-    .paddleSize = vec2(math.floor(blockSize.x * 3),blockSize.y)
+    .paddleSize = vec2(math.floor(blockSize.y * 10),blockSize.y)
     paddleView.size = paddleSize
 
     paddleView.goalX = 0.0
@@ -190,9 +190,11 @@ loadNextLevel = function()
     }
 }
 
+runningInTheBackground = false
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
+    .runningInTheBackground = false
     print("in clientSite onSiteLoad:", publicData)
     if(publicData and publicData.highScores)
     {
@@ -200,9 +202,14 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
     }
 }
 
+katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
+{
+    .runningInTheBackground = isBackground
+}
+
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
-    if(!gameRunning)
+    if(!gameRunning or runningInTheBackground)
     {
         return
     }

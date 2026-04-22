@@ -683,19 +683,26 @@ updateAISnake = function(snake, dt)
     updateSnake(snake, dt)
 }
 
+runningInTheBackground = false
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
-    print("in clientSite onConnected:", publicData)
+    .runningInTheBackground = false
+    #print("in clientSite onSiteLoad:", publicData)
     if(publicData and publicData.highScores)
     {
         highScores.setFromHost(publicData.highScores)
     }
 }
 
+katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
+{
+    .runningInTheBackground = isBackground
+}
+
 #this is the main update function, called every tick by katipo, usually 60 times a second.
 katipo.update = function(dt)
 {
-    if(!levelView)
+    if(!levelView or runningInTheBackground)
     {
         return
     }
