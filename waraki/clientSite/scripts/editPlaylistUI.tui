@@ -354,8 +354,8 @@ show = function(directoryTree, playlistOrNil)
             addSongFileBrowser.hidden = true
         }
 
-        textChangeCallback = function(textValue, confirmChanges){
-            if(confirmChanges and string.length(textValue) > 0 and playlistTitle != textValue)
+        textChangeCallback = function(textValue, changesMade){
+            if(changesMade and string.length(textValue) > 0 and playlistTitle != textValue)
             {
                 .playlistTitle = textValue
                 addSongSubtitleText.text = textValue
@@ -364,7 +364,7 @@ show = function(directoryTree, playlistOrNil)
             }
         }
 
-        playlistTitleTextEntry.onChange = textChangeCallback
+        playlistTitleTextEntry.onFinishedEditing = textChangeCallback
 
         
     }

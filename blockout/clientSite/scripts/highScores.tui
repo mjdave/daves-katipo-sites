@@ -6,7 +6,6 @@ enterHighScoreText = highScoresView.getView("enterHighScoreText")
 highScoresTitle = highScoresView.getView("highScoresTitle")
 playButton = highScoresView.getView("playButton")
 
-enterHighScoreName = "Dad"
 scores = database.get("highScores")
 print("loaded high scores:", scores)
 if(!scores)
@@ -122,10 +121,9 @@ playButton.click = function()
     }
 }
 
-showHighScoresAfterGame = function(newScore, fadeFromView)
+showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
 {
     isHighScore = false
-    #score = newScore
     if(table.count(scores) < maxHighScores or newScore >= scores[maxHighScores - 1].score)
     {
         isHighScore = true
@@ -139,20 +137,20 @@ showHighScoresAfterGame = function(newScore, fadeFromView)
         highScoresTitle.text = "New High Score!"
         highScoreContentView.hidden = true
         enterHighScoreText.maxChars = 3
-        enterHighScoreText.onChange = function(textValue, confirmChanges)
+        enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
         {
-            addIndex = nil
+            if(!textValue)
+            {
+                error("got nil high score name")
+            }
+            addIndex = 0
             for(i, scoreInfo in scores)
             {
                 if(scoreInfo.score <= newScore)
                 {
-                    .addIndex = i
                     break
                 }
-            }
-            if(addIndex == nil)
-            {
-                addIndex = table.count(scores)
+                addIndex++
             }
 
             name = textValue
@@ -162,17 +160,17 @@ showHighScoresAfterGame = function(newScore, fadeFromView)
             }
 
             newScoreInfo = {
-                score = newScore
+                score = newScore,
                 name = textValue
             }
+
             table.insert(scores, addIndex, newScoreInfo)
+
             .mostRecentScoreIndex = addIndex
             if(table.count(scores) > maxHighScores)
             {
                 table.remove(scores, table.count(scores) - 1)
             }
-
-            print("new high scores:", scores)
 
             database.set("highScores", scores)
 
@@ -192,17 +190,20 @@ showHighScoresAfterGame = function(newScore, fadeFromView)
         highScoreContentView.hidden = false
     }
 
-    fadeIn(fadeFromView)
+    fadeIn(fadeFromView, completionFunction)
 }
 
 
 setFromHost = function(incomingScores)
 {
     .scores = incomingScores
+    if(!scores)
+    {
+        .scores = {}
+    }
     database.set("highScores", scores)
     updateHighScores()
 }
-
 
 getHidden = function()
 {

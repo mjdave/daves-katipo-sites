@@ -196,7 +196,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
 {
     .runningInTheBackground = false
     print("in clientSite onSiteLoad:", publicData)
-    if(publicData and publicData.highScores)
+    if(publicData)
     {
         highScores.setFromHost(publicData.highScores)
     }
@@ -209,7 +209,7 @@ katipo.onBackgroundChange = function(isBackground) #called if the app enters the
 
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
-    if(!gameRunning or runningInTheBackground)
+    if(!gameRunning or runningInTheBackground or katipo.paused)
     {
         return
     }

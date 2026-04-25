@@ -687,8 +687,8 @@ runningInTheBackground = false
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
     .runningInTheBackground = false
-    #print("in clientSite onSiteLoad:", publicData)
-    if(publicData and publicData.highScores)
+    print("in clientSite onSiteLoad:", publicData)
+    if(publicData)
     {
         highScores.setFromHost(publicData.highScores)
     }
@@ -702,7 +702,7 @@ katipo.onBackgroundChange = function(isBackground) #called if the app enters the
 #this is the main update function, called every tick by katipo, usually 60 times a second.
 katipo.update = function(dt)
 {
-    if(!levelView or runningInTheBackground)
+    if(!levelView or runningInTheBackground or katipo.paused)
     {
         return
     }
@@ -776,7 +776,7 @@ katipo.update = function(dt)
 
 leftArrowFunction = function(isDown, code, mod, isRepeat)
 {
-    if(isDown and !isRepeat and playerSnake.direction != movementDirections.right)
+    if(playerSnake and isDown and !isRepeat and playerSnake.direction != movementDirections.right)
     {
         setSnakeDirection(playerSnake, movementDirections.left)
     }
@@ -784,7 +784,7 @@ leftArrowFunction = function(isDown, code, mod, isRepeat)
 
 rightArrowFunction = function(isDown, code, mod, isRepeat)
 {
-    if(isDown and !isRepeat and playerSnake.direction != movementDirections.left)
+    if(playerSnake and isDown and !isRepeat and playerSnake.direction != movementDirections.left)
     {
         setSnakeDirection(playerSnake, movementDirections.right)
     }
@@ -792,7 +792,7 @@ rightArrowFunction = function(isDown, code, mod, isRepeat)
 
 upArrowFunction = function(isDown, code, mod, isRepeat)
 {
-    if(isDown and !isRepeat and playerSnake.direction != movementDirections.down)
+    if(playerSnake and isDown and !isRepeat and playerSnake.direction != movementDirections.down)
     {
         setSnakeDirection(playerSnake, movementDirections.up)
     }
@@ -800,7 +800,7 @@ upArrowFunction = function(isDown, code, mod, isRepeat)
 
 downArrowFunction = function(isDown, code, mod, isRepeat)
 {
-    if(isDown and !isRepeat and playerSnake.direction != movementDirections.up)
+    if(playerSnake and isDown and !isRepeat and playerSnake.direction != movementDirections.up)
     {
         setSnakeDirection(playerSnake, movementDirections.down)
     }

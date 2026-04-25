@@ -6,7 +6,6 @@ enterHighScoreText = highScoresView.getView("enterHighScoreText")
 highScoresTitle = highScoresView.getView("highScoresTitle")
 playButton = highScoresView.getView("playButton")
 
-enterHighScoreName = "Dad"
 scores = database.get("highScores")
 print("loaded high scores:", scores)
 if(!scores)
@@ -138,20 +137,20 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
         highScoresTitle.text = "New High Score!"
         highScoreContentView.hidden = true
         enterHighScoreText.maxChars = 3
-        enterHighScoreText.onChange = function(textValue, confirmChanges)
+        enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
         {
-            addIndex = false
+            if(!textValue)
+            {
+                error("got nil high score name")
+            }
+            addIndex = 0
             for(i, scoreInfo in scores)
             {
                 if(scoreInfo.score <= newScore)
                 {
-                    .addIndex = i
                     break
                 }
-            }
-            if(!addIndex)
-            {
-                addIndex = table.count(scores)
+                addIndex++
             }
 
             name = textValue
@@ -164,14 +163,14 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
                 score = newScore,
                 name = textValue
             }
+
             table.insert(scores, addIndex, newScoreInfo)
+
             .mostRecentScoreIndex = addIndex
             if(table.count(scores) > maxHighScores)
             {
                 table.remove(scores, table.count(scores) - 1)
             }
-
-            print("new high scores:", scores)
 
             database.set("highScores", scores)
 
@@ -198,6 +197,10 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
 setFromHost = function(incomingScores)
 {
     .scores = incomingScores
+    if(!scores)
+    {
+        .scores = {}
+    }
     database.set("highScores", scores)
     updateHighScores()
 }

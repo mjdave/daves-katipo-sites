@@ -188,8 +188,11 @@ resetLevel = function()
     }
 }
 
+runningInTheBackground = false
+
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
+    .runningInTheBackground = false
     print("in clientSite onSiteLoad:", publicData)
     if(publicData and publicData.highScores)
     {
@@ -197,9 +200,14 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
     }
 }
 
+katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
+{
+    .runningInTheBackground = isBackground
+}
+
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
-    if(!gameRunning)
+    if(!gameRunning or runningInTheBackground or katipo.paused)
     {
         return
     }
