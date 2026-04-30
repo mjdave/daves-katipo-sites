@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "notes" #used to uniquely identify this site
+title = "Notes" #displayed name
+keywords = { "notes", "utility" } #used for search
+description = "A simple notes app" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

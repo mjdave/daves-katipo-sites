@@ -1,0 +1,59 @@
+notesArray = database.get("notes")
+if(!notesArray)
+{
+    notesArray = {}
+}
+notesScrollView = scene.getView("notesScrollView")
+
+loadNoteRows = function()
+{
+    notesScrollView.removeAllRows()
+    for(i, note in notesArray)
+    {
+        noteView = notesScrollView.addView(scene.noteLayout)
+        noteTextView = noteView.getView("noteText")
+        #noteView.setVariableHeight(true) #in scene.tui
+        noteTextView.setText(note.text)
+        noteView.onParentSizeChanged = function(parentSize)
+        {
+            noteView.size = vec2(parentSize.x, noteTextView.size.y + 10)
+            noteTextView.size = vec2(parentSize.x, noteTextView.size.y)
+            noteView.size = vec2(parentSize.x, noteTextView.size.y + 10) #twice required to adjust for inner markdown view dimension changes
+        }
+    }
+}
+
+addNote = function()
+{
+    noteTextEntry = notesScrollView.addView(scene.noteLayout)
+    noteTextEntry.onStartedEditing = function()
+    {
+
+    }
+
+    noteTextEntry.onFinishedEditing = function(textValue, changesMade)
+    {
+        if(changesMade)
+        {
+            note = {
+                text = textValue
+            }
+            table.insert(notesArray, note)
+            database.set("notes", notesArray)
+            loadNoteRows()
+        }
+    }
+}
+
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    
+}
+
+katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
+{
+    
+}
+
+
+loadNoteRows()

@@ -1,0 +1,21 @@
+
+siteInfo = require(katipo.sitePath + "/site.tui")
+host = require("scripts/host.tui")
+
+init = function() #called just after katipo.init. The database is now ready to use.
+{
+}
+
+### this function is called when clients query this site
+get = function(url, clientData)
+{
+    return host.get(url, clientData)
+}
+
+runLoop = function()
+{
+    while(true)
+    {
+        sleep(1.0) #nothing to do yet
+    }
+}

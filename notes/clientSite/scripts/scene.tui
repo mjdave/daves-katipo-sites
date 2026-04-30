@@ -1,0 +1,62 @@
+viewTypes = { #can be added to at any time
+    button = require("app/common/button.tui")
+    textEntry = require("app/common/textEntry.tui")
+    scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
+    markup = require("app/common/markupView.tui")
+}
+
+textEntryHeight = 20
+
+notesScrollView = {
+    id = "notesScrollView"
+    type = "scrollView"
+    alignmentY = "top"
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, parentSize.y - textEntryHeight)
+    }
+}
+
+mainView = {
+    type = "view"
+    subviews = {
+        notesScrollView,
+        noteTextEntry,
+    }
+}
+
+noteLayout = {
+    type = "view"
+    subviews = {
+        {
+            id = "noteText"
+            type = "markup"
+            alignmentY = "top"
+            variableHeight = true
+            markupPadding = {
+                top = 10
+            }
+            #pos = vec3(10,-10, 0)
+        }
+        {
+            id = "rule"
+            type = "color"
+            alignmentY = "bottom"
+            color = vec4(1.0,1.0,1.0,0.5)
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x - 40, 1)
+            }
+        }
+    }
+}
+
+
+dateLayout = {
+    id = "dateText"
+    type = "text"
+    alignmentY = "top"
+    alignmentX = "right"
+    fontSize = 12
+}
