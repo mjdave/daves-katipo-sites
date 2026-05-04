@@ -1,5 +1,5 @@
 # musicDirectoryPath: set this to the directory that contains music files and .m3u playlists. All files can be nested in subdirectories.
-musicDirectoryPath = "/Users/davidframpton/warakiTestMusic"
+musicDirectoryPath = "/home/dave/warakiMusic"
 
 # doCrawlOnLaunch Will crawl anyway if the cache file is not found, but you can turn off the crawl if you know your music library won't change
 doCrawlOnLaunch = true
