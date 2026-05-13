@@ -1,18 +1,22 @@
 # daves-katipo-sites
-This is an expanding collection of sites that can be hosted over katipo.
+This is an expanding collection of sites that can be hosted with Katipo.
 
-Blockout is a simple  clone of the Breakout game, just to show how games can be made in Katipo.
+Blockout is a simple clone of the Breakout game, just to show how games can be made for Katipo. Snake is another game like slither.io, both have global high scores. KatipoBrowser.com is the website which is hosted at that domain. Notes and blockrun are currently non-functional works in progress.
+
+# Waraki
 
 Waraki is an MP3 player app and hosting service, allowing you to keep playlists in sync automatically over a network with a home server.
 
-You can clone this repository, install a couple of dependencies, and run it on any server or desktop that has a music library in a directory.
+To install Waraki, you can clone this repository, install a couple of dependencies, and run it on any server or desktop that has a music library in a directory.
 
-Then you can install the [Katipo browser app](https://github.com/mjdave/katipoBrowser) on various devices, phones, desktops, and use it to sync your playlists wirelessly and play music anywhere offline.
+Then you can install the [Katipo app](https://github.com/mjdave/katipoBrowser) on various devices like your phone, and use it to sync your playlists wirelessly and play music anywhere offline.
 
-The general idea is that it is playlist based, so it only synchronizes the actual music songs that are in one or more playlists. You can then currently only shuffle play playlists by clicking/tapping them. It supports bluetooth control and displays the song title and image in iOS. Currently .m4a files are only supported on Apple platforms, not Windows or Linux, and there are some problems with files that contain non-ascii characters, with a fair few other issues that will be resolved in time.
+Waraki via the Katipo app supports bluetooth playback and control, and queues up music to play in the background on iOS.
+
+The general idea is that it is playlist based, so it only synchronizes the actual music songs that are in one or more playlists. You can then currently only shuffle play playlists by clicking/tapping them. It supports bluetooth control and displays the song title and image in iOS.
 
 # Instructions using cmake
-WarakiServer has been tested on macOS, Raspberry Pi OS and Ubuntu, and it will work on Windows, just use the Visual Studio solutions to build the Katipo apps.
+Waraki has been tested on macOS, iOS, Raspberry Pi OS, Ubuntu, and Windows.
 
 For cmake:
 Install basic dependencies if needed, clone this repository
@@ -28,16 +32,17 @@ cd daves-katipo-sites/
 git submodule update --init --recursive
 ```
 
-Edit the config.tui file to point to your music directory. The music directory can contain nested directories filled with mp3s, m4As, oggs, flac files, but not all formats will be supported on all platforms, YMMV. It will also read in .m3u playlist files, though it will not support every different type of .m3u file either. Feel free to edit waraki/libraryCrawler to parse your specific files, it's pretty simple code, or file an issue on github. But ultimately this will be a one step thing to bring in old playlists.
-
-```
-nano waraki/config.tui
-```
 
 Build and start the tracker and then the host
 ```
 ./startTracker.sh
 ./startWarakiServer.sh
+```
+
+You will need to edit the generated config.tui file to point to your music directory. The music directory can contain nested directories filled with mp3s, m4As, oggs, flac files, but not all formats will be supported on all platforms, YMMV. It can also read in .m3u playlist files, though it will not support every different type of .m3u file either. Feel free to edit waraki/libraryCrawler to parse your specific files, it's pretty simple code, or file an issue on github. But ultimately importing playlists is an optional thing you only need to do once, and this feature is rough around the edges.
+
+```
+nano waraki_config.tui
 ```
 
 # If libsodium isn't found
@@ -60,7 +65,7 @@ elseif(WIN32)
     include_directories(../../thirdParty/libsodium/windows/include)
     #target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/windows/lib/libsodium.a) #hmm
 else()
-    include_directories(../../thirdParty/libsodium/pi/include)
-    target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/pi/lib/libsodium.a)
+    include_directories(../../thirdParty/libsodium/linux/include)
+    target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/linux/lib/libsodium.a)
 endif()
 ```

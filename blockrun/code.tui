@@ -1,8 +1,7 @@
 maxHighScores = 10
 
-#config = require(katipo.sitePath + "/config.tui")
 siteInfo = require(katipo.sitePath + "/site.tui")
-host = require("scripts/host.tui")
+host = katipo.host
 #siteImage = file.loadData(katipo.sitePath + "/site.png")
 
 highScores = false

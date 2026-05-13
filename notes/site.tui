@@ -5,6 +5,7 @@ title = "Notes" #displayed name
 keywords = { "notes", "utility" } #used for search
 description = "A simple notes app" #used for search and more info
 author = "majicDave" #used for search and more info
+shareHost = true # make this site's code available for others to host if they visit nameKey/install
 
 #image =
 #link =
