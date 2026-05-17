@@ -1,3 +1,6 @@
 [submodule "katipo"]
 	path = katipo
 	url = https://github.com/mjdave/katipo
+[submodule "waraki-site"]
+	path = waraki-site
+	url = https://github.com/mjdave/waraki-site.git
