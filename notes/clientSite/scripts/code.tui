@@ -11,39 +11,63 @@ loadNoteRows = function()
     for(i, note in notesArray)
     {
         noteView = notesScrollView.addView(scene.noteLayout)
-        noteTextView = noteView.getView("noteText")
+        noteMarkupView = noteView.getView("noteMarkup")
         #noteView.setVariableHeight(true) #in scene.tui
-        noteTextView.setText(note.text)
+        noteMarkupView.style = {
+            textEntry = function(newText)
+            {
+                note.text = newText
+                noteMarkupView.setText(note.text)
+                database.set("notes", notesArray)
+            }
+        }
+        noteMarkupView.setText(note.text)
         noteView.onParentSizeChanged = function(parentSize)
         {
-            noteView.size = vec2(parentSize.x, noteTextView.size.y + 10)
-            noteTextView.size = vec2(parentSize.x, noteTextView.size.y)
-            noteView.size = vec2(parentSize.x, noteTextView.size.y + 10) #twice required to adjust for inner markdown view dimension changes
+            noteView.size = vec2(parentSize.x, noteMarkupView.size.y + 10)
+            noteMarkupView.size = vec2(parentSize.x, noteMarkupView.size.y)
+            noteView.size = vec2(parentSize.x, noteMarkupView.size.y + 10) #twice required to adjust for inner markdown view dimension changes
+        }
+
+        removeButton = noteView.getView("removeButton")
+        removeButton.click = function()
+        {
+            table.remove(notesArray, i)
+            database.set("notes", notesArray)
+            loadNoteRows()
         }
     }
 }
 
 addNote = function()
 {
-    noteTextEntry = notesScrollView.addView(scene.noteLayout)
-    noteTextEntry.onStartedEditing = function()
-    {
-
+    note = {
+        text = "This is a test note"
     }
-
-    noteTextEntry.onFinishedEditing = function(textValue, changesMade)
-    {
-        if(changesMade)
-        {
-            note = {
-                text = textValue
-            }
-            table.insert(notesArray, note)
-            database.set("notes", notesArray)
-            loadNoteRows()
-        }
-    }
+    table.insert(notesArray, note)
+    loadNoteRows()
+    #noteTextEntry = notesScrollView.addView(scene.noteLayout)
+    #noteTextEntry.onStartedEditing = function()
+    #{
+#
+    #}
+#
+    #noteTextEntry.onFinishedEditing = function(textValue, changesMade)
+    #{
+    #    if(changesMade)
+    #    {
+    #        note = {
+    #            text = textValue
+    #        }
+    #        table.insert(notesArray, note)
+    #        database.set("notes", notesArray)
+    #        loadNoteRows()
+    #    }
+    #}
 }
+
+addNoteButton = scene.getView("addNoteButton")
+addNoteButton.click = addNote
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {

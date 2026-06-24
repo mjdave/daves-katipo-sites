@@ -1,62 +1,134 @@
 viewTypes = { #can be added to at any time
     button = require("app/common/button.tui")
-    textEntry = require("app/common/textEntry.tui")
     scrollView = require("app/common/scrollView.tui")
     fileBrowser = require("app/common/fileBrowser.tui")
     markup = require("app/common/markupView.tui")
 }
 
-textEntryHeight = 20
+
+headerHeight = 50
+
+mainHeader = {
+    id = "mainHeader"
+    type = "color"
+    color = vec4(0.0,0.2,0.2,0.2)
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "settingsButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/dotDotDot.png"
+            pos = vec3(20,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "title"
+            type = "text"
+            text = "Notes"
+            font = "roboto"
+            additiveBlend = true
+            fontSize = 18
+            #pos = vec3(0,10, 0)
+        }
+        {
+            id = "addNoteButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/add.png"
+            pos = vec3(-20,0, 0)
+            size = vec2(40,40)
+            alignmentX = "right"
+        }
+        {
+            id = "headerRule"
+            type = "color"
+            clip = true
+            alignmentY = "bottom"
+            alignmentX = "left"
+            color = vec4(1.0,1.0,1.0,0.5)
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x, 1)
+            }
+        }
+    }
+}
 
 notesScrollView = {
     id = "notesScrollView"
     type = "scrollView"
-    alignmentY = "top"
+    alignmentY = "bottom"
     onParentSizeChanged = function(parentSize)
     {
-        return vec2(parentSize.x, parentSize.y - textEntryHeight)
+        return vec2(parentSize.x, parentSize.y - headerHeight)
     }
 }
 
 mainView = {
     type = "view"
     subviews = {
-        notesScrollView,
-        noteTextEntry,
+        mainHeader
+        notesScrollView
     }
 }
 
 noteLayout = {
     type = "view"
+    clip = true
     subviews = {
         {
-            id = "noteText"
+            id = "noteMarkup"
             type = "markup"
             alignmentY = "top"
+            alignmentX = "left"
             variableHeight = true
+            clip = true
             markupPadding = {
-                top = 10
+                top = 14
+                right = 45
             }
             #pos = vec3(10,-10, 0)
         }
         {
+            id = "dateText"
+            type = "text"
+            text = "1/2/33"
+            alignmentY = "top"
+            alignmentX = "left"
+            font = "roboto"
+            fontSize = 12
+            color = vec4(0.3,0.5,0.4,0.6)
+            pos = vec3(5,-1, 0)
+        }
+        {
+            id = "removeButton"
+            type = "button"
+            clip = true
+            buttonType = "imageHueShift"
+            path = "images/remove.png"
+            pos = vec3(-20,0, 0)
+            size = vec2(20,20)
+            alignmentX = "right"
+        }
+        {
             id = "rule"
             type = "color"
+            clip = true
             alignmentY = "bottom"
+            alignmentX = "left"
             color = vec4(1.0,1.0,1.0,0.5)
             onParentSizeChanged = function(parentSize)
             {
-                return vec2(parentSize.x - 40, 1)
+                return vec2(parentSize.x - 20, 1)
             }
         }
     }
 }
 
-
-dateLayout = {
-    id = "dateText"
-    type = "text"
-    alignmentY = "top"
-    alignmentX = "right"
-    fontSize = 12
-}
