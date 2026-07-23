@@ -16,9 +16,20 @@ loadNoteRows = function()
         noteMarkupView.style = {
             textEntry = function(newText)
             {
+                #print("got full note text:", newText)
                 note.text = newText
-                noteMarkupView.setText(note.text)
+                #noteMarkupView.setText(note.text)
                 database.set("notes", notesArray)
+                noteView.size = vec2(noteView.size.x, noteMarkupView.size.y + 10)
+                notesScrollView.dirty = true
+            }
+            onTextChanged = function(newText)
+            {
+                #note.text = newText
+                #noteMarkupView.setText(note.text)
+                #database.set("notes", notesArray)
+                noteView.size = vec2(noteView.size.x, noteMarkupView.size.y + 10)
+                notesScrollView.dirty = true
             }
         }
         noteMarkupView.setText(note.text)
@@ -42,7 +53,7 @@ loadNoteRows = function()
 addNote = function()
 {
     note = {
-        text = "This is a test note"
+        text = ""
     }
     table.insert(notesArray, note)
     loadNoteRows()
