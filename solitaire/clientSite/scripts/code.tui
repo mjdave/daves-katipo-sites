@@ -1,0 +1,389 @@
+something = true
+
+print("loading code")
+
+glyphXOffset = 0.2
+
+glyphs = {
+    {
+        glyphText = "2"
+        glyphPositions = {
+            vec2(0.0,0.4)
+            vec2(0.0,-0.4)
+        }
+    }
+    {
+        glyphText = "3"
+        glyphPositions = {
+            vec2(0.0,0.4)
+            vec2(0.0,0.0)
+            vec2(0.0,-0.4)
+        }
+    }
+    {
+        glyphText = "4"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,-0.4)
+            vec2(glyphXOffset,0.4)
+            vec2(glyphXOffset,-0.4)
+        }
+    }
+    {
+        glyphText = "5"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,-0.4)
+            vec2(glyphXOffset,0.4)
+            vec2(glyphXOffset,-0.4)
+            vec2(0,0)
+        }
+    }
+    {
+        glyphText = "6"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,0.0)
+            vec2(-glyphXOffset,-0.4)
+            vec2(glyphXOffset,0.4)
+            vec2(glyphXOffset,0.0)
+            vec2(glyphXOffset,-0.4)
+        }
+    }
+    {
+        glyphText = "7"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,0.0)
+            vec2(-glyphXOffset,-0.4)
+            vec2(glyphXOffset,0.4)
+            vec2(glyphXOffset,0.0)
+            vec2(glyphXOffset,-0.4)
+            vec2(0,0.2)
+        }
+    }
+    {
+        glyphText = "8"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,0.0)
+            vec2(-glyphXOffset,-0.4)
+            vec2(glyphXOffset,0.4)
+            vec2(glyphXOffset,0.0)
+            vec2(glyphXOffset,-0.4)
+            vec2(0,0.2)
+            vec2(0,-0.2)
+        }
+    }
+    {
+        glyphText = "9"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.5)
+            vec2(-glyphXOffset,0.167)
+            vec2(-glyphXOffset,-0.167)
+            vec2(-glyphXOffset,-0.5)
+            vec2(glyphXOffset,0.5)
+            vec2(glyphXOffset,0.167)
+            vec2(glyphXOffset,-0.167)
+            vec2(glyphXOffset,-0.5)
+            vec2(0,0)
+        }
+    }
+    {
+        glyphText = "10"
+        glyphPositions = {
+            vec2(-glyphXOffset,0.5)
+            vec2(-glyphXOffset,0.167)
+            vec2(-glyphXOffset,-0.167)
+            vec2(-glyphXOffset,-0.5)
+            vec2(glyphXOffset,0.5)
+            vec2(glyphXOffset,0.167)
+            vec2(glyphXOffset,-0.167)
+            vec2(glyphXOffset,-0.5)
+            vec2(0,(0.5 - 0.167))
+            vec2(0,-(0.5 - 0.167))
+        }
+    }
+    {
+        glyphText = "J"
+        glyphPositions = {
+            vec2(0,0)
+        }
+    }
+    {
+        glyphText = "Q"
+        glyphPositions = {
+            vec2(0,0)
+        }
+    }
+    {
+        glyphText = "K"
+        glyphPositions = {
+            vec2(0,0)
+        }
+    }
+    {
+        glyphText = "A"
+        glyphPositions = {
+            vec2(0,0)
+        }
+    }
+}
+
+suits = {
+    {
+        color = vec4(1.0,0.0,0.0,1.0)
+        imagePath = "images/diamond.png"
+        red = true
+    }
+    {
+        color = vec4(1.0,0.0,0.0,1.0)
+        imagePath = "images/heart.png"
+        red = true
+    }
+    {
+        color = vec4(0.0,0.0,0.0,1.0)
+        imagePath = "images/spade.png"
+    }
+    {
+        color = vec4(0.0,0.0,0.0,1.0)
+        imagePath = "images/club.png"
+    }
+}
+
+aces = {{},{},{},{}}
+
+field = {
+{},{},{},{},{},{},{}
+}
+
+hand = {}
+dealIndex = 0
+dealComplete = false
+
+cardParentSizeChanged = function(parentSize, view)
+{
+    return scene.cardSize
+}
+
+cardTextParentSizeChanged = function(parentSize, view)
+{
+    view.fontSize = math.floor(scene.cardSize.x / 6)
+    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.05, 0)
+    return parentSize
+}
+
+cardImageParentSizeChanged = function(parentSize, view)
+{
+    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.25, 0)
+    return vec2(scene.cardSize.x / 10, scene.cardSize.x / 10)
+}
+
+getCardLayout = function(card)
+{
+    layout = {
+        type = "button"
+        buttonType = "image"
+        path = "images/card.png"
+        #additiveBlend = true
+        onParentSizeChanged = cardParentSizeChanged
+        color = vec4(1.0,1.0,1.0,0.5)
+        subviews = {
+            {
+                id = "cardNumber"
+                type = "text"
+                alignmentX = "center"
+                alignmentY = "top"
+                #pos = vec3(-scene.cardSize.x * 0.3,-scene.padding, 0)
+                color = card.suit.color * 0.6
+                text = card.glyph.glyphText
+                font = "roboto"
+                fontSize = math.floor(scene.cardSize.x / 6)
+                onParentSizeChanged = cardTextParentSizeChanged
+            }
+            {
+                type = "image"
+                alignmentX = "center"
+                alignmentY = "top"
+                #pos = vec3(-scene.cardSize.x * 0.3,-math.floor(scene.cardSize.x / 4) - scene.padding, 0)
+                color = card.suit.color * 0.6
+                path = card.suit.imagePath
+                onParentSizeChanged = cardImageParentSizeChanged
+            }
+        }
+    }
+
+    if(card.glyph.glyphPositions)
+    {
+        for(i,glyphPos in card.glyph.glyphPositions)
+        {
+            localGlyphPos = glyphPos
+            glyphOnParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(scene.cardSize.x * localGlyphPos.x, scene.cardSize.x * localGlyphPos.y, 0)
+                return vec2(scene.cardSize.x / 5, scene.cardSize.x / 5)
+            }
+            glyphLayout = {
+                type = "image"
+                color = card.suit.color * 0.6
+                path = card.suit.imagePath
+                onParentSizeChanged = glyphOnParentSizeChanged
+            }
+
+            if(localGlyphPos.y < -0.1)
+            {
+                glyphLayout.rotation = math.rotate(math.pi,vec3(0,0,1))
+            }
+
+            table.insert(layout.subviews, glyphLayout)
+        }
+    }
+
+    return layout
+}
+
+selectedPiles = {}
+selectedFromPileIndex = false
+
+acePileClicked = function(aceIndex)
+{
+    if(selectedFromPileIndex)
+    {
+        acePileView = scene.getView("ace" + aceIndex)
+        if(acePileView.selected)
+        {
+            #table.insert(acesPile, topCard)
+        }
+    }
+    #selectPossibilitiesForAcePileClick(localAcePileIndex)
+}
+
+emptyPileClicked = function(pileIndex)
+{
+    print("emptyPileClicked")
+}
+
+cardClicked = function(pileIndex)
+{
+    print("cardClicked")
+    for(selectedView in selectedPiles)
+    {
+        selectedView.setSelected(false)
+    }
+    .selectedPiles = {}
+
+    baseView = scene.getView("field" + pileIndex)
+    baseView.setSelected(true)
+    table.insert(selectedPiles, baseView)
+
+    .selectedFromPileIndex = pileIndex
+    #for(selectedCard in selectedCards)
+    #{#
+#
+#    }
+    pile = field[pileIndex]
+    pileCount = table.count(pile)
+    if(pileCount > 0)
+    {
+        topCard = pile[pileCount - 1]
+        if(topCard.glyph.glyphText == "A")
+        {
+            for(aceIndex = 0, aceIndex < 4, aceIndex++)
+            {
+                if(table.count(aces[aceIndex]) == 0)
+                {
+                    #acesPile = aces[aceIndex]
+
+                    acePileView = scene.getView("ace" + aceIndex)
+                    acePileView.setSelected(true)
+                    table.insert(selectedPiles, acePileView)
+                    #table.insert(acesPile, topCard)
+                    break
+                }
+            }
+        }
+    }
+}
+
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    print("onSiteLoad")
+    for(i,suit in suits)
+    {
+        for(j,glyph in glyphs)
+        {
+            card = {
+                glyph = glyph
+                suit = suit
+            }
+            table.insert(hand, card)
+        }
+    }
+    table.shuffle(hand)
+
+    for(pileIndex=0,pileIndex<7,pileIndex++)
+    {
+        for(d=pileIndex,d<7,d++)
+        {
+            lastCardIndex = table.count(hand) - 1
+            card = hand[lastCardIndex]
+            table.remove(hand, lastCardIndex)
+            pile = field[d]
+            table.insert(pile, card)
+        }
+
+        localPileIndex = pileIndex #tui bug
+        pile = field[localPileIndex]
+        pileCount = table.count(pile)
+        pileView = scene.getView("field" + localPileIndex)
+        pileClick = function()
+        {
+            emptyPileClicked(localPileIndex)
+        }
+        pileView.setClickFunction(pileClick)
+
+        for(i=0,i<pileCount - 1,i++)
+        {
+            backLayout = {
+                type = "image"
+                path = "images/card.png"
+                color = vec4(0.2,0.05,0.1,1.0)
+                additiveBlend = true
+                onParentSizeChanged = cardParentSizeChanged
+                pos = vec3(0,10 * (i + 1),-10 * (i + 1))
+            }
+            backCard = pile[i]
+            backCardView = pileView.addView(backLayout)
+            backCard.view = cardView
+        }
+
+        topCard = pile[pileCount - 1]
+        cardLayout = getCardLayout(topCard)
+        cardView = pileView.addView(cardLayout)
+        cardClick = function()
+        {
+            cardClicked(localPileIndex)
+        }
+        cardView.setClickFunction(cardClick)
+        topCard.view = cardView
+        topCard.visible = true
+    }
+
+    for(aceIndex = 0, aceIndex < 4, aceIndex++)
+    {
+        localAcePileIndex = aceIndex
+        acePileView = scene.getView("ace" + aceIndex)
+        pileClick = function()
+        {
+            acePileClicked(localAcePileIndex)
+        }
+        acePileView.setClickFunction(pileClick)
+    }
+
+    .dealIndex = 0
+}
+
+katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
+{
+
+}

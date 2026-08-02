@@ -1,0 +1,235 @@
+viewTypes = {
+    button = require("app/common/button.tui")
+    scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
+    markup = require("app/common/markupView.tui")
+}
+
+cardSize = vec2(100,140)
+padding = 10
+
+fieldCardColor = vec4(0.0,0.7,0.7,0.2)
+fieldCardSelectedColor = vec4(0.5,1.0,1.0,0.4)
+
+
+mainView = {
+    type = "color"
+    color = vec4(0.0,0.0,0.1,0.1)
+    onParentSizeChanged = function(parentSize)
+    {
+        cardSize.x = math.min(parentSize.x / 8, parentSize.y / 6)
+        cardSize.y = cardSize.x * 1.4
+        .padding = cardSize.x / 10
+        #print("setting card size:", cardSize)
+        return parentSize
+    }
+    subviews = {
+        {
+            id = "aces"
+            type = "color"
+            color = vec4(0.0,0.3,0.1,0.2)
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(0,parentSize.y * 0.3,0)
+                return vec2(cardSize.x * 4 + padding * 3, cardSize.y)
+            }
+            subviews = {
+                {
+                    id = "ace0"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = vec4(0.0,0.7,0.5,0.2)
+                    selectedColor = vec4(0.0,1.0,0.7,0.5)
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "ace1"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = vec4(0.0,0.7,0.5,0.2)
+                    selectedColor = vec4(0.0,1.0,0.7,0.5)
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3(cardSize.x + padding,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "ace2"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = vec4(0.0,0.7,0.5,0.2)
+                    selectedColor = vec4(0.0,1.0,0.7,0.5)
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 2,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "ace3"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = vec4(0.0,0.7,0.5,0.2)
+                    selectedColor = vec4(0.0,1.0,0.7,0.5)
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 3,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+            }
+        }
+        {
+            id = "field"
+            type = "color"
+            color = vec4(0.3,0.3,0.1,0.2)
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(0,0,0)
+                return vec2(cardSize.x * 7 + padding * 6, cardSize.y)
+            }
+            subviews = {
+                {
+                    id = "field0"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field1"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3(cardSize.x + padding,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field2"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 2,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field3"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 3,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field4"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 4,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field5"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 5,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+                {
+                    id = "field6"
+                    type = "button"
+                    buttonType = "image"
+                    path = "images/card.png"
+                    additiveBlend = true
+                    color = fieldCardColor
+                    selectedColor = fieldCardSelectedColor
+                    alignmentX = "left"
+                    onParentSizeChanged = function(parentSize, view)
+                    {
+                        view.pos = vec3((cardSize.x + padding) * 6,0,0)
+                        return vec2(cardSize.x, cardSize.y)
+                    }
+                }
+            }
+        }
+        {
+            id = "hand"
+            type = "color"
+            color = vec4(0.3,0.3,0.1,0.2)
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(-cardSize.x * 0.5 - padding,-parentSize.y * 0.25, 0)
+                return vec2(cardSize.x, cardSize.y)
+            }
+        }
+        {
+            id = "play"
+            type = "color"
+            color = vec4(0.3,0.1,0.0,0.2)
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(cardSize.x * 0.5 + padding,-parentSize.y * 0.25, 0)
+                return vec2(cardSize.x, cardSize.y)
+            }
+        }
+    }
+}       

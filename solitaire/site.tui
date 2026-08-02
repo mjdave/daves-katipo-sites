@@ -1,0 +1,5 @@
+nameKey = "solitaire" #used to uniquely identify this site
+title = "Solitaire Clicker" #displayed name
+keywords = { "solitaire", "game" } #used for search
+description = "solitaire" #used for search and more info
+author = "majicDave" #used for search and more info
