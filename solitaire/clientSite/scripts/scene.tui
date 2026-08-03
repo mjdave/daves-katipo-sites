@@ -231,5 +231,13 @@ mainView = {
                 return vec2(cardSize.x, cardSize.y)
             }
         }
+        {
+            id = "cardBacks"
+            type = "view"
+        }
+        {
+            id = "cardFaces"
+            type = "view"
+        }
     }
 }       

@@ -1,12 +1,18 @@
-something = true
-
-print("loading code")
+cardClicked = false
 
 glyphXOffset = 0.2
 
 glyphs = {
     {
+        glyphText = "A"
+        number = 1
+        glyphPositions = {
+            vec2(0,0)
+        }
+    }
+    {
         glyphText = "2"
+        number = 2
         glyphPositions = {
             vec2(0.0,0.4)
             vec2(0.0,-0.4)
@@ -14,6 +20,7 @@ glyphs = {
     }
     {
         glyphText = "3"
+        number = 3
         glyphPositions = {
             vec2(0.0,0.4)
             vec2(0.0,0.0)
@@ -22,6 +29,7 @@ glyphs = {
     }
     {
         glyphText = "4"
+        number = 4
         glyphPositions = {
             vec2(-glyphXOffset,0.4)
             vec2(-glyphXOffset,-0.4)
@@ -31,6 +39,7 @@ glyphs = {
     }
     {
         glyphText = "5"
+        number = 5
         glyphPositions = {
             vec2(-glyphXOffset,0.4)
             vec2(-glyphXOffset,-0.4)
@@ -41,6 +50,7 @@ glyphs = {
     }
     {
         glyphText = "6"
+        number = 6
         glyphPositions = {
             vec2(-glyphXOffset,0.4)
             vec2(-glyphXOffset,0.0)
@@ -52,6 +62,7 @@ glyphs = {
     }
     {
         glyphText = "7"
+        number = 7
         glyphPositions = {
             vec2(-glyphXOffset,0.4)
             vec2(-glyphXOffset,0.0)
@@ -64,6 +75,7 @@ glyphs = {
     }
     {
         glyphText = "8"
+        number = 8
         glyphPositions = {
             vec2(-glyphXOffset,0.4)
             vec2(-glyphXOffset,0.0)
@@ -77,6 +89,7 @@ glyphs = {
     }
     {
         glyphText = "9"
+        number = 9
         glyphPositions = {
             vec2(-glyphXOffset,0.5)
             vec2(-glyphXOffset,0.167)
@@ -91,6 +104,7 @@ glyphs = {
     }
     {
         glyphText = "10"
+        number = 10
         glyphPositions = {
             vec2(-glyphXOffset,0.5)
             vec2(-glyphXOffset,0.167)
@@ -106,24 +120,19 @@ glyphs = {
     }
     {
         glyphText = "J"
+        number = 11
         glyphPositions = {
             vec2(0,0)
         }
     }
     {
         glyphText = "Q"
-        glyphPositions = {
-            vec2(0,0)
-        }
+        number = 12
+        picture = "images/queen.png"
     }
     {
         glyphText = "K"
-        glyphPositions = {
-            vec2(0,0)
-        }
-    }
-    {
-        glyphText = "A"
+        number = 13
         glyphPositions = {
             vec2(0,0)
         }
@@ -169,25 +178,45 @@ cardParentSizeChanged = function(parentSize, view)
 cardTextParentSizeChanged = function(parentSize, view)
 {
     view.fontSize = math.floor(scene.cardSize.x / 6)
-    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.05, 0)
+    view.pos = vec3(-scene.cardSize.x * 0.41,-scene.cardSize.x * 0.02, 0)
+    return parentSize
+}
+
+cardTextParentSizeChangedFlipped = function(parentSize, view)
+{
+    view.fontSize = math.floor(scene.cardSize.x / 6)
+    view.pos = vec3(scene.cardSize.x * 0.41,scene.cardSize.x * 0.22, 0)
     return parentSize
 }
 
 cardImageParentSizeChanged = function(parentSize, view)
 {
-    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.25, 0)
+    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.19, 0)
     return vec2(scene.cardSize.x / 10, scene.cardSize.x / 10)
 }
 
-getCardLayout = function(card)
+cardImageParentSizeChangedFlipped = function(parentSize, view)
+{
+    view.pos = vec3(scene.cardSize.x * 0.4,scene.cardSize.x * 0.29, 0)
+    return vec2(scene.cardSize.x / 10, scene.cardSize.x / 10)
+}
+
+cardBackgroundImageParentSizeChanged = function(parentSize, view)
+{
+    return vec2(scene.cardSize.x * 0.9, scene.cardSize.y * 0.9)
+}
+
+getCardLayout = function(card, layoutParentID)
 {
     layout = {
         type = "button"
+        layoutParentID = layoutParentID,
         buttonType = "image"
         path = "images/card.png"
         #additiveBlend = true
         onParentSizeChanged = cardParentSizeChanged
-        color = vec4(1.0,1.0,1.0,0.5)
+        color = vec4(0.9,0.9,0.9,1.0)
+        selectedColor = vec4(1.0,1.0,1.0,1.0)
         subviews = {
             {
                 id = "cardNumber"
@@ -202,6 +231,19 @@ getCardLayout = function(card)
                 onParentSizeChanged = cardTextParentSizeChanged
             }
             {
+                id = "cardNumberFlipped"
+                type = "text"
+                alignmentX = "center"
+                alignmentY = "bottom"
+                rotation = mat3(-1,0,0,0,-1,0,0,0,1)
+                #pos = vec3(-scene.cardSize.x * 0.3,-scene.padding, 0)
+                color = card.suit.color * 0.6
+                text = card.glyph.glyphText
+                font = "roboto"
+                fontSize = math.floor(scene.cardSize.x / 6)
+                onParentSizeChanged = cardTextParentSizeChangedFlipped
+            }
+            {
                 type = "image"
                 alignmentX = "center"
                 alignmentY = "top"
@@ -210,7 +252,28 @@ getCardLayout = function(card)
                 path = card.suit.imagePath
                 onParentSizeChanged = cardImageParentSizeChanged
             }
+            {
+                type = "image"
+                alignmentX = "center"
+                alignmentY = "bottom"
+                rotation = mat3(-1,0,0,0,-1,0,0,0,1)
+                #pos = vec3(-scene.cardSize.x * 0.3,-math.floor(scene.cardSize.x / 4) - scene.padding, 0)
+                color = card.suit.color * 0.6
+                path = card.suit.imagePath
+                onParentSizeChanged = cardImageParentSizeChangedFlipped
+            }
         }
+    }
+
+    if(card.glyph.picture)
+    {
+        backgroundImageViewLayout = {
+            type = "image"
+            path = card.glyph.picture
+            color = card.suit.color * 0.6
+            onParentSizeChanged = cardBackgroundImageParentSizeChanged
+        }
+        table.insert(layout.subviews, 0, backgroundImageViewLayout)
     }
 
     if(card.glyph.glyphPositions)
@@ -242,63 +305,228 @@ getCardLayout = function(card)
     return layout
 }
 
-selectedPiles = {}
-selectedFromPileIndex = false
+selectedAceIndex = false
+selectedEmptyPiles = {}
+selectedCards = {}
+
+selectedFromCard = false
+
+cardBacksView = false
+cardFacesView = false
+
+clearSelected = function()
+{
+    if(selectedAceIndex)
+    {
+        acePileView = scene.getView("ace" + selectedAceIndex)
+        acePileView.setSelected(false)
+        .selectedAceIndex = false
+    }
+    
+    for(selectedView in selectedEmptyPiles)
+    {
+        selectedView.setSelected(false)
+    }
+    .selectedEmptyPiles = {}
+    
+    for(selectedCard in selectedCards)
+    {
+        selectedCard.view.setSelected(false)
+    }
+    .selectedCards = {}
+
+    if(selectedFromCard and selectedFromCard.view)
+    {
+        selectedFromCard.view.setSelected(false)
+    }
+    .selectedFromCard = false
+}
+
+removeSelectedCardFromPile = function()
+{
+    fromPileIndex = selectedFromCard.pileIndex
+    fromPile = field[fromPileIndex]
+    newFromPileCount = table.count(fromPile) - 1
+    table.remove(fromPile, newFromPileCount)
+    if(newFromPileCount > 0)
+    {
+        newPileTopCard = fromPile[newFromPileCount - 1]
+        if(!newPileTopCard.offsetIndex)
+        {
+            cardBacksView.removeView(newPileTopCard.view)
+            
+            pileViewID = "field" + fromPileIndex
+            newPileTopCard.offsetIndex = 0
+            cardLayout = getCardLayout(newPileTopCard, pileViewID)
+            cardView = cardFacesView.addView(cardLayout)
+            cardClick = function()
+            {
+                cardClicked(newPileTopCard)
+            }
+            cardView.setClickFunction(cardClick)
+            newPileTopCard.view = cardView
+        }
+    }
+
+}
 
 acePileClicked = function(aceIndex)
 {
-    if(selectedFromPileIndex)
+    if(selectedFromCard and aceIndex == selectedAceIndex)
     {
-        acePileView = scene.getView("ace" + aceIndex)
-        if(acePileView.selected)
+        acesPile = aces[aceIndex]
+        
+        acePileCount = table.count(acesPile)
+        if(acePileCount > 0)
         {
-            #table.insert(acesPile, topCard)
+            topCard = acesPile[acePileCount - 1]
+            cardFacesView.removeView(topCard.view)
+            topCard.view = nil
         }
+
+        removeSelectedCardFromPile()
+
+        table.insert(acesPile, selectedFromCard)
+        
+        selectedFromCard.pileIndex = nil
+        selectedFromCard.aceIndex = selectedAceIndex
+        acePileView = scene.getView("ace" + aceIndex)
+        selectedFromCard.view.layoutParent = acePileView
+        
+        #table.insert(acesPile, topCard)
+        clearSelected()
     }
-    #selectPossibilitiesForAcePileClick(localAcePileIndex)
+}
+
+
+moveAttachedCards = function(newLayoutParentView)
+{
+    belowCard = selectedFromCard.belowCard
+    offsetIndex = selectedFromCard.offsetIndex + 1
+    while(belowCard)
+    {
+        belowCard.view.layoutParent = newLayoutParentView
+        belowCard.offsetIndex = offsetIndex
+        offsetIndex++
+        belowCard.view.pos = vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
+        belowCard.view.orderFront()
+        .belowCard = belowCard.belowCard
+    }
 }
 
 emptyPileClicked = function(pileIndex)
 {
-    print("emptyPileClicked")
+    if(selectedFromCard and selectedFromCard.glyph.glyphText == "K")
+    {
+        emptyPile = field[pileIndex]
+        
+        emptyPileCount = table.count(emptyPile)
+        if(emptyPileCount == 0)
+        {
+            
+            removeSelectedCardFromPile()
+
+            table.insert(emptyPile, selectedFromCard)
+
+            selectedFromCard.pileIndex = pileIndex
+            emptyPileView = scene.getView("field" + pileIndex)
+            selectedFromCard.view.layoutParent = emptyPileView
+            selectedFromCard.offsetIndex = 0
+
+            selectedFromCard.view.pos = vec3(0,0,0)
+
+            
+            moveAttachedCards(emptyPileView)
+        }
+
+        #table.insert(acesPile, topCard)
+        clearSelected()
+    }
 }
 
-cardClicked = function(pileIndex)
+cardClicked = function(card)
 {
-    print("cardClicked")
-    for(selectedView in selectedPiles)
+    if(selectedFromCard and selectedFromCard != card)
     {
-        selectedView.setSelected(false)
-    }
-    .selectedPiles = {}
-
-    baseView = scene.getView("field" + pileIndex)
-    baseView.setSelected(true)
-    table.insert(selectedPiles, baseView)
-
-    .selectedFromPileIndex = pileIndex
-    #for(selectedCard in selectedCards)
-    #{#
-#
-#    }
-    pile = field[pileIndex]
-    pileCount = table.count(pile)
-    if(pileCount > 0)
-    {
-        topCard = pile[pileCount - 1]
-        if(topCard.glyph.glyphText == "A")
+        if(card.aceIndex)
         {
-            for(aceIndex = 0, aceIndex < 4, aceIndex++)
+            acePileClicked(card.aceIndex)
+        }
+        else
+        {
+            if(card.glyph.number == selectedFromCard.glyph.number + 1 and card.suit.red != selectedFromCard.suit.red)
             {
-                if(table.count(aces[aceIndex]) == 0)
-                {
-                    #acesPile = aces[aceIndex]
+                removeSelectedCardFromPile()
+                moveToPile = field[card.pileIndex]
+                table.insert(moveToPile, selectedFromCard)
+                selectedFromCard.pileIndex = card.pileIndex
+                moveToPileView = scene.getView("field" + card.pileIndex)
+                selectedFromCard.view.layoutParent = moveToPileView
+                selectedFromCard.offsetIndex = card.offsetIndex + 1
+                selectedFromCard.view.pos = vec3(0,-selectedFromCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
+                selectedFromCard.view.orderFront()
 
-                    acePileView = scene.getView("ace" + aceIndex)
-                    acePileView.setSelected(true)
-                    table.insert(selectedPiles, acePileView)
-                    #table.insert(acesPile, topCard)
-                    break
+                moveAttachedCards(moveToPileView)
+
+                card.belowCard = selectedFromCard
+            }
+            clearSelected()
+        }
+        return
+    }
+
+    clearSelected()
+
+    card.view.setSelected(true)
+    table.insert(selectedCards, card)
+
+    .selectedFromCard = card
+
+    if(!selectedFromCard.belowCard)
+    {
+        for(aceIndex = 0, aceIndex < 4, aceIndex++)
+        {
+            if(table.count(aces[aceIndex]) == card.glyph.number - 1)
+            {
+                print("table.count(aces[aceIndex]):", table.count(aces[aceIndex]), " == card.glyph.number - 1:", card.glyph.number - 1)
+                print("aceIndex:", aceIndex)
+                acePileView = scene.getView("ace" + aceIndex)
+                acePileView.setSelected(true)
+                .selectedAceIndex = aceIndex
+                break
+            }
+        }
+    }
+
+    if(!selectedAceIndex)
+    {
+        if(card.glyph.glyphText == "K")
+        {
+            for(pileIndex = 0, pileIndex < 7, pileIndex++)
+            {
+                if(table.count(field[pileIndex]) == 0)
+                {
+                    pileViewID = "field" + pileIndex
+                    pileView = scene.getView(pileViewID)
+                    pileView.setSelected(true)
+                    table.insert(selectedEmptyPiles, pileView)
+                }
+            }
+        }
+        else
+        {
+            for(pileIndex = 0, pileIndex < 7, pileIndex++)
+            {
+                pile = field[pileIndex]
+                pileCount = table.count(pile)
+                if(pileCount > 0)
+                {
+                    topCard = pile[pileCount - 1]
+                    if(topCard.glyph.number == selectedFromCard.glyph.number + 1 and topCard.suit.red != selectedFromCard.suit.red)
+                    {
+                        topCard.view.setSelected(true)
+                        table.insert(selectedCards, topCard)
+                    }
                 }
             }
         }
@@ -307,6 +535,8 @@ cardClicked = function(pileIndex)
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
+    .cardFacesView = scene.getView("cardFaces")
+    .cardBacksView = scene.getView("cardBacks")
     print("onSiteLoad")
     for(i,suit in suits)
     {
@@ -335,7 +565,8 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         localPileIndex = pileIndex #tui bug
         pile = field[localPileIndex]
         pileCount = table.count(pile)
-        pileView = scene.getView("field" + localPileIndex)
+        pileViewID = "field" + localPileIndex
+        pileView = scene.getView(pileViewID)
         pileClick = function()
         {
             emptyPileClicked(localPileIndex)
@@ -347,22 +578,26 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
             backLayout = {
                 type = "image"
                 path = "images/card.png"
+                layoutParentID = pileViewID
                 color = vec4(0.2,0.05,0.1,1.0)
                 additiveBlend = true
                 onParentSizeChanged = cardParentSizeChanged
                 pos = vec3(0,10 * (i + 1),-10 * (i + 1))
             }
             backCard = pile[i]
-            backCardView = pileView.addView(backLayout)
-            backCard.view = cardView
+            backCardView = cardBacksView.addView(backLayout)
+            backCard.view = backCardView
+            backCard.pileIndex = localPileIndex
         }
 
         topCard = pile[pileCount - 1]
-        cardLayout = getCardLayout(topCard)
-        cardView = pileView.addView(cardLayout)
+        topCard.pileIndex = localPileIndex
+        topCard.offsetIndex = 0
+        cardLayout = getCardLayout(topCard, pileViewID)
+        cardView = cardFacesView.addView(cardLayout)
         cardClick = function()
         {
-            cardClicked(localPileIndex)
+            cardClicked(topCard)
         }
         cardView.setClickFunction(cardClick)
         topCard.view = cardView
