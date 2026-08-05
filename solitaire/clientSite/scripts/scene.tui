@@ -17,20 +17,24 @@ mainView = {
     color = vec4(0.0,0.0,0.1,0.1)
     onParentSizeChanged = function(parentSize)
     {
-        cardSize.x = math.min(parentSize.x / 8, parentSize.y / 6)
+        cardSize.x = math.min(parentSize.x / 8, parentSize.y / 7)
         cardSize.y = cardSize.x * 1.4
         .padding = cardSize.x / 10
         #print("setting card size:", cardSize)
         return parentSize
     }
     subviews = {
+        
+        {
+            id = "cardBacks"
+            type = "view"
+        }
         {
             id = "aces"
-            type = "color"
-            color = vec4(0.0,0.3,0.1,0.2)
+            type = "view"
             onParentSizeChanged = function(parentSize, view)
             {
-                view.pos = vec3(0,parentSize.y * 0.3,0)
+                view.pos = vec3(0,parentSize.y * 0.38,0)
                 return vec2(cardSize.x * 4 + padding * 3, cardSize.y)
             }
             subviews = {
@@ -97,11 +101,10 @@ mainView = {
         }
         {
             id = "field"
-            type = "color"
-            color = vec4(0.3,0.3,0.1,0.2)
+            type = "view"
             onParentSizeChanged = function(parentSize, view)
             {
-                view.pos = vec3(0,0,0)
+                view.pos = vec3(0,parentSize.y * 0.15,0)
                 return vec2(cardSize.x * 7 + padding * 6, cardSize.y)
             }
             subviews = {
@@ -213,31 +216,39 @@ mainView = {
         }
         {
             id = "hand"
-            type = "color"
-            color = vec4(0.3,0.3,0.1,0.2)
-            onParentSizeChanged = function(parentSize, view)
-            {
-                view.pos = vec3(-cardSize.x * 0.5 - padding,-parentSize.y * 0.25, 0)
-                return vec2(cardSize.x, cardSize.y)
-            }
-        }
-        {
-            id = "play"
-            type = "color"
-            color = vec4(0.3,0.1,0.0,0.2)
-            onParentSizeChanged = function(parentSize, view)
-            {
-                view.pos = vec3(cardSize.x * 0.5 + padding,-parentSize.y * 0.25, 0)
-                return vec2(cardSize.x, cardSize.y)
-            }
-        }
-        {
-            id = "cardBacks"
             type = "view"
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(cardSize.x * 0.75 + padding,-parentSize.y * 0.33, 0)
+                return vec2(cardSize.x, cardSize.y)
+            }
         }
         {
             id = "cardFaces"
             type = "view"
+        }
+        {
+            id = "deck"
+            type = "button"
+            buttonType = "image"
+            path = "images/card.png"
+            additiveBlend = true
+            color = vec4(0.5,0.0,0.5,0.67)
+            onParentSizeChanged = function(parentSize, view)
+            {
+                view.pos = vec3(-cardSize.x * 0.75 - padding,-parentSize.y * 0.33, 0)
+                return vec2(cardSize.x, cardSize.y)
+            }
+        }
+        {
+            id = "gameWon"
+            type = "text"
+            text = "YAY YOU WIN!"
+            font = "roboto"
+            color = vec4(1.0,0.4,1.0,1.0)
+            shader = "drawQuadTexturedHueShift"
+            fontSize = 40
+            hidden = true
         }
     }
 }       
