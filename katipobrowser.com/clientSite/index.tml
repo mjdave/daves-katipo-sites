@@ -1,13 +1,15 @@
 # This is the first ever katipo website!
 
-Katipo is a tool that we can use to build a better web.
+Katipo is an http alternative for creating, sharing, hosting, browsing and using apps, games, and websites.
 
-I have made some games for you to play.
+# Examples
 
-This is [snake](link = "katipobrowser.com/snake"). You need arrow keys on a keyboard to play at the moment.
+The most polished example is [Solitaire](link = "katipobrowser.com/solitaire"), which can be played on either desktop keyboard/mouse or on a touch screen device. Refresh the page to try again with cmd-R or using the refresh button in the bottom left.
 
-And this is [blockout](link = "katipobrowser.com/blockout"). Use the arrow keys, or you can play on a touch screen by touching the left side of the screen to move left or the right to move right.
+This is [Snake](link = "katipobrowser.com/snake"). You need arrow keys on a keyboard to play at the moment. Turn the sound on!
 
-And this is a demo of [waraki](link = "katipobrowser.com/waraki"). Waraki is an mp3 player, and I recorded a mini podcast as an example. You can host your own music library too.
+This is [Blockout](link = "katipobrowser.com/blockout"). Use the arrow keys, or you can play on a touch screen by touching the left side of the screen to move left or the right to move right. Turn the sound on!
+
+And this is a demo of [Waraki](link = "katipobrowser.com/waraki"). Waraki is an mp3 player, and I recorded a mini podcast as an example. You can host your own music library too.
 
 More coming soon!
