@@ -6,7 +6,7 @@ viewTypes = {
 }
 
 cardSize = vec2(100,140)
-padding = 10
+padding = 999
 
 fieldCardColor = vec4(0.0,0.7,0.7,0.2)
 fieldCardSelectedColor = vec4(0.5,1.0,1.0,0.4)
@@ -14,12 +14,12 @@ fieldCardSelectedColor = vec4(0.5,1.0,1.0,0.4)
 
 mainView = {
     type = "color"
-    color = vec4(0.0,0.0,0.1,0.1)
+    color = vec4(0.0,0.0,0.5,0.1)
     onParentSizeChanged = function(parentSize)
     {
-        cardSize.x = math.min(parentSize.x / 8, parentSize.y / 7)
+        cardSize.x = math.min(parentSize.x / 7.5, parentSize.y / 7)
         cardSize.y = cardSize.x * 1.4
-        .padding = cardSize.x / 10
+        .padding = cardSize.x / 20
         #print("setting card size:", cardSize)
         return parentSize
     }

@@ -1,6 +1,9 @@
 cardClicked = false
 
-glyphXOffset = 0.2
+glyphXOffset = 0.15
+glyphYOffset = 0.4
+glyphYOffsetTen = 0.4
+glyphYOffsetTenThird = glyphYOffsetTen / 3
 
 glyphs = {
     {
@@ -14,37 +17,37 @@ glyphs = {
         glyphText = "2"
         number = 2
         glyphPositions = {
-            vec2(0.0,0.4)
-            vec2(0.0,-0.4)
+            vec2(0.0,glyphYOffset)
+            vec2(0.0,-glyphYOffset)
         }
     }
     {
         glyphText = "3"
         number = 3
         glyphPositions = {
-            vec2(0.0,0.4)
+            vec2(0.0,glyphYOffset)
             vec2(0.0,0.0)
-            vec2(0.0,-0.4)
+            vec2(0.0,-glyphYOffset)
         }
     }
     {
         glyphText = "4"
         number = 4
         glyphPositions = {
-            vec2(-glyphXOffset,0.4)
-            vec2(-glyphXOffset,-0.4)
-            vec2(glyphXOffset,0.4)
-            vec2(glyphXOffset,-0.4)
+            vec2(-glyphXOffset,glyphYOffset)
+            vec2(-glyphXOffset,-glyphYOffset)
+            vec2(glyphXOffset,glyphYOffset)
+            vec2(glyphXOffset,-glyphYOffset)
         }
     }
     {
         glyphText = "5"
         number = 5
         glyphPositions = {
-            vec2(-glyphXOffset,0.4)
-            vec2(-glyphXOffset,-0.4)
-            vec2(glyphXOffset,0.4)
-            vec2(glyphXOffset,-0.4)
+            vec2(-glyphXOffset,glyphYOffset)
+            vec2(-glyphXOffset,-glyphYOffset)
+            vec2(glyphXOffset,glyphYOffset)
+            vec2(glyphXOffset,-glyphYOffset)
             vec2(0,0)
         }
     }
@@ -52,24 +55,24 @@ glyphs = {
         glyphText = "6"
         number = 6
         glyphPositions = {
-            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,glyphYOffset)
             vec2(-glyphXOffset,0.0)
-            vec2(-glyphXOffset,-0.4)
-            vec2(glyphXOffset,0.4)
+            vec2(-glyphXOffset,-glyphYOffset)
+            vec2(glyphXOffset,glyphYOffset)
             vec2(glyphXOffset,0.0)
-            vec2(glyphXOffset,-0.4)
+            vec2(glyphXOffset,-glyphYOffset)
         }
     }
     {
         glyphText = "7"
         number = 7
         glyphPositions = {
-            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,glyphYOffset)
             vec2(-glyphXOffset,0.0)
-            vec2(-glyphXOffset,-0.4)
-            vec2(glyphXOffset,0.4)
+            vec2(-glyphXOffset,-glyphYOffset)
+            vec2(glyphXOffset,glyphYOffset)
             vec2(glyphXOffset,0.0)
-            vec2(glyphXOffset,-0.4)
+            vec2(glyphXOffset,-glyphYOffset)
             vec2(0,0.2)
         }
     }
@@ -77,12 +80,12 @@ glyphs = {
         glyphText = "8"
         number = 8
         glyphPositions = {
-            vec2(-glyphXOffset,0.4)
+            vec2(-glyphXOffset,glyphYOffset)
             vec2(-glyphXOffset,0.0)
-            vec2(-glyphXOffset,-0.4)
-            vec2(glyphXOffset,0.4)
+            vec2(-glyphXOffset,-glyphYOffset)
+            vec2(glyphXOffset,glyphYOffset)
             vec2(glyphXOffset,0.0)
-            vec2(glyphXOffset,-0.4)
+            vec2(glyphXOffset,-glyphYOffset)
             vec2(0,0.2)
             vec2(0,-0.2)
         }
@@ -91,14 +94,14 @@ glyphs = {
         glyphText = "9"
         number = 9
         glyphPositions = {
-            vec2(-glyphXOffset,0.5)
-            vec2(-glyphXOffset,0.167)
-            vec2(-glyphXOffset,-0.167)
-            vec2(-glyphXOffset,-0.5)
-            vec2(glyphXOffset,0.5)
-            vec2(glyphXOffset,0.167)
-            vec2(glyphXOffset,-0.167)
-            vec2(glyphXOffset,-0.5)
+            vec2(-glyphXOffset,glyphYOffsetTen)
+            vec2(-glyphXOffset,glyphYOffsetTenThird)
+            vec2(-glyphXOffset,-glyphYOffsetTenThird)
+            vec2(-glyphXOffset,-glyphYOffsetTen)
+            vec2(glyphXOffset,glyphYOffsetTen)
+            vec2(glyphXOffset,glyphYOffsetTenThird)
+            vec2(glyphXOffset,-glyphYOffsetTenThird)
+            vec2(glyphXOffset,-glyphYOffsetTen)
             vec2(0,0)
         }
     }
@@ -106,16 +109,16 @@ glyphs = {
         glyphText = "10"
         number = 10
         glyphPositions = {
-            vec2(-glyphXOffset,0.5)
-            vec2(-glyphXOffset,0.167)
-            vec2(-glyphXOffset,-0.167)
-            vec2(-glyphXOffset,-0.5)
-            vec2(glyphXOffset,0.5)
-            vec2(glyphXOffset,0.167)
-            vec2(glyphXOffset,-0.167)
-            vec2(glyphXOffset,-0.5)
-            vec2(0,(0.5 - 0.167))
-            vec2(0,-(0.5 - 0.167))
+            vec2(-glyphXOffset,glyphYOffsetTen)
+            vec2(-glyphXOffset,glyphYOffsetTenThird)
+            vec2(-glyphXOffset,-glyphYOffsetTenThird)
+            vec2(-glyphXOffset,-glyphYOffsetTen)
+            vec2(glyphXOffset,glyphYOffsetTen)
+            vec2(glyphXOffset,glyphYOffsetTenThird)
+            vec2(glyphXOffset,-glyphYOffsetTenThird)
+            vec2(glyphXOffset,-glyphYOffsetTen)
+            vec2(0,(glyphYOffsetTen - glyphYOffsetTenThird))
+            vec2(0,-(glyphYOffsetTen - glyphYOffsetTenThird))
         }
     }
     {
@@ -176,30 +179,35 @@ cardParentSizeChanged = function(parentSize, view)
     return scene.cardSize
 }
 
+getFontSize = function()
+{
+    return math.max(math.floor(scene.cardSize.x / 6), 14)
+}
+
 cardTextParentSizeChanged = function(parentSize, view)
 {
-    view.fontSize = math.floor(scene.cardSize.x / 6)
-    view.pos = vec3(-scene.cardSize.x * 0.41,-scene.cardSize.x * 0.02, 0)
+    view.fontSize = getFontSize()
+    view.pos = vec3(scene.cardSize.x * 0.04,-scene.cardSize.x * 0.02, 0)
     return parentSize
 }
 
 cardTextParentSizeChangedFlipped = function(parentSize, view)
 {
-    view.fontSize = math.floor(scene.cardSize.x / 6)
-    view.pos = vec3(scene.cardSize.x * 0.41,scene.cardSize.x * 0.22, 0)
+    view.fontSize = getFontSize()
+    view.pos = vec3(-scene.cardSize.x * 0.04 + scene.cardSize.x,scene.cardSize.x * 0.02 - scene.cardSize.y, 0)
     return parentSize
 }
 
 cardImageParentSizeChanged = function(parentSize, view)
 {
-    view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.19, 0)
-    return vec2(scene.cardSize.x / 10, scene.cardSize.x / 10)
+    #view.pos = vec3(-scene.cardSize.x * 0.4,-scene.cardSize.x * 0.19, 0)
+    return vec2(scene.cardSize.x / 8, scene.cardSize.x / 8)
 }
 
 cardImageParentSizeChangedFlipped = function(parentSize, view)
 {
-    view.pos = vec3(scene.cardSize.x * 0.4,scene.cardSize.x * 0.29, 0)
-    return vec2(scene.cardSize.x / 10, scene.cardSize.x / 10)
+    #view.pos = vec3(scene.cardSize.x * 0.4,scene.cardSize.x * 0.29, 0)
+    return vec2(scene.cardSize.x / 8, scene.cardSize.x / 8)
 }
 
 cardBackgroundImageParentSizeChanged = function(parentSize, view)
@@ -221,32 +229,33 @@ getCardLayout = function(card, layoutParentID)
             {
                 id = "cardNumber"
                 type = "text"
-                alignmentX = "center"
+                alignmentX = "left"
                 alignmentY = "top"
                 #pos = vec3(-scene.cardSize.x * 0.3,-scene.padding, 0)
                 color = card.suit.color * 0.6
                 text = card.glyph.glyphText
                 font = "roboto"
-                fontSize = math.floor(scene.cardSize.x / 6)
+                fontSize = getFontSize()
                 onParentSizeChanged = cardTextParentSizeChanged
             }
             {
                 id = "cardNumberFlipped"
                 type = "text"
-                alignmentX = "center"
-                alignmentY = "bottom"
+                alignmentX = "left"
+                alignmentY = "top"
                 rotation = mat3(-1,0,0,0,-1,0,0,0,1)
                 #pos = vec3(-scene.cardSize.x * 0.3,-scene.padding, 0)
                 color = card.suit.color * 0.6
                 text = card.glyph.glyphText
                 font = "roboto"
-                fontSize = math.floor(scene.cardSize.x / 6)
+                fontSize = getFontSize()
                 onParentSizeChanged = cardTextParentSizeChangedFlipped
             }
             {
                 type = "image"
                 alignmentX = "center"
-                alignmentY = "top"
+                alignmentY = "below"
+                layoutParentID = "cardNumber"
                 #pos = vec3(-scene.cardSize.x * 0.3,-math.floor(scene.cardSize.x / 4) - scene.padding, 0)
                 color = card.suit.color * 0.6
                 path = card.suit.imagePath
@@ -255,8 +264,9 @@ getCardLayout = function(card, layoutParentID)
             {
                 type = "image"
                 alignmentX = "center"
-                alignmentY = "bottom"
-                rotation = mat3(-1,0,0,0,-1,0,0,0,1)
+                alignmentY = "below"
+                layoutParentID = "cardNumberFlipped"
+                #rotation = mat3(-1,0,0,0,-1,0,0,0,1)
                 #pos = vec3(-scene.cardSize.x * 0.3,-math.floor(scene.cardSize.x / 4) - scene.padding, 0)
                 color = card.suit.color * 0.6
                 path = card.suit.imagePath
@@ -284,7 +294,7 @@ getCardLayout = function(card, layoutParentID)
             glyphOnParentSizeChanged = function(parentSize, view)
             {
                 view.pos = vec3(scene.cardSize.x * localGlyphPos.x, scene.cardSize.x * localGlyphPos.y, 0)
-                return vec2(scene.cardSize.x / 5, scene.cardSize.x / 5)
+                return vec2(scene.cardSize.x / 6, scene.cardSize.x / 6)
             }
             glyphLayout = {
                 type = "image"
@@ -342,7 +352,7 @@ clearSelected = function()
         if(cardCount > 0)
         {
             topAceCard = acePile[cardCount - 1]
-            topAceCard.frontView.setSelected(true)
+            topAceCard.frontView.setSelected(false)
         }
         .selectedAceIndex = false
     }
@@ -629,9 +639,14 @@ getDeckCardPos = function(cardIndex)
     return vec3(0,0,-2 * (cardIndex + 1))
 }
 
+getFieldCardColor = function(cardIndex)
+{
+    return vec4(0.3,0.05,0.15,1.0) * (1.0 - math.min(cardIndex/30, 1))
+}
+
 getDeckCardColor = function(cardIndex)
 {
-    return vec4(0.05,0.1,0.05,1.0) * (1.0 - math.min(cardIndex/30, 1))
+    return vec4(0.01,0.1,0.05,1.0) * (1.0 - math.min(cardIndex/30, 1))
 }
 
 deckClicked = function()
@@ -755,7 +770,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
                 type = "image"
                 path = "images/card.png"
                 layoutParentID = pileViewID
-                color = vec4(0.2,0.05,0.1,1.0)
+                color = getFieldCardColor(i)
                 additiveBlend = true
                 onParentSizeChanged = cardParentSizeChanged
                 pos = vec3(0,10 * (i + 1),-2 * (i + 1))
