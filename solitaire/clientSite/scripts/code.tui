@@ -124,9 +124,7 @@ glyphs = {
     {
         glyphText = "J"
         number = 11
-        glyphPositions = {
-            vec2(0,0)
-        }
+        picture = "images/jack.png"
     }
     {
         glyphText = "Q"
@@ -136,9 +134,7 @@ glyphs = {
     {
         glyphText = "K"
         number = 13
-        glyphPositions = {
-            vec2(0,0)
-        }
+        picture = "images/king.png"
     }
 }
 
@@ -213,6 +209,31 @@ cardImageParentSizeChangedFlipped = function(parentSize, view)
 cardBackgroundImageParentSizeChanged = function(parentSize, view)
 {
     return vec2(scene.cardSize.x * 0.9, scene.cardSize.y * 0.9)
+}
+
+
+setGoalPos = function(card, goalPos)
+{
+    if(card.frontView)
+    {
+        card.goalPos = goalPos
+        
+        if(!card.frontView.goalPosUpdateSet)
+        {
+            card.frontView.goalPosUpdateSet = true
+            newUpdateFunc = function(dt)
+            {
+                card.frontView.pos = card.frontView.pos + (card.goalPos - card.frontView.pos) * math.min(dt * 12, 1)
+                if(math.length2(card.frontView.pos - card.goalPos) < 0.001)
+                {
+                    card.frontView.pos = card.goalPos
+                    card.frontView.setUpdate(nil)
+                    card.frontView.goalPosUpdateSet = false
+                }
+            }
+            card.frontView.setUpdate(newUpdateFunc)
+        }
+    }
 }
 
 getCardLayout = function(card, layoutParentID)
@@ -315,9 +336,9 @@ getCardLayout = function(card, layoutParentID)
     return layout
 }
 
-selectedAceIndex = false
-selectedEmptyPiles = {}
-selectedCards = {}
+#selectedAceIndex = false
+#selectedEmptyPiles = {}
+#selectedCards = {}
 
 selectedFromCard = false
 
@@ -343,35 +364,13 @@ checkForCompletion = function()
 
 clearSelected = function()
 {
-    if(selectedAceIndex)
-    {
-        acePileView = scene.getView("ace" + selectedAceIndex)
-        acePileView.setSelected(false)
-        acePile = aces[selectedAceIndex]
-        cardCount = table.count(acePile)
-        if(cardCount > 0)
-        {
-            topAceCard = acePile[cardCount - 1]
-            topAceCard.frontView.setSelected(false)
-        }
-        .selectedAceIndex = false
-    }
-    
-    for(selectedView in selectedEmptyPiles)
-    {
-        selectedView.setSelected(false)
-    }
-    .selectedEmptyPiles = {}
-    
-    for(selectedCard in selectedCards)
-    {
-        selectedCard.frontView.setSelected(false)
-    }
-    .selectedCards = {}
-
-    if(selectedFromCard and selectedFromCard.frontView)
+    if(selectedFromCard and selectedFromCard.frontView and selectedFromCard.frontView.selected)
     {
         selectedFromCard.frontView.setSelected(false)
+        if(selectedFromCard.preSelectionGoalPos)
+        {
+            setGoalPos(selectedFromCard, selectedFromCard.preSelectionGoalPos)
+        }
     }
     .selectedFromCard = false
 }
@@ -449,53 +448,74 @@ removeSelectedCardFromPile = function()
 
 acePileClicked = function(aceIndex)
 {
-    if(selectedFromCard and aceIndex == selectedAceIndex)
+    if(selectedFromCard and !selectedFromCard.belowCard)
     {
         acesPile = aces[aceIndex]
         
         acePileCount = table.count(acesPile)
-        if(acePileCount > 0)
+        if(acePileCount == selectedFromCard.glyph.number - 1)
         {
-            topCard = acesPile[acePileCount - 1]
-            topCard.frontView.setClickFunction(nil)
-        }
+            if(acePileCount == 0 or acesPile[0].suit == selectedFromCard.suit)
+            {
+                if(acePileCount > 0)
+                {
+                    topCard = acesPile[acePileCount - 1]
+                    topCard.frontView.setClickFunction(nil)
+                    topCard.frontView.isHover = false
+                    topCard.frontView.setSelected(false)
+                }
 
-        removeSelectedCardFromPile()
+                removeSelectedCardFromPile()
 
-        table.insert(acesPile, selectedFromCard)
-        
-        selectedFromCard.pileIndex = nil
-        selectedFromCard.aceIndex = selectedAceIndex
-        acePileView = scene.getView("ace" + aceIndex)
-        selectedFromCard.frontView.layoutParent = acePileView
-        selectedFromCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
-        selectedFromCard.frontView.pos = vec3(0,0,0)
-        localAceIndex = aceIndex
-        newClickFunction = function()
-        {
-            acePileClicked(localAceIndex)
+                
+                movingCard = selectedFromCard
+                clearSelected()
+
+                table.insert(acesPile, movingCard)
+                
+                movingCard.pileIndex = nil
+                movingCard.aceIndex = aceIndex
+                acePileView = scene.getView("ace" + aceIndex)
+                posOffset = movingCard.frontView.locationRelativeToView(vec2(0,0), acePileView)
+                movingCard.frontView.layoutParent = acePileView
+                movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.1, vec3(0,0,1))
+                movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
+                
+                localAceIndex = aceIndex
+                newClickFunction = function()
+                {
+                    acePileClicked(localAceIndex)
+                }
+                movingCard.frontView.setClickFunction(newClickFunction)
+                movingCard.frontView.orderFront()
+                movingCard.frontView.setSelected(false)
+                setGoalPos(movingCard, vec3(0,0,0))
+                
+                #table.insert(acesPile, topCard)
+                checkForCompletion()
+            }
         }
-        selectedFromCard.frontView.setClickFunction(newClickFunction)
-        
-        #table.insert(acesPile, topCard)
-        clearSelected()
-        checkForCompletion()
     }
+    clearSelected()
 }
 
-moveAttachedCards = function(newLayoutParentView)
+moveAttachedCards = function(movingCard, newLayoutParentView)
 {
-    belowCard = selectedFromCard.belowCard
-    offsetIndex = selectedFromCard.offsetIndex + 1
+    belowCard = movingCard.belowCard
+    offsetIndex = movingCard.offsetIndex + 1
     while(belowCard)
     {
-        newPile = field[selectedFromCard.pileIndex] #assumes we have moved already
+        newPile = field[movingCard.pileIndex] #assumes we have moved already
         table.insert(newPile, belowCard)
+        posOffset = belowCard.frontView.locationRelativeToView(vec2(0,0), newLayoutParentView)
         belowCard.frontView.layoutParent = newLayoutParentView
-        belowCard.pileIndex = selectedFromCard.pileIndex
+        belowCard.pileIndex = movingCard.pileIndex
         belowCard.offsetIndex = offsetIndex
         offsetIndex++
-        belowCard.frontView.pos = vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
+        
+        belowCard.frontView.pos = vec3(posOffset.x,posOffset.y,belowCard.frontView.pos.y)
+        setGoalPos(belowCard, vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0))
+        #belowCard.frontView.pos = vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
         belowCard.frontView.orderFront()
         .belowCard = belowCard.belowCard
     }
@@ -513,17 +533,23 @@ emptyPileClicked = function(pileIndex)
             
             removeSelectedCardFromPile()
 
-            table.insert(emptyPile, selectedFromCard)
+            movingCard = selectedFromCard
+            clearSelected()
 
-            selectedFromCard.pileIndex = pileIndex
+            table.insert(emptyPile, movingCard)
+
+            movingCard.pileIndex = pileIndex
             emptyPileView = scene.getView("field" + pileIndex)
-            selectedFromCard.frontView.layoutParent = emptyPileView
-            selectedFromCard.offsetIndex = 0
+            posOffset = movingCard.frontView.locationRelativeToView(vec2(0,0), emptyPileView)
+            movingCard.frontView.layoutParent = emptyPileView
+            movingCard.offsetIndex = 0
 
-            selectedFromCard.frontView.pos = vec3(0,0,0)
-            selectedFromCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+            movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
+            setGoalPos(movingCard, vec3(0,0,0))
+
+            movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
             
-            moveAttachedCards(emptyPileView)
+            moveAttachedCards(movingCard, emptyPileView)
         }
 
         #table.insert(acesPile, topCard)
@@ -537,11 +563,14 @@ cardClicked = function(card)
     {
         clearSelected()
     }
+
     if(selectedFromCard and selectedFromCard != card)
     {
         if(card.aceIndex)
         {
             acePileClicked(card.aceIndex)
+            clearSelected()
+            return
         }
         else
         {
@@ -550,88 +579,48 @@ cardClicked = function(card)
                 removeSelectedCardFromPile()
 
                 moveToPile = field[card.pileIndex]
-                table.insert(moveToPile, selectedFromCard)
-                selectedFromCard.pileIndex = card.pileIndex
+                
+                movingCard = selectedFromCard
+                clearSelected()
+
+                card.frontView.isHover = false
+
+                table.insert(moveToPile, movingCard)
+                movingCard.pileIndex = card.pileIndex
                 moveToPileView = scene.getView("field" + card.pileIndex)
-                selectedFromCard.frontView.layoutParent = moveToPileView
-                selectedFromCard.offsetIndex = card.offsetIndex + 1
-                selectedFromCard.frontView.pos = vec3(0,-selectedFromCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
-                selectedFromCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
-                selectedFromCard.frontView.orderFront()
+                
+                posOffset = movingCard.frontView.locationRelativeToView(vec2(0,0), moveToPileView)
 
-                moveAttachedCards(moveToPileView)
+                movingCard.frontView.layoutParent = moveToPileView
+                movingCard.offsetIndex = card.offsetIndex + 1
+                #movingCard.frontView.pos = vec3(0,-movingCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
+                
+                movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
+                setGoalPos(movingCard, vec3(0,-movingCard.offsetIndex * scene.cardSize.x * 0.25,0)) #todo on view size reset
 
-                card.belowCard = selectedFromCard
+                movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+                movingCard.frontView.orderFront()
+
+                moveAttachedCards(movingCard, moveToPileView)
+
+                card.belowCard = movingCard
+                return
             }
-            clearSelected()
         }
-        return
     }
 
     clearSelected()
 
     card.frontView.setSelected(true)
-    table.insert(selectedCards, card)
+    card.preSelectionGoalPos = card.goalPos
+    if(!card.preSelectionGoalPos)
+    {
+        card.preSelectionGoalPos = card.frontView.pos
+    }
+    setGoalPos(card, vec3(card.preSelectionGoalPos.x,card.preSelectionGoalPos.y + scene.cardSize.x * 0.1, scene.cardSize.x * 0.1))
+    #table.insert(selectedCards, card)
 
     .selectedFromCard = card
-
-    if(!selectedFromCard.belowCard)
-    {
-        for(aceIndex = 0, aceIndex < 4, aceIndex++)
-        {
-            acePile = aces[aceIndex]
-            cardCount = table.count(acePile)
-            if(cardCount == card.glyph.number - 1)
-            {
-                if(cardCount == 0 or acePile[0].suit == card.suit)
-                {
-                    print("table.count(aces[aceIndex]):", table.count(aces[aceIndex]), " == card.glyph.number - 1:", card.glyph.number - 1)
-                    print("aceIndex:", aceIndex)
-                    acePileView = scene.getView("ace" + aceIndex)
-                    acePileView.setSelected(true)
-
-                    if(cardCount > 0)
-                    {
-                        topAceCard = acePile[cardCount - 1]
-                        topAceCard.frontView.setSelected(true)
-                    }
-                    .selectedAceIndex = aceIndex
-                    break
-                }
-            }
-        }
-    }
-
-    if(card.glyph.glyphText == "K")
-    {
-        for(pileIndex = 0, pileIndex < 7, pileIndex++)
-        {
-            if(table.count(field[pileIndex]) == 0)
-            {
-                pileViewID = "field" + pileIndex
-                pileView = scene.getView(pileViewID)
-                pileView.setSelected(true)
-                table.insert(selectedEmptyPiles, pileView)
-            }
-        }
-    }
-    else
-    {
-        for(pileIndex = 0, pileIndex < 7, pileIndex++)
-        {
-            pile = field[pileIndex]
-            pileCount = table.count(pile)
-            if(pileCount > 0)
-            {
-                topCard = pile[pileCount - 1]
-                if(topCard.glyph.number == selectedFromCard.glyph.number + 1 and topCard.suit.red != selectedFromCard.suit.red)
-                {
-                    topCard.frontView.setSelected(true)
-                    table.insert(selectedCards, topCard)
-                }
-            }
-        }
-    }
 }
 
 getDeckCardPos = function(cardIndex)
@@ -651,6 +640,7 @@ getDeckCardColor = function(cardIndex)
 
 deckClicked = function()
 {
+    clearSelected()
     if(table.count(deck) == 0)
     {
         .deck = hand
