@@ -375,6 +375,33 @@ clearSelected = function()
     .selectedFromCard = false
 }
 
+turnPileTopCard = function(pileIndex)
+{
+    pile = field[pileIndex]
+    pileCount = table.count(pile)
+    if(pileCount)
+    {
+        pileTopCard = pile[table.count(pile) - 1]
+        if(pileTopCard.backView)
+        {
+            cardBacksView.removeView(pileTopCard.backView)
+            pileTopCard.backView = nil
+            
+            pileViewID = "field" + pileIndex
+            pileTopCard.offsetIndex = 0
+            cardLayout = getCardLayout(pileTopCard, pileViewID)
+            cardView = cardFacesView.addView(cardLayout)
+            cardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+            cardClick = function()
+            {
+                cardClicked(pileTopCard)
+            }
+            cardView.setClickFunction(cardClick)
+            pileTopCard.frontView = cardView
+        }
+    }
+}
+
 removeSelectedCardFromPile = function()
 {
     fromPileIndex = selectedFromCard.pileIndex
@@ -395,24 +422,7 @@ removeSelectedCardFromPile = function()
         if(newFromPileCount > 0)
         {
             newPileTopCard = fromPile[newFromPileCount - 1]
-            if(newPileTopCard.backView)
-            {
-                cardBacksView.removeView(newPileTopCard.backView)
-                newPileTopCard.backView = nil
-                
-                pileViewID = "field" + fromPileIndex
-                newPileTopCard.offsetIndex = 0
-                cardLayout = getCardLayout(newPileTopCard, pileViewID)
-                cardView = cardFacesView.addView(cardLayout)
-                cardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
-                cardClick = function()
-                {
-                    cardClicked(newPileTopCard)
-                }
-                cardView.setClickFunction(cardClick)
-                newPileTopCard.frontView = cardView
-            }
-            else
+            if(!newPileTopCard.backView)
             {
                 newPileTopCard.belowCard = nil
             }
@@ -493,10 +503,12 @@ acePileClicked = function(aceIndex)
                 
                 #table.insert(acesPile, topCard)
                 checkForCompletion()
+                return true
             }
         }
     }
     clearSelected()
+    return false
 }
 
 moveAttachedCards = function(movingCard, newLayoutParentView)
@@ -555,16 +567,30 @@ emptyPileClicked = function(pileIndex)
         #table.insert(acesPile, topCard)
         clearSelected()
     }
+
+    turnPileTopCard(pileIndex)
 }
 
 cardClicked = function(card)
 {
+    if(selectedFromCard and selectedFromCard == card)
+    {
+        for(aceIndex = 0, aceIndex < 4, aceIndex++)
+        {
+            if(acePileClicked(aceIndex))
+            {
+                return
+            }
+        }
+    }
+
     if(card.inHand)
     {
         clearSelected()
     }
 
-    if(selectedFromCard and selectedFromCard != card)
+
+    if(selectedFromCard and selectedFromCard != card and !card.belowCard)
     {
         if(card.aceIndex)
         {
@@ -648,6 +674,11 @@ deckClicked = function()
         
         for(i, card in deck)
         {
+            if(card.preSelectionGoalPos)
+            {
+                card.goalPos = card.preSelectionGoalPos
+                card.frontView.pos = card.preSelectionGoalPos
+            }
             card.frontView.hidden = true
             card.backView.hidden = false
             card.backView.pos = getDeckCardPos(i)
