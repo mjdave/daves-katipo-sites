@@ -59,7 +59,8 @@ mainView = {
                     type = "textEntry"
                     font = "blockheadsHue"
                     fontSize = 48
-                    size = vec2(400, 60)
+                    maxChars = 8
+                    backgroundColor = vec4(0.5,0.0,1.0,0.2)
                     hidden = true
                 }
                 {

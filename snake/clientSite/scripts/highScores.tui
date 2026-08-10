@@ -133,10 +133,10 @@ showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
     {
         playButton.hidden = true
         enterHighScoreText.hidden = false
+        enterHighScoreText.setText("Player 1")
         enterHighScoreText.textEntryClickFunction()
         highScoresTitle.text = "New High Score!"
         highScoreContentView.hidden = true
-        enterHighScoreText.maxChars = 3
         enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
         {
             if(!textValue)
