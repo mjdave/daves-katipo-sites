@@ -379,7 +379,7 @@ turnPileTopCard = function(pileIndex)
 {
     pile = field[pileIndex]
     pileCount = table.count(pile)
-    if(pileCount)
+    if(pileCount > 0)
     {
         pileTopCard = pile[table.count(pile) - 1]
         if(pileTopCard.backView)
@@ -507,7 +507,6 @@ acePileClicked = function(aceIndex)
             }
         }
     }
-    clearSelected()
     return false
 }
 
@@ -824,6 +823,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         pileClick = function()
         {
             acePileClicked(localAcePileIndex)
+            clearSelected()
         }
         acePileView.setClickFunction(pileClick)
     }
