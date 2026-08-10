@@ -243,7 +243,7 @@ mainView = {
         {
             id = "gameWon"
             type = "text"
-            text = "YAY YOU WIN!"
+            text = "YAY! YOU WIN!"
             font = "roboto"
             color = vec4(1.0,0.4,1.0,1.0)
             shader = "drawQuadTexturedHueShift"

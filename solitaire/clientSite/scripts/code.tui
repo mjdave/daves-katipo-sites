@@ -212,23 +212,40 @@ cardBackgroundImageParentSizeChanged = function(parentSize, view)
 }
 
 
-setGoalPos = function(card, goalPos)
+setGoalPos = function(card, goalPos, goalRotation)
 {
     if(card.frontView)
     {
         card.goalPos = goalPos
+        card.goalRotation = goalRotation
+        if(!card.rotationAngle)
+        {
+            card.rotationAngle = 0
+        }
+        if(!card.goalRotation)
+        {
+            card.goalRotation = card.rotationAngle
+        }
+        
+        #if(goalPos.x != 0 and (((goalPos.x - card.frontView.pos.x) > 0) == (card.goalRotation > 0)))
+        #{
+        #    card.goalRotation = -card.goalRotation
+        #}
         
         if(!card.frontView.goalPosUpdateSet)
         {
             card.frontView.goalPosUpdateSet = true
             newUpdateFunc = function(dt)
             {
-                card.frontView.pos = card.frontView.pos + (card.goalPos - card.frontView.pos) * math.min(dt * 12, 1)
+                card.frontView.pos = card.frontView.pos + (card.goalPos - card.frontView.pos) * math.min(dt * 20, 1)
+                card.rotationAngle = card.rotationAngle + (card.goalRotation - card.rotationAngle) * math.min(dt * 20, 1)
+                card.frontView.rotation = math.rotate(card.rotationAngle,vec3(0,0,1))
                 if(math.length2(card.frontView.pos - card.goalPos) < 0.001)
                 {
                     card.frontView.pos = card.goalPos
                     card.frontView.setUpdate(nil)
                     card.frontView.goalPosUpdateSet = false
+                    card.goalRotation = card.rotationAngle
                 }
             }
             card.frontView.setUpdate(newUpdateFunc)
@@ -345,9 +362,11 @@ selectedFromCard = false
 cardBacksView = false
 cardFacesView = false
 
+complete = false
+
 checkForCompletion = function()
 {
-    complete = true
+    .complete = true
     for(i = 0, i < 4, i++)
     {
         if(table.count(aces[i]) != 13)
@@ -369,7 +388,7 @@ clearSelected = function()
         selectedFromCard.frontView.setSelected(false)
         if(selectedFromCard.preSelectionGoalPos)
         {
-            setGoalPos(selectedFromCard, selectedFromCard.preSelectionGoalPos)
+            setGoalPos(selectedFromCard, selectedFromCard.preSelectionGoalPos, nil)
         }
     }
     .selectedFromCard = false
@@ -391,7 +410,7 @@ turnPileTopCard = function(pileIndex)
             pileTopCard.offsetIndex = 0
             cardLayout = getCardLayout(pileTopCard, pileViewID)
             cardView = cardFacesView.addView(cardLayout)
-            cardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+            cardView.rotation = math.rotate(getRandomRotation(0.05), vec3(0,0,1))
             cardClick = function()
             {
                 cardClicked(pileTopCard)
@@ -400,6 +419,11 @@ turnPileTopCard = function(pileIndex)
             pileTopCard.frontView = cardView
         }
     }
+}
+
+getRandomRotation = function(range)
+{
+    return math.cos(math.random() * math.pi * 2.0) * range
 }
 
 removeSelectedCardFromPile = function()
@@ -488,7 +512,7 @@ acePileClicked = function(aceIndex)
                 acePileView = scene.getView("ace" + aceIndex)
                 posOffset = movingCard.frontView.locationRelativeToView(vec2(0,0), acePileView)
                 movingCard.frontView.layoutParent = acePileView
-                movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.1, vec3(0,0,1))
+                #movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.1, vec3(0,0,1))
                 movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
                 
                 localAceIndex = aceIndex
@@ -499,7 +523,7 @@ acePileClicked = function(aceIndex)
                 movingCard.frontView.setClickFunction(newClickFunction)
                 movingCard.frontView.orderFront()
                 movingCard.frontView.setSelected(false)
-                setGoalPos(movingCard, vec3(0,0,0))
+                setGoalPos(movingCard, vec3(0,0,0), getRandomRotation(0.1))
                 
                 #table.insert(acesPile, topCard)
                 checkForCompletion()
@@ -525,7 +549,7 @@ moveAttachedCards = function(movingCard, newLayoutParentView)
         offsetIndex++
         
         belowCard.frontView.pos = vec3(posOffset.x,posOffset.y,belowCard.frontView.pos.y)
-        setGoalPos(belowCard, vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0))
+        setGoalPos(belowCard, vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0), nil)
         #belowCard.frontView.pos = vec3(0,-belowCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
         belowCard.frontView.orderFront()
         .belowCard = belowCard.belowCard
@@ -556,9 +580,7 @@ emptyPileClicked = function(pileIndex)
             movingCard.offsetIndex = 0
 
             movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
-            setGoalPos(movingCard, vec3(0,0,0))
-
-            movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+            setGoalPos(movingCard, vec3(0,0,0), getRandomRotation(0.05))
             
             moveAttachedCards(movingCard, emptyPileView)
         }
@@ -621,9 +643,9 @@ cardClicked = function(card)
                 #movingCard.frontView.pos = vec3(0,-movingCard.offsetIndex * scene.cardSize.x * 0.25,0) #todo on view size reset
                 
                 movingCard.frontView.pos = vec3(posOffset.x,posOffset.y,movingCard.frontView.pos.y)
-                setGoalPos(movingCard, vec3(0,-movingCard.offsetIndex * scene.cardSize.x * 0.25,0)) #todo on view size reset
+                setGoalPos(movingCard, vec3(0,-movingCard.offsetIndex * scene.cardSize.x * 0.25,0), getRandomRotation(0.05)) #todo on view size reset
 
-                movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+                //movingCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
                 movingCard.frontView.orderFront()
 
                 moveAttachedCards(movingCard, moveToPileView)
@@ -642,7 +664,7 @@ cardClicked = function(card)
     {
         card.preSelectionGoalPos = card.frontView.pos
     }
-    setGoalPos(card, vec3(card.preSelectionGoalPos.x,card.preSelectionGoalPos.y + scene.cardSize.x * 0.1, scene.cardSize.x * 0.1))
+    setGoalPos(card, vec3(card.preSelectionGoalPos.x,card.preSelectionGoalPos.y + scene.cardSize.x * 0.1, scene.cardSize.x * 0.1), nil)
     #table.insert(selectedCards, card)
 
     .selectedFromCard = card
@@ -705,8 +727,17 @@ deckClicked = function()
         }
         
         topCard.handOffsetIndex = i
-        topCard.frontView.pos = vec3(topCard.handOffsetIndex * scene.cardSize.x * (math.random() * 0.1 + 0.15),topCard.handOffsetIndex * scene.cardSize.x * -0.07,0) #todo on view size reset
-        topCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05 - i * 0.15 + 0.05, vec3(0,0,1))
+        goalPos = vec3(topCard.handOffsetIndex * scene.cardSize.x * (math.random() * 0.1 + 0.15),topCard.handOffsetIndex * scene.cardSize.x * -0.07,0) #todo on view size reset
+        #topCard.frontView.pos = vec3(-)
+        #topCard.frontView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05 - i * 0.15 + 0.05, vec3(0,0,1))
+        
+        
+        handView = scene.getView("hand")
+        deckView = scene.getView("deck")
+        posOffset = handView.locationRelativeToView(vec2(0,0), deckView)
+        topCard.frontView.pos = vec3(-posOffset.x, -posOffset.y, 0)
+                
+        setGoalPos(topCard, goalPos, getRandomRotation(0.05)  - i * 0.15 + 0.05)
         topCard.frontView.orderFront()
 
         if(i == 2 or deckEmpty)
@@ -797,7 +828,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
             }
             backCard = pile[i]
             backCardView = cardBacksView.addView(backLayout)
-            backCardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.1, vec3(0,0,1))
+            backCardView.rotation = math.rotate(getRandomRotation(0.1), vec3(0,0,1))
             backCard.backView = backCardView
             backCard.pileIndex = localPileIndex
         }
@@ -807,7 +838,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         topCard.offsetIndex = 0
         cardLayout = getCardLayout(topCard, pileViewID)
         cardView = cardFacesView.addView(cardLayout)
-        cardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.05, vec3(0,0,1))
+        cardView.rotation = math.rotate(getRandomRotation(0.05), vec3(0,0,1))
         cardClick = function()
         {
             cardClicked(topCard)
@@ -844,7 +875,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         }
         backCard = deck[i]
         backCardView = cardBacksView.addView(backLayout)
-        backCardView.rotation = math.rotate(math.cos(math.random() * math.pi * 2.0) * 0.1, vec3(0,0,1))
+        backCardView.rotation = math.rotate(getRandomRotation(0.1), vec3(0,0,1))
         backCard.backView = backCardView
     }
 
@@ -853,5 +884,15 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
 
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
-
+    if(complete)
+    {
+        for(i = 0, i < 4, i++)
+        {
+            acePile = aces[i]
+            pileCount = table.count(acePile)
+            randomIndex = math.randomInt(pileCount)
+            randomCard = acePile[randomIndex]
+            setGoalPos(randomCard, vec3((math.random() - 0.5) * 2000.0, math.random() * -2000.0,(math.random() - 0.5) * 100.0), getRandomRotation(math.pi * 2.0))
+        }
+    }
 }
