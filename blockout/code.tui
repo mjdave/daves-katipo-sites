@@ -37,7 +37,7 @@ get = function(url, clientData)
         print("got setScore")
         scoreDict = clientData
 
-        if(!scoreDict.name or !scoreDict.score or type(scoreDict.name) != "string" or string.length(scoreDict.name) > 3 or type(scoreDict.score) != "number")
+        if(!scoreDict.name or !scoreDict.score or type(scoreDict.name) != "string" or string.length(scoreDict.name) > 8 or type(scoreDict.score) != "number")
         {
             print("error, missing or invalid data scoreDict:", scoreDict)
 
