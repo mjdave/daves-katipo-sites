@@ -451,6 +451,11 @@ removeSelectedCardFromPile = function()
                 newPileTopCard.belowCard = nil
             }
         }
+        else
+        {
+            emptyPileView = scene.getView("field" + fromPileIndex)
+            emptyPileView.setColor(scene.emptyPileColor)
+        }
     }
     else #must be from the hand
     {
@@ -682,7 +687,7 @@ getFieldCardColor = function(cardIndex)
 
 getDeckCardColor = function(cardIndex)
 {
-    return vec4(0.01,0.1,0.05,1.0) * (1.0 - math.min(cardIndex/30, 1))
+    return getFieldCardColor(cardIndex)#vec4(0.01,0.1,0.05,1.0) * (1.0 - math.min(cardIndex/30, 1))
 }
 
 deckClicked = function()
@@ -692,6 +697,12 @@ deckClicked = function()
     {
         .deck = hand
         .hand = {}
+
+        if(table.count(deck) > 0)
+        {
+            deckView = scene.getView("deck")
+            deckView.setColor(getDeckCardColor(0))
+        }
         
         for(i, card in deck)
         {
@@ -764,6 +775,8 @@ deckClicked = function()
 
         if(deckEmpty)
         {
+            deckView = scene.getView("deck")
+            deckView.setColor(scene.emptyPileColor)
             break
         }
     }
@@ -815,6 +828,15 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         }
         pileView.setClickFunction(pileClick)
 
+        if(pileCount > 0)
+        {
+            pileView.setColor(getDeckCardColor(0))
+        }
+        else
+        {
+            pileView.setColor(scene.emptyPileColor)
+        }
+
         for(i=0,i<pileCount - 1,i++)
         {
             backLayout = {
@@ -861,6 +883,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
     
     deckView = scene.getView("deck")
     deckView.setClickFunction(deckClicked)
+    deckView.setColor(getDeckCardColor(0))
     
     for(i=0,i<table.count(deck),i++)
     {
@@ -886,13 +909,11 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
 {
     if(complete)
     {
-        for(i = 0, i < 4, i++)
-        {
-            acePile = aces[i]
-            pileCount = table.count(acePile)
-            randomIndex = math.randomInt(pileCount)
-            randomCard = acePile[randomIndex]
-            setGoalPos(randomCard, vec3((math.random() - 0.5) * 2000.0, math.random() * -2000.0,(math.random() - 0.5) * 100.0), getRandomRotation(math.pi * 2.0))
-        }
+        randomPileIndex = math.randomInt(4)
+        acePile = aces[randomPileIndex]
+        pileCount = table.count(acePile)
+        randomIndex = math.randomInt(pileCount)
+        randomCard = acePile[randomIndex]
+        setGoalPos(randomCard, vec3((math.random() - 0.5) * 1000.0, math.random() * -1000.0,(math.random() - 0.5) * 100.0), getRandomRotation(math.pi * 2.0))
     }
 }
