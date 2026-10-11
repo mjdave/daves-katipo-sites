@@ -1,0 +1,259 @@
+#global katipo
+#global scene
+#global time
+#global eventManager
+
+keys = require("app/common/keys.tui")
+highScores = require("scripts/highScores.tui")
+words = require("scripts/words.tui")
+
+validWords = {}
+for(word in words)
+{
+    validWords[word] = true
+}
+
+gameView = scene.getView("gameView")
+
+gameRunning = false
+
+runningInTheBackground = false
+
+todaysWord = false
+
+tryIndex = 0
+currentTry = ""
+
+enterChar = function(newChar)
+{
+    key = "key_" + string.upper(newChar)
+    keyButton = gameView.getView(key)
+    if(!keyButton or keyButton.disabled)
+    {
+        return
+    }
+
+    currentLength = string.length(currentTry)
+    if(currentLength < 5)
+    {
+        currentTry += string.lower(newChar)
+        squareKey = "square_" + tryIndex + "_" + currentLength
+        squareView = gameView.getView(squareKey)
+        squareView.color = scene.squareSetColor
+        
+        textView = squareView.getView("text")
+        textView.text = string.upper(newChar)
+
+        if(currentLength == 4)
+        {
+            if(validWords[currentTry])
+            {
+                key = "key_>"
+                keyButton = gameView.getView(key)
+                keyButton.setDisabled(false)
+            }  
+        }
+        else
+        {
+            squareKey = "square_" + tryIndex + "_" + (currentLength + 1)
+            squareView = gameView.getView(squareKey)
+            squareView.color = scene.squareSelectedColor
+        }
+    }
+}
+
+confirmPressed = function()
+{
+    currentLength = string.length(currentTry)
+    if(currentLength == 5)
+    {
+        if(validWords[currentTry])
+        {
+            for(charIndex = 0, charIndex < 5, charIndex++)
+            {
+                thisChar = string.subString(currentTry, charIndex, 1)
+
+                squareKey = "square_" + tryIndex + "_" + charIndex
+                squareView = gameView.getView(squareKey)
+                textView = squareView.getView("text")
+
+                key = "key_" + string.upper(thisChar)
+                keyButton = gameView.getView(key)
+
+                foundLocation = string.find(todaysWord, thisChar)
+                if(foundLocation)
+                {
+                    thisLocation = string.find(todaysWord, thisChar, charIndex)
+                    if(thisLocation == charIndex)
+                    {
+                        squareView.color = vec4(0,1,0,0.6)
+                    }
+                    else
+                    {
+                        squareView.color = vec4(1,1,0,0.6)
+                    }
+                    keyButton.setColor(squareView.color)
+                }
+                else
+                {
+                    squareView.color = vec4(0,0,0,0.2)
+                    textView.color = vec4(1,1,1,0.4)
+                    keyButton.setDisabled(true)
+                    keyButton.setColor(vec4(0,0,0,0.5))
+                }
+            }
+
+            if(currentTry == todaysWord)
+            {
+                #game won
+            }
+            else
+            {
+                tryIndex++
+                if(tryIndex == 6)
+                {
+                    print("the word was:", todaysWord)
+                }
+                else
+                {
+                    .currentTry = ""
+                    key = "key_>"
+                    keyButton = gameView.getView(key)
+                    keyButton.setDisabled(true)
+
+                    squareView = gameView.getView("square_" + tryIndex + "_0")
+                    squareView.color = scene.squareSelectedColor
+                }
+            }
+        }
+    }
+}
+
+deleteCurrentChar = function()
+{
+    currentLength = string.length(currentTry)
+    if(currentLength > 0)
+    {
+        if(currentLength < 5)
+        {
+            squareKey = "square_" + tryIndex + "_" + currentLength
+            squareView = gameView.getView(squareKey)
+            squareView.color = scene.squareBackgroundColor
+        }
+
+        squareKey = "square_" + tryIndex + "_" + (currentLength - 1)
+        squareView = gameView.getView(squareKey)
+        squareView.color = scene.squareSelectedColor
+
+        textView = squareView.getView("text")
+        textView.text = ""
+        .currentTry = string.subString(currentTry, 0, currentLength - 1)
+
+        if(currentLength == 5)
+        {
+            key = "key_>"
+            keyButton = gameView.getView(key)
+            keyButton.setDisabled(true)
+        }
+    }
+}
+
+keyClickFunction = function(keyView)
+{
+    if(keyView.keyChar == "<")
+    {
+        deleteCurrentChar()
+    }
+    else if(keyView.keyChar == ">")
+    {
+        confirmPressed()
+    }
+    else
+    {
+        enterChar(keyView.keyChar)
+    }
+}
+
+katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
+{
+    .runningInTheBackground = false
+    print("in clientSite onSiteLoad:", publicData)
+    if(publicData)
+    {
+        highScores.setFromHost(publicData.highScores)
+    }
+
+    for(y = 0, y < 3, y++)
+    {
+        row = scene.keyboardKeys[y]
+        for(x, char in row)
+        {
+            key = "key_" + char
+            keyButton = gameView.getView(key)
+            keyButton.keyChar = char
+            keyButton.setClickFunction(keyClickFunction)
+
+            if(char == ">")
+            {
+                keyButton.setDisabled(true)
+                keyButton.setColor(vec4(0.1,1.0,0.1,0.67))
+            }
+        }
+    }
+
+    squareView = gameView.getView("square_0_0")
+    squareView.color = scene.squareSelectedColor
+}
+
+katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
+{
+    .runningInTheBackground = isBackground
+}
+
+katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
+{
+    if(!gameRunning or runningInTheBackground or katipo.paused)
+    {
+        return
+    }
+}
+
+highScores.onPlayClick = function()
+{
+    highScores.fadeOut(gameView)
+    .gameRunning = true
+
+    todaysIndex = math.randomInt(table.count(words), math.floor(time.now()))
+    .todaysWord = words[todaysIndex]
+
+    //print("today's word:", todaysWord)
+}
+
+keyEvent = function(isDown, keyCode, modKey, isRepeat)
+{
+    if(isDown and !isRepeat)
+    {
+        if(keyCode == keys.keyCodes.backspace)
+        {
+            deleteCurrentChar()
+        }
+        else if(keyCode == keys.keyCodes.enter or keyCode == keys.keyCodes.key_return)
+        {
+            confirmPressed()
+        }
+    }
+}
+
+textEntry = function(text)
+{
+    print("text entry:", text)
+
+    string.eachChar(text, enterChar)
+}
+
+if(platform() != "ios")
+{
+    eventManager.eventManager.setTextEntryListener(textEntry, keyEvent)
+}
+
+highScores.fadeIn()

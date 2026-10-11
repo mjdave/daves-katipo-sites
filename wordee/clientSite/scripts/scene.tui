@@ -1,0 +1,192 @@
+viewTypes = { #can be added to at any time
+    button = require("app/common/button.tui")
+    textEntry = require("app/common/textEntry.tui")
+    scrollView = require("app/common/scrollView.tui")
+    fileBrowser = require("app/common/fileBrowser.tui")
+}
+
+
+
+highScoreText = {
+    type = "text"
+    alignmentX = "left"
+    alignmentY = "top"
+    font = "robotoBold"
+    fontSize = 30
+    color = vec4(0.2,0.4,1.0,1.0)
+    additiveBlend = true
+}
+
+highScoresView = {
+    id = "highScores"
+    type = "view"
+    hidden = true
+    subviews = {
+        {
+            id = "highScoresTitle"
+            type = "text"
+            alignmentY = "top"
+            pos = vec3(0,-50, 0)
+            font = "robotoBold"
+            fontSize = 48
+            text = "High Scores"
+            color = vec4(1.0,0.4,0.0,1.0)
+            additiveBlend = true
+        }
+        {
+            id = "enterHighScoreText"
+            type = "textEntry"
+            font = "robotoBold"
+            fontSize = 48
+            maxChars = 8
+            backgroundColor = vec4(0.5,0.0,1.0,0.2)
+            hidden = true
+        }
+        {
+            id = "highScoreContent"
+            type = "view"
+        }
+        {
+            id = "playButton"
+            type = "button"
+            alignmentY = "bottom"
+            buttonType = "colorHueShift"
+            color = vec4(1.0,0.0,1.0,0.5)
+            pos = vec3(0,120,0)
+            size = vec2(400, 60)
+            subviews = {
+                {
+                    id = "playButtonText"
+                    type = "text"
+                    alignmentY = "bottom"
+                    font = "robotoBold"
+                    text = "DO WORDS"
+                    fontSize = 48
+                    color = vec4(0.2,0.4,1.0,1.0)
+                    #pos = vec3(0,5,0)
+                    additiveBlend = true
+                }
+            }
+        }
+    }
+}
+
+keyboardKeys = {
+    {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"}
+    {"A", "S", "D", "F", "G", "H", "J", "K", "L"}
+    {"<", "Z", "X", "C", "V", "B", "N", "M", ">"}
+}
+
+gridCellSize = 60
+padding = 2
+
+gridBackgroundSize = vec2((gridCellSize + padding)*5 + padding,(gridCellSize + padding)*6 + padding)
+
+gridBackgroundColor = vec4(0,0,1,0.2)
+squareBackgroundColor = vec4(0.5,0.5,0.5,0.2)
+squareSelectedColor = vec4(0.5,0.7,0.7,0.4)
+squareSetColor = vec4(0,0.5,0.5,0.2)
+
+squareViews = {}
+for(y = 0, y < 6, y++)
+{
+    for(x = 0, x < 5, x++)
+    {
+        yOffsetIndex = 5 - y
+        squareView = {
+            id = "square_" + y + "_" + x
+            type = "color"
+            size = vec2(gridCellSize,gridCellSize)
+            color = squareBackgroundColor
+            pos = vec2(padding + (gridCellSize + padding) * x, padding + (gridCellSize + padding) * yOffsetIndex) - gridBackgroundSize * 0.5 + vec2(gridCellSize,gridCellSize) * 0.5
+            subviews = {
+                {
+                    id = "text"
+                    type = "text"
+                    font = "robotoBold"
+                    fontSize = 30
+                }
+            }
+        }
+        table.insert(squareViews, squareView)
+    }
+}
+
+keyViews = {}
+
+
+for(y = 0, y < 3, y++)
+{
+    row = keyboardKeys[y]
+    rowCount = table.count(row)
+
+    for(x, char in row)
+    {
+
+            rowIndex = y
+            columnIndex = x
+
+        keyView = {
+            id = "key_" + char
+            type = "button"
+            buttonType = "color"
+            alignmentY = "bottom"
+            #size = vec2(gridCellSize,gridCellSize)
+            color = squareBackgroundColor
+            onParentSizeChanged = function(parentSize, view)
+            {
+                keyboardCellSize = math.min(100, parentSize.x / 11)
+                xBaseOffset = ((-rowCount) * (keyboardCellSize + padding) + padding) * 0.5
+                xOffset = xBaseOffset + columnIndex * (keyboardCellSize + padding)
+                yOffset = (keyboardCellSize + padding) * (2 - rowIndex)
+                view.pos = vec2(xOffset, yOffset) + vec2(keyboardCellSize,keyboardCellSize) * 0.5
+                return vec2(keyboardCellSize,keyboardCellSize)
+            }
+            subviews = {
+                {
+                    id = "text"
+                    type = "text"
+                    font = "robotoBold"
+                    fontSize = 30
+                    text = char
+                }
+            }
+        }
+        table.insert(keyViews, keyView)
+    }
+}
+
+gameView = {
+    type = "view"
+    id = "gameView"
+    hidden = true
+    subviews = {
+        {
+            id = "grid"
+            type = "color"
+            additiveBlend = true
+            alignmentY = "top"
+            pos = vec2(0,-20)
+            size = gridBackgroundSize
+            color = gridBackgroundColor
+            subviews = squareViews
+        }
+        {
+            id = "keyboard"
+            type = "view"
+            alignmentY = "bottom"
+            pos = vec2(0,20)
+            subviews = keyViews
+        }
+
+    }
+}
+
+
+mainView = {
+    type = "view"
+    subviews = {
+        highScoresView,
+        gameView,
+    }
+}

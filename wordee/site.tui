@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "wordee" #used to uniquely identify this site
+title = "wordee" #displayed name
+keywords = { "wordee", "game" } #used for search
+description = "A very basic example of a game in katipo" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

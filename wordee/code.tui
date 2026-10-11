@@ -1,0 +1,102 @@
+#global katipo
+#global sleep
+
+maxHighScores = 10
+
+siteInfo = require(katipo.sitePath + "/site.tui")
+host = katipo.host
+#siteImage = file.loadData(katipo.sitePath + "/site.png")
+
+highScores = false
+
+init = function() #called just after katipo.init. The database is now ready to use.
+{
+    .highScores = host.getPublicData("highScores")
+    if(!highScores)
+    {
+        .highScores = {}
+    }
+    else
+    {
+        sortFunction = function(a,b){
+            return a.score < b.score
+        }
+        table.sort(highScores, sortFunction)
+    }
+    print("loaded scores:", highScores)
+}
+
+### this function is called when clients query this site
+get = function(url, clientData)
+{
+    print("in site code get. url:", url, " clientData:", clientData)
+    urlSplit = string.split(url, "/")
+    splitCount = table.count(urlSplit)
+
+    #print("urlSplit:", urlSplit)
+    #print("splitCount:", splitCount)
+
+    if(splitCount > 0 and urlSplit[0] == "setScore")
+    {
+        print("got setScore")
+        scoreDict = clientData
+
+        if(!scoreDict.name or !scoreDict.score or type(scoreDict.name) != "string" or string.length(scoreDict.name) > 8 or type(scoreDict.score) != "number")
+        {
+            print("error, missing or invalid data scoreDict:", scoreDict)
+
+            return {
+                status = "error"
+                message = "missing or invalid data"
+            }
+        }
+
+        newScore = scoreDict.score
+        addIndex = 0
+        for(i, scoreInfo in highScores)
+        {
+            .addIndex = i
+            if(scoreInfo.score <= newScore)
+            {
+                break
+            }
+        }
+
+        if(addIndex > maxHighScores)
+        {
+            print("attempt to add high score beyond bounds")
+            return
+        }
+
+        newScoreInfo = {
+            score = newScore,
+            name = scoreDict.name
+        }
+
+        table.insert(highScores, addIndex, newScoreInfo)
+        if(table.count(highScores) > maxHighScores)
+        {
+            table.remove(highScores, table.count(highScores) - 1)
+        }
+
+        print("saving highScores:", highScores)
+        host.setPublicData("highScores", highScores)
+    }
+    else 
+    {
+       return host.get(url, clientData)
+    }
+
+    return {
+        status = "error"
+        message = "unhandled request"
+    }
+}
+
+runLoop = function()
+{
+    while(true)
+    {
+        sleep(1.0) #nothing to do yet
+    }
+}
