@@ -2,6 +2,9 @@
 #global scene
 #global time
 #global eventManager
+#global database
+
+printCheatWord = true
 
 keys = require("app/common/keys.tui")
 highScores = require("scripts/highScores.tui")
@@ -15,7 +18,7 @@ for(word in words)
 
 gameView = scene.getView("gameView")
 
-gameRunning = false
+gameRunning = true
 
 runningInTheBackground = false
 
@@ -23,9 +26,21 @@ todaysWord = false
 
 tryIndex = 0
 currentTry = ""
+scoreColorGrid = {}
+
+
+mostRecentCompletedIndex = false
+currentInProgressIndex = false
+
+secondsBetweenWords = 1200
+prevTimeUpdateSeconds = false
 
 enterChar = function(newChar)
 {
+    if(mostRecentCompletedIndex)
+    {
+        return
+    }
     key = "key_" + string.upper(newChar)
     keyButton = gameView.getView(key)
     if(!keyButton or keyButton.disabled)
@@ -69,6 +84,8 @@ confirmPressed = function()
     {
         if(validWords[currentTry])
         {
+            scoreColors = {}
+            table.insert(scoreColorGrid, scoreColors)
             for(charIndex = 0, charIndex < 5, charIndex++)
             {
                 thisChar = string.subString(currentTry, charIndex, 1)
@@ -87,10 +104,12 @@ confirmPressed = function()
                     if(thisLocation == charIndex)
                     {
                         squareView.color = vec4(0,1,0,0.6)
+                        table.insert(scoreColors, 1)
                     }
                     else
                     {
                         squareView.color = vec4(1,1,0,0.6)
+                        table.insert(scoreColors, 2)
                     }
                     keyButton.setColor(squareView.color)
                 }
@@ -98,14 +117,21 @@ confirmPressed = function()
                 {
                     squareView.color = vec4(0,0,0,0.2)
                     textView.color = vec4(1,1,1,0.4)
-                    keyButton.setDisabled(true)
                     keyButton.setColor(vec4(0,0,0,0.5))
+                    table.insert(scoreColors, 0)
                 }
             }
 
             if(currentTry == todaysWord)
             {
                 #game won
+                .mostRecentCompletedIndex = currentInProgressIndex
+                .currentInProgressIndex = false
+                highScores.showHighScoresAfterGame(tryIndex, 
+                    scoreColorGrid
+                    todaysWord, 
+                    mostRecentCompletedIndex, 
+                    gameView)
             }
             else
             {
@@ -180,7 +206,10 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
     print("in clientSite onSiteLoad:", publicData)
     if(publicData)
     {
-        highScores.setFromHost(publicData.highScores)
+        for(k, v in publicData)
+        {
+            database.set(k, v)
+        }
     }
 
     for(y = 0, y < 3, y++)
@@ -210,28 +239,88 @@ katipo.onBackgroundChange = function(isBackground) #called if the app enters the
     .runningInTheBackground = isBackground
 }
 
+
+clearBoard = function()
+{
+    for(y = 0, y < 6, y++)
+    {
+        for(x = 0, x < 5, x++)
+        {
+            key = "square_" + y + "_" + x
+            squareView = gameView.getView(key)
+            squareView.color = scene.squareBackgroundColor
+            textView = squareView.getView("text")
+            textView.text = ""
+        }
+    }
+
+    for(y = 0, y < 3, y++)
+    {
+        row = scene.keyboardKeys[y]
+        for(x, char in row)
+        {
+            if(char != ">")
+            {
+                key = "key_" + char
+                keyButton = gameView.getView(key)
+                keyButton.setColor(scene.squareBackgroundColor)
+            }
+        }
+    }
+
+    .currentTry = ""
+    .tryIndex = 0
+    .scoreColorGrid = {}
+}
+
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
     if(!gameRunning or runningInTheBackground or katipo.paused)
     {
         return
     }
-}
 
-highScores.onPlayClick = function()
-{
-    highScores.fadeOut(gameView)
-    .gameRunning = true
+    nowTime = time.now()
+    secondsUntilNext = secondsBetweenWords - math.floor(nowTime % secondsBetweenWords)
 
-    todaysIndex = math.randomInt(table.count(words), math.floor(time.now()))
-    .todaysWord = words[todaysIndex]
+    if(secondsUntilNext != prevTimeUpdateSeconds)
+    {
+        #print("update")
+        .prevTimeUpdateSeconds = secondsUntilNext
+        todaysIndex = math.randomInt(table.count(words), math.floor(nowTime / secondsBetweenWords))
 
-    //print("today's word:", todaysWord)
+        if(mostRecentCompletedIndex != todaysIndex)
+        {
+            #print("mostRecentCompletedIndex:", mostRecentCompletedIndex, " != todaysIndex:", todaysIndex)
+            if(!currentInProgressIndex)
+            {
+                .currentInProgressIndex = todaysIndex
+                .mostRecentCompletedIndex = false
+                .todaysWord = words[todaysIndex]
+                if(printCheatWord)
+                {
+                    print("today's word:", todaysWord)
+                }
+                highScores.fadeOut(gameView)
+                clearBoard()
+            }
+        }
+        else
+        {
+            timeUntilNextText = scene.getView("timeUntilNextText")
+            timeUntilNextText.text = string.format("%d:%d%d:%d%d", 
+            (math.floor(secondsUntilNext / 3600)),
+            (math.floor(secondsUntilNext / 600) % 10)
+            (math.floor(secondsUntilNext / 60) % 10)
+            (math.floor((secondsUntilNext % 60) / 10)), 
+            (secondsUntilNext % 10))
+        }
+    }
 }
 
 keyEvent = function(isDown, keyCode, modKey, isRepeat)
 {
-    if(isDown and !isRepeat)
+    if(isDown and !isRepeat and !mostRecentCompletedIndex)
     {
         if(keyCode == keys.keyCodes.backspace)
         {

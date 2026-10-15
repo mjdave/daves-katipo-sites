@@ -3,21 +3,13 @@
 #global katipo
 
 maxHighScores = 10
+todaysIndex = false
 
 highScoresView = scene.getView("highScores")
 highScoreContentView = highScoresView.getView("highScoreContent")
 enterHighScoreText = highScoresView.getView("enterHighScoreText")
 highScoresTitle = highScoresView.getView("highScoresTitle")
-playButton = highScoresView.getView("playButton")
 
-scores = database.get("highScores")
-print("loaded high scores:", scores)
-if(!scores)
-{
-    scores = {}
-}
-
-onPlayClick = false
 mostRecentScoreIndex = false
 
 crossFade = function(viewFrom, viewTo, completionFunction)
@@ -52,47 +44,119 @@ crossFade = function(viewFrom, viewTo, completionFunction)
     }
 }
 
+rowHeight = 30
+
+scoreViewLayout = {
+    type = "view"
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x / 2, rowHeight)
+    }
+    subviews = {
+        {
+            id = "number"
+            type = "text"
+            alignmentX = "left"
+            #pos = vec2(0, 0)
+            font = "robotoBold"
+            fontSize = 24
+            color = vec4(1,1,1,1)
+            additiveBlend = true
+        }
+        {
+            id = "colorGrid"
+            type = "view"
+            layoutParentID = "number"
+            alignmentX = "outerRight"
+            pos = vec2(10,0)
+            size = vec2(rowHeight,rowHeight)
+        }
+        {
+            id = "name"
+            type = "text"
+            layoutParentID = "colorGrid"
+            alignmentX = "outerRight"
+            pos = vec2(10,0)
+            font = "robotoBold"
+            fontSize = 24
+            color = vec4(1,1,1,1)
+            additiveBlend = true
+        }
+    }
+}
+
+colors = {
+    vec4(0.2,0.1,0.1,0.5)
+    vec4(0.0,1.0,0.0,1.0)
+    vec4(1.0,1.0,0.0,1.0)
+}
+
+
+constructColorGrid = function(parentView, scoreColorGrid)
+{
+    rowCount = table.count(scoreColorGrid)
+    gridHeight = rowHeight - 2
+    cellSize = gridHeight / rowCount
+
+    top = -1 #gridHeight * 0.5 - 1
+
+    for(rowIndex, colorIndexes in scoreColorGrid)
+    {
+        for(i, colorIndex in colorIndexes)
+        {
+            colorCellLayout = {
+                type = "color"
+                alignmentX = "left"
+                alignmentY = "top"
+                size = vec2(cellSize,cellSize)
+                color = colors[colorIndex]
+                pos = vec2(i * (cellSize + 2), top - rowIndex * cellSize)
+            }
+            parentView.addView(colorCellLayout)
+        }
+    }
+
+    parentView.size = vec2(5 * (cellSize + 2), rowHeight)
+}
+
 updateHighScores = function()
 {
+    if(!todaysIndex)
+    {
+        return
+    }
+    scores = database.get("highScores_" + todaysIndex)
+
     if(highScoreContentView.listView)
     {
         highScoreContentView.removeView(highScoreContentView.listView)
     }
 
-    if(table.count(scores) > 0)
+    if(scores and table.count(scores) > 0)
     {
         listView = highScoreContentView.addView({type = "view"})
         highScoreContentView.listView = listView
         for(i, scoreInfo in scores)
         {
-            numberTextView = listView.addView(scene.highScoreText)
+            scoreViewLayout.pos = vec2(0, (table.count(scores) * rowHeight) * 0.5 - i * rowHeight)
+            //yOffset = -rowHeight -i * rowHeight - 100
+            scoreView = listView.addView(scoreViewLayout)
+
+            numberTextView = scoreView.getView("number")
             numberTextView.text = (i + 1) + ". "
-            numberTextView.alignmentX = "right"
 
-            rowHeight = 40
+            nameTextView = scoreView.getView("name")
+            nameTextView.text = string.upper(scoreInfo.name)
 
-            yOffset = -rowHeight -i * rowHeight - 100
-
-            numberTextView.onParentSizeChanged = function(parentSize) #this sucks, need a better solution
-            {
-                numberTextView.pos = vec3(-parentSize.x / 2, yOffset, 0)
-                return vec2(parentSize.x / 2, rowHeight)
-            }
-
-            scoreTextView = listView.addView(scene.highScoreText)
-            scoreTextView.text = string.upper(scoreInfo.name) + " " + scoreInfo.score
-            scoreTextView.alignmentX = "left"
-            scoreTextView.onParentSizeChanged = function(parentSize)
-            {
-                scoreTextView.pos = vec3(parentSize.x / 2, yOffset, 0)
-                return vec2(parentSize.x / 2, rowHeight)
-            }
+            colorGridView = scoreView.getView("colorGrid")
+            constructColorGrid(colorGridView, scoreInfo.scoreColorGrid)
 
             if(i == mostRecentScoreIndex)
             {
-                scoreTextView.color = vec4(1.0,0.9,0.05,1.5)
+                nameTextView.color = vec4(1.0,0.9,0.05,1.5)
                 numberTextView.color = vec4(1.0,0.9,0.05,1.5)
             }
+            
 
             if(i == maxHighScores - 1)
             {
@@ -114,99 +178,64 @@ fadeOut = function(fadeToView, completionFunction)
     crossFade(highScoresView, fadeToView, completionFunction)
 }
 
-playButton.click = function()
+showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysIndex_, fadeFromView, completionFunction)
 {
-    if(!highScoresView.update and !highScoresView.hidden)
+    .todaysIndex = todaysIndex_
+    databaseKey = "highScores_" + todaysIndex
+    scores = database.get(databaseKey)
+    if(!scores)
     {
-        if(onPlayClick)
+        scores = {}
+    }
+
+    enterHighScoreText.hidden = false
+    enterHighScoreText.setText("Player 1")
+    enterHighScoreText.textEntryClickFunction()
+    highScoresTitle.text = string.upper(todaysWord)
+    highScoreContentView.hidden = true
+    enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
+    {
+        addIndex = 0
+        for(i, scoreInfo in scores)
         {
-            onPlayClick()
+            if(scoreInfo.score > newScore)
+            {
+                break
+            }
+            addIndex++
         }
-    }
-}
 
-showHighScoresAfterGame = function(newScore, fadeFromView, completionFunction)
-{
-    isHighScore = false
-    if(table.count(scores) < maxHighScores or newScore >= scores[maxHighScores - 1].score)
-    {
-        isHighScore = true
-    }
-
-    if(isHighScore)
-    {
-        playButton.hidden = true
-        enterHighScoreText.hidden = false
-        enterHighScoreText.setText("Player 1")
-        enterHighScoreText.textEntryClickFunction()
-        highScoresTitle.text = "New High Score!"
-        highScoreContentView.hidden = true
-        enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
+        name = textValue
+        if(!name or name == "")
         {
-            if(!textValue)
-            {
-                error("got nil high score name")
-            }
-            addIndex = 0
-            for(i, scoreInfo in scores)
-            {
-                if(scoreInfo.score <= newScore)
-                {
-                    break
-                }
-                addIndex++
-            }
+            name = "bob"
+        }
 
+        newScoreInfo = {
+            score = newScore,
+            scoreColorGrid = scoreColorGrid,
             name = textValue
-            if(!name or name == "")
-            {
-                name = "bob"
-            }
-
-            newScoreInfo = {
-                score = newScore,
-                name = textValue
-            }
-
-            table.insert(scores, addIndex, newScoreInfo)
-
-            .mostRecentScoreIndex = addIndex
-            if(table.count(scores) > maxHighScores)
-            {
-                table.remove(scores, table.count(scores) - 1)
-            }
-
-            database.set("highScores", scores)
-
-            katipo.get("setScore", newScoreInfo)
-
-            playButton.hidden = false
-            enterHighScoreText.hidden = true
-
-            updateHighScores()
-
-            highScoreContentView.hidden = false
+            dayIndex = todaysIndex
         }
-    }
-    else
-    {
-        highScoresTitle.text = "High Scores"
+
+        table.insert(scores, addIndex, newScoreInfo)
+
+        .mostRecentScoreIndex = addIndex
+
+        database.set(databaseKey, scores)
+
+        #print("newScoreInfo:", newScoreInfo)
+
+        katipo.get("setScore", newScoreInfo)
+
+        enterHighScoreText.hidden = true
+
+        updateHighScores()
+
         highScoreContentView.hidden = false
     }
 
     fadeIn(fadeFromView, completionFunction)
-}
-
-
-setFromHost = function(incomingScores)
-{
-    .scores = incomingScores
-    if(!scores)
-    {
-        .scores = {}
-    }
-    database.set("highScores", scores)
-    updateHighScores()
 }
 
 getHidden = function()

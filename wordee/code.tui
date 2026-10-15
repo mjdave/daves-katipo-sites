@@ -7,23 +7,8 @@ siteInfo = require(katipo.sitePath + "/site.tui")
 host = katipo.host
 #siteImage = file.loadData(katipo.sitePath + "/site.png")
 
-highScores = false
-
 init = function() #called just after katipo.init. The database is now ready to use.
 {
-    .highScores = host.getPublicData("highScores")
-    if(!highScores)
-    {
-        .highScores = {}
-    }
-    else
-    {
-        sortFunction = function(a,b){
-            return a.score < b.score
-        }
-        table.sort(highScores, sortFunction)
-    }
-    print("loaded scores:", highScores)
 }
 
 ### this function is called when clients query this site
@@ -38,10 +23,19 @@ get = function(url, clientData)
 
     if(splitCount > 0 and urlSplit[0] == "setScore")
     {
-        print("got setScore")
         scoreDict = clientData
+        print("got setScore:", scoreDict)
 
-        if(!scoreDict.name or !scoreDict.score or type(scoreDict.name) != "string" or string.length(scoreDict.name) > 8 or type(scoreDict.score) != "number")
+        #tui bug function expected opening brace
+        #if(!scoreDict.name or 
+        ##    !scoreDict.score or 
+         #   type(scoreDict.name) != "string" or 
+         #   string.length(scoreDict.name) > 8 or 
+         #   !scoreDict.dayIndex or
+         #   type(scoreDict.score) != "number")
+       # {
+
+        if(!scoreDict.name or !scoreDict.score or type(scoreDict.name) != "string" or string.length(scoreDict.name) > 8 or !scoreDict.dayIndex or type(scoreDict.score) != "number")
         {
             print("error, missing or invalid data scoreDict:", scoreDict)
 
@@ -50,16 +44,22 @@ get = function(url, clientData)
                 message = "missing or invalid data"
             }
         }
+        databaseKey = "highScores_" + scoreDict.dayIndex
+        highScores = host.getPublicData(databaseKey)
+        if(!highScores)
+        {
+            highScores = {}
+        }
 
         newScore = scoreDict.score
         addIndex = 0
         for(i, scoreInfo in highScores)
         {
-            .addIndex = i
-            if(scoreInfo.score <= newScore)
+            if(scoreInfo.score > newScore)
             {
                 break
             }
+            addIndex++
         }
 
         if(addIndex > maxHighScores)
@@ -69,8 +69,9 @@ get = function(url, clientData)
         }
 
         newScoreInfo = {
-            score = newScore,
+            score = newScore
             name = scoreDict.name
+            scoreColorGrid = scoreDict.scoreColorGrid
         }
 
         table.insert(highScores, addIndex, newScoreInfo)
@@ -80,7 +81,7 @@ get = function(url, clientData)
         }
 
         print("saving highScores:", highScores)
-        host.setPublicData("highScores", highScores)
+        host.setPublicData(databaseKey, highScores)
     }
     else 
     {

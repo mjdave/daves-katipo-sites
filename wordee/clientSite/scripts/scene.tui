@@ -7,16 +7,6 @@ viewTypes = { #can be added to at any time
 
 
 
-highScoreText = {
-    type = "text"
-    alignmentX = "left"
-    alignmentY = "top"
-    font = "robotoBold"
-    fontSize = 30
-    color = vec4(0.2,0.4,1.0,1.0)
-    additiveBlend = true
-}
-
 highScoresView = {
     id = "highScores"
     type = "view"
@@ -46,27 +36,14 @@ highScoresView = {
             id = "highScoreContent"
             type = "view"
         }
+
         {
-            id = "playButton"
-            type = "button"
+            id = "timeUntilNextText"
+            type = "text"
+            font = "robotoBold"
+            fontSize = 20
             alignmentY = "bottom"
-            buttonType = "colorHueShift"
-            color = vec4(1.0,0.0,1.0,0.5)
-            pos = vec3(0,120,0)
-            size = vec2(400, 60)
-            subviews = {
-                {
-                    id = "playButtonText"
-                    type = "text"
-                    alignmentY = "bottom"
-                    font = "robotoBold"
-                    text = "DO WORDS"
-                    fontSize = 48
-                    color = vec4(0.2,0.4,1.0,1.0)
-                    #pos = vec3(0,5,0)
-                    additiveBlend = true
-                }
-            }
+            pos = vec2(0,50)
         }
     }
 }
