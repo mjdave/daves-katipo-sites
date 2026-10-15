@@ -4,7 +4,7 @@
 #global eventManager
 #global database
 
-printCheatWord = true
+printCheatWord = false
 
 keys = require("app/common/keys.tui")
 highScores = require("scripts/highScores.tui")
@@ -32,7 +32,7 @@ scoreColorGrid = {}
 mostRecentCompletedIndex = false
 currentInProgressIndex = false
 
-secondsBetweenWords = 1200
+secondsBetweenWords = 60 * 60 * 12
 prevTimeUpdateSeconds = false
 
 enterChar = function(newChar)
@@ -118,6 +118,8 @@ confirmPressed = function()
                     squareView.color = vec4(0,0,0,0.2)
                     textView.color = vec4(1,1,1,0.4)
                     keyButton.setColor(vec4(0,0,0,0.5))
+                    textView = keyButton.getView("text")
+                    textView.color = vec4(1,1,1,0.3)
                     table.insert(scoreColors, 0)
                 }
             }
@@ -200,10 +202,49 @@ keyClickFunction = function(keyView)
     }
 }
 
+clearBoard = function()
+{
+    for(y = 0, y < 6, y++)
+    {
+        for(x = 0, x < 5, x++)
+        {
+            key = "square_" + y + "_" + x
+            squareView = gameView.getView(key)
+            squareView.color = scene.squareBackgroundColor
+            textView = squareView.getView("text")
+            textView.text = ""
+            textView.color = vec4(1,1,1,1)
+        }
+    }
+
+    for(y = 0, y < 3, y++)
+    {
+        row = scene.keyboardKeys[y]
+        for(x, char in row)
+        {
+            if(char != ">")
+            {
+                key = "key_" + char
+                keyButton = gameView.getView(key)
+                keyButton.setColor(scene.squareBackgroundColor)
+                textView = keyButton.getView("text")
+                textView.color = vec4(1,1,1,1)
+            }
+        }
+    }
+
+    squareView = gameView.getView("square_0_0")
+    squareView.color = scene.squareSelectedColor
+
+    .currentTry = ""
+    .tryIndex = 0
+    .scoreColorGrid = {}
+}
+
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
 {
     .runningInTheBackground = false
-    print("in clientSite onSiteLoad:", publicData)
+    #print("in clientSite onSiteLoad:", publicData)
     if(publicData)
     {
         for(k, v in publicData)
@@ -230,8 +271,7 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         }
     }
 
-    squareView = gameView.getView("square_0_0")
-    squareView.color = scene.squareSelectedColor
+    clearBoard()
 }
 
 katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
@@ -240,38 +280,6 @@ katipo.onBackgroundChange = function(isBackground) #called if the app enters the
 }
 
 
-clearBoard = function()
-{
-    for(y = 0, y < 6, y++)
-    {
-        for(x = 0, x < 5, x++)
-        {
-            key = "square_" + y + "_" + x
-            squareView = gameView.getView(key)
-            squareView.color = scene.squareBackgroundColor
-            textView = squareView.getView("text")
-            textView.text = ""
-        }
-    }
-
-    for(y = 0, y < 3, y++)
-    {
-        row = scene.keyboardKeys[y]
-        for(x, char in row)
-        {
-            if(char != ">")
-            {
-                key = "key_" + char
-                keyButton = gameView.getView(key)
-                keyButton.setColor(scene.squareBackgroundColor)
-            }
-        }
-    }
-
-    .currentTry = ""
-    .tryIndex = 0
-    .scoreColorGrid = {}
-}
 
 katipo.update = function(dt) #called every rendered frame, the variable time step is stored in dt
 {
@@ -292,17 +300,32 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
         if(mostRecentCompletedIndex != todaysIndex)
         {
             #print("mostRecentCompletedIndex:", mostRecentCompletedIndex, " != todaysIndex:", todaysIndex)
+
+            
             if(!currentInProgressIndex)
             {
-                .currentInProgressIndex = todaysIndex
-                .mostRecentCompletedIndex = false
-                .todaysWord = words[todaysIndex]
-                if(printCheatWord)
+                existingScore = highScores.checkHasCompleted(todaysIndex)
+
+                if(existingScore)
                 {
-                    print("today's word:", todaysWord)
+                    .mostRecentCompletedIndex = todaysIndex
+
+                    timeUntilNextText = scene.getView("timeUntilNextText")
+                    timeUntilNextText.text = ""
+                    highScores.showHighScores(todaysWord, todaysIndex, gameView)
                 }
-                highScores.fadeOut(gameView)
-                clearBoard()
+                else
+                {
+                    .currentInProgressIndex = todaysIndex
+                    .mostRecentCompletedIndex = false
+                    .todaysWord = words[todaysIndex]
+                    if(printCheatWord)
+                    {
+                        print("today's word:", todaysWord)
+                    }
+                    highScores.fadeOut(gameView)
+                    clearBoard()
+                }
             }
         }
         else

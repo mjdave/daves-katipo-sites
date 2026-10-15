@@ -35,6 +35,9 @@ highScoresView = {
         {
             id = "highScoreContent"
             type = "view"
+            alignmentY = "below"
+            layoutParentID = "highScoresTitle"
+            pos = vec3(0,-20, 0)
         }
 
         {

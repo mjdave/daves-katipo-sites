@@ -44,14 +44,12 @@ crossFade = function(viewFrom, viewTo, completionFunction)
     }
 }
 
-rowHeight = 30
+rowHeight = 50
 
 scoreViewLayout = {
     type = "view"
-    onParentSizeChanged = function(parentSize)
-    {
-        return vec2(parentSize.x / 2, rowHeight)
-    }
+    alignmentY = "top"
+    size = vec2(360,rowHeight)
     subviews = {
         {
             id = "number"
@@ -96,7 +94,7 @@ constructColorGrid = function(parentView, scoreColorGrid)
 {
     rowCount = table.count(scoreColorGrid)
     gridHeight = rowHeight - 2
-    cellSize = gridHeight / rowCount
+    cellSize = gridHeight / rowCount - 2
 
     top = -1 #gridHeight * 0.5 - 1
 
@@ -110,7 +108,7 @@ constructColorGrid = function(parentView, scoreColorGrid)
                 alignmentY = "top"
                 size = vec2(cellSize,cellSize)
                 color = colors[colorIndex]
-                pos = vec2(i * (cellSize + 2), top - rowIndex * cellSize)
+                pos = vec2(i * (cellSize + 2), top - rowIndex * (cellSize + 2))
             }
             parentView.addView(colorCellLayout)
         }
@@ -136,9 +134,10 @@ updateHighScores = function()
     {
         listView = highScoreContentView.addView({type = "view"})
         highScoreContentView.listView = listView
+        
         for(i, scoreInfo in scores)
         {
-            scoreViewLayout.pos = vec2(0, (table.count(scores) * rowHeight) * 0.5 - i * rowHeight)
+            scoreViewLayout.pos = vec2(0, -(i * rowHeight))
             //yOffset = -rowHeight -i * rowHeight - 100
             scoreView = listView.addView(scoreViewLayout)
 
@@ -178,6 +177,42 @@ fadeOut = function(fadeToView, completionFunction)
     crossFade(highScoresView, fadeToView, completionFunction)
 }
 
+showHighScores = function(todaysWord, todaysIndex_, fadeFromView, completionFunction)
+{
+    .todaysIndex = todaysIndex_
+    
+    enterHighScoreText.hidden = true
+
+    updateHighScores()
+
+    highScoreContentView.hidden = false
+    
+    fadeIn(fadeFromView, completionFunction)
+}
+
+checkHasCompleted = function(todaysIndex_)
+{
+    print("in checkHasCompleted")
+    thisIndex = todaysIndex_
+    unsentScore = database.get("unsentScore_" + thisIndex)
+    if(unsentScore)
+    {
+    print("unsentScore")
+        scoreSentFunction = function(result)
+        {
+            database.remove("unsentScore_" + thisIndex)
+            database.set("sentScore_" + thisIndex, unsentScore)
+        }
+
+        katipo.get("setScore", unsentScore, scoreSentFunction)
+        return true
+    }
+
+    print("result:", (database.get("sentScore_" + thisIndex) != nil))
+
+    return (database.get("sentScore_" + thisIndex) != nil)
+}
+
 showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysIndex_, fadeFromView, completionFunction)
 {
     .todaysIndex = todaysIndex_
@@ -215,7 +250,6 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
             score = newScore,
             scoreColorGrid = scoreColorGrid,
             name = textValue
-            dayIndex = todaysIndex
         }
 
         table.insert(scores, addIndex, newScoreInfo)
@@ -226,7 +260,19 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
 
         #print("newScoreInfo:", newScoreInfo)
 
-        katipo.get("setScore", newScoreInfo)
+        database.set("unsentScore_" + todaysIndex, newScoreInfo)
+
+        newScoreInfo.dayIndex = todaysIndex
+
+        scoreSentFunction = function(result)
+        {
+            database.remove("unsentScore_" + todaysIndex)
+            database.set("sentScore_" + todaysIndex, newScoreInfo)
+            print("in score sent function")
+        }
+
+            print("setting score")
+        katipo.get("setScore", newScoreInfo, scoreSentFunction)
 
         enterHighScoreText.hidden = true
 
