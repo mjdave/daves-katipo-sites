@@ -60,7 +60,7 @@ keyboardKeys = {
 gridCellSize = 60
 padding = 2
 
-gridBackgroundSize = vec2((gridCellSize + padding)*5 + padding,(gridCellSize + padding)*6 + padding)
+gridBackgroundSize = vec2((gridCellSize + padding)*5 + padding,(gridCellSize + padding) * 8 + padding)
 
 gridBackgroundColor = vec4(0,0,1,0.2)
 squareBackgroundColor = vec4(0.5,0.5,0.5,0.2)
@@ -68,11 +68,11 @@ squareSelectedColor = vec4(0.5,0.7,0.7,0.4)
 squareSetColor = vec4(0,0.5,0.5,0.2)
 
 squareViews = {}
-for(y = 0, y < 6, y++)
+for(y = 0, y < 8, y++)
 {
     for(x = 0, x < 5, x++)
     {
-        yOffsetIndex = 5 - y
+        yOffsetIndex = 7 - y
         squareView = {
             id = "square_" + y + "_" + x
             type = "color"

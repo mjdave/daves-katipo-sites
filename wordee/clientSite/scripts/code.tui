@@ -138,9 +138,15 @@ confirmPressed = function()
             else
             {
                 tryIndex++
-                if(tryIndex == 6)
+                if(tryIndex == 8)
                 {
-                    print("the word was:", todaysWord)
+                    .mostRecentCompletedIndex = currentInProgressIndex
+                    .currentInProgressIndex = false
+                    highScores.showHighScoresAfterGame(tryIndex, 
+                        scoreColorGrid
+                        todaysWord,
+                        mostRecentCompletedIndex, 
+                        gameView)
                 }
                 else
                 {
@@ -204,7 +210,7 @@ keyClickFunction = function(keyView)
 
 clearBoard = function()
 {
-    for(y = 0, y < 6, y++)
+    for(y = 0, y < 8, y++)
     {
         for(x = 0, x < 5, x++)
         {
@@ -312,6 +318,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
 
                     timeUntilNextText = scene.getView("timeUntilNextText")
                     timeUntilNextText.text = ""
+                    .todaysWord = words[todaysIndex]
                     highScores.showHighScores(todaysWord, todaysIndex, gameView)
                 }
                 else
@@ -333,7 +340,7 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
             timeUntilNextText = scene.getView("timeUntilNextText")
             timeUntilNextText.text = string.format("%d:%d%d:%d%d", 
             (math.floor(secondsUntilNext / 3600)),
-            (math.floor(secondsUntilNext / 600) % 10)
+            (math.floor(secondsUntilNext / 360) % 10)
             (math.floor(secondsUntilNext / 60) % 10)
             (math.floor((secondsUntilNext % 60) / 10)), 
             (secondsUntilNext % 10))

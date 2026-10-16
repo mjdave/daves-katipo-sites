@@ -180,6 +180,7 @@ fadeOut = function(fadeToView, completionFunction)
 showHighScores = function(todaysWord, todaysIndex_, fadeFromView, completionFunction)
 {
     .todaysIndex = todaysIndex_
+    highScoresTitle.text = string.upper(todaysWord)
     
     enterHighScoreText.hidden = true
 
