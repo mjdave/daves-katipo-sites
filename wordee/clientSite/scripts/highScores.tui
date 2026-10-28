@@ -5,10 +5,6 @@
 maxHighScores = 10
 todaysIndex = false
 
-highScoresView = scene.getView("highScores")
-highScoreContentView = highScoresView.getView("highScoreContent")
-enterHighScoreText = highScoresView.getView("enterHighScoreText")
-highScoresTitle = highScoresView.getView("highScoresTitle")
 
 mostRecentScoreIndex = false
 
@@ -117,6 +113,14 @@ constructColorGrid = function(parentView, scoreColorGrid)
     parentView.size = vec2(5 * (cellSize + 2), rowHeight)
 }
 
+/*
+
+highScoresView = scene.getView("highScores")
+highScoreContentView = highScoresView.getView("highScoreContent")
+enterHighScoreText = highScoresView.getView("enterHighScoreText")
+highScoresTitle = highScoresView.getView("highScoresTitle")
+highScoresDefinition = highScoresView.getView("highScoresDefinition")*/
+
 updateHighScores = function()
 {
     if(!todaysIndex)
@@ -124,10 +128,14 @@ updateHighScores = function()
         return
     }
     scores = database.get("highScores_" + todaysIndex)
+    
+    highScoresView = scene.getView("highScores")
+    highScoreContentView = highScoresView.getView("highScoreContent")
 
     if(highScoreContentView.listView)
     {
         highScoreContentView.removeView(highScoreContentView.listView)
+        highScoreContentView.listView = nil
     }
 
     if(scores and table.count(scores) > 0)
@@ -169,18 +177,54 @@ updateHighScores = function()
 fadeIn = function(fadeFromView, completionFunction)
 {
     updateHighScores()
+    highScoresView = scene.getView("highScores")
     crossFade(fadeFromView, highScoresView, completionFunction)
 }
 
 fadeOut = function(fadeToView, completionFunction)
 {
+    highScoresView = scene.getView("highScores")
     crossFade(highScoresView, fadeToView, completionFunction)
+}
+
+updateWordText = function(todaysWord)
+{
+    highScoresView = scene.getView("highScores")
+    highScoresTitle = highScoresView.getView("highScoresTitle")
+
+    charFunc = function(char, index)
+    {
+        squareView = highScoresTitle.getView("titleSquare_" + index)
+        textView = squareView.getView("text")
+        textView.text = string.upper(char)
+    }
+    string.eachChar(todaysWord.w, charFunc)
+
+    combinedDescription = ""
+    for(i, description in todaysWord.d)
+    {
+        combinedDescription += (i + ". " + description)
+        if(i + 1 < table.count(todaysWord.d))
+        {
+            combinedDescription += "\n"
+        }
+    }
+
+    highScoresDefinition = highScoresView.getView("highScoresDefinition")
+    highScoresDefinition.text = combinedDescription
+    
 }
 
 showHighScores = function(todaysWord, todaysIndex_, fadeFromView, completionFunction)
 {
     .todaysIndex = todaysIndex_
-    highScoresTitle.text = string.upper(todaysWord)
+
+    highScoresView = scene.getView("highScores")
+    highScoreContentView = highScoresView.getView("highScoreContent")
+    enterHighScoreText = highScoresView.getView("enterHighScoreText")
+
+    #highScoresTitle.text = string.lower(todaysWord.w)
+    updateWordText(todaysWord)
     
     enterHighScoreText.hidden = true
 
@@ -224,10 +268,15 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
         scores = {}
     }
 
+    highScoresView = scene.getView("highScores")
+    highScoreContentView = highScoresView.getView("highScoreContent")
+    enterHighScoreText = highScoresView.getView("enterHighScoreText")
+
     enterHighScoreText.hidden = false
     enterHighScoreText.setText("Player 1")
     enterHighScoreText.textEntryClickFunction()
-    highScoresTitle.text = string.upper(todaysWord)
+    #highScoresTitle.text = string.upper(todaysWord.w)
+    updateWordText(todaysWord)
     highScoreContentView.hidden = true
     enterHighScoreText.onFinishedEditing = function(textValue, changesMade)
     {
@@ -287,5 +336,6 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
 
 getHidden = function()
 {
+    highScoresView = scene.getView("highScores")
     return highScoresView.hidden
 }

@@ -1,0 +1,60 @@
+dictionary = require("dictionary.jsonl")
+
+allowedCharsList = {
+    "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M"
+}
+
+allowedChars = {}
+for(char in allowedCharsList)
+{
+    allowedChars[string.lower(char)] = true
+}
+
+validWords = {}
+
+for(v in dictionary)
+{
+    word = v.word
+    if(word and string.length(word) == 5)
+    {
+        lowercaseWord = string.lower(word)
+        validWord = true
+
+        charFunc = function(char)
+        {
+            if(!allowedChars[char])
+            {
+                .validWord = false
+                return true
+            }
+            return false
+        }
+        string.eachChar(lowercaseWord, charFunc)
+
+        if(validWord)
+        {
+            wordDefinitions = validWords[lowercaseWord]
+            if(!wordDefinitions)
+            {
+                wordDefinitions = {}
+                validWords[lowercaseWord] = wordDefinitions
+            }
+            if(table.count(wordDefinitions) < 4)
+            {
+                table.insert(wordDefinitions, v.definition)
+            }
+        }
+    }
+}
+
+wordsArray = {}
+for(word, definitions in validWords)
+{
+    wordInfo = {
+        w = word
+        d = definitions
+    }
+    table.insert(wordsArray, wordInfo)
+}
+
+file.save("/Users/davidframpton/Documents/daves-katipo-sites/wordee/words.tui", wordsArray)

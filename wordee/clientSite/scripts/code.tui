@@ -13,7 +13,7 @@ words = require("scripts/words.tui")
 validWords = {}
 for(word in words)
 {
-    validWords[word] = true
+    validWords[word.w] = true
 }
 
 gameView = scene.getView("gameView")
@@ -22,15 +22,7 @@ gameRunning = true
 
 runningInTheBackground = false
 
-todaysWord = false
-
-tryIndex = 0
-currentTry = ""
-scoreColorGrid = {}
-
-
 mostRecentCompletedIndex = false
-currentInProgressIndex = false
 
 secondsBetweenWords = 60 * 60 * 12
 prevTimeUpdateSeconds = false
@@ -48,10 +40,18 @@ enterChar = function(newChar)
         return
     }
 
+    tryIndex = database.get("tryIndex")
+    currentTry = database.get("try_" + tryIndex)
+    if(!currentTry)
+    {
+        currentTry = ""
+    }
+
     currentLength = string.length(currentTry)
     if(currentLength < 5)
     {
         currentTry += string.lower(newChar)
+        database.set("try_" + tryIndex, currentTry)
         squareKey = "square_" + tryIndex + "_" + currentLength
         squareView = gameView.getView(squareKey)
         squareView.color = scene.squareSetColor
@@ -79,11 +79,23 @@ enterChar = function(newChar)
 
 confirmPressed = function()
 {
+    currentInProgressWordIndex = database.get("currentInProgressIndex")
+    tryIndex = database.get("tryIndex")
+    currentTry = database.get("try_" + tryIndex)
+    if(!currentTry)
+    {
+        currentTry = ""
+    }
+
     currentLength = string.length(currentTry)
     if(currentLength == 5)
     {
         if(validWords[currentTry])
         {
+            scoreColorGrid = database.get("scoreColorGrid")
+
+            todaysWord = words[currentInProgressWordIndex]
+
             scoreColors = {}
             table.insert(scoreColorGrid, scoreColors)
             for(charIndex = 0, charIndex < 5, charIndex++)
@@ -97,10 +109,10 @@ confirmPressed = function()
                 key = "key_" + string.upper(thisChar)
                 keyButton = gameView.getView(key)
 
-                foundLocation = string.find(todaysWord, thisChar)
+                foundLocation = string.find(todaysWord.w, thisChar)
                 if(foundLocation)
                 {
-                    thisLocation = string.find(todaysWord, thisChar, charIndex)
+                    thisLocation = string.find(todaysWord.w, thisChar, charIndex)
                     if(thisLocation == charIndex)
                     {
                         squareView.color = vec4(0,1,0,0.6)
@@ -124,11 +136,14 @@ confirmPressed = function()
                 }
             }
 
-            if(currentTry == todaysWord)
+            database.set("scoreColorGrid", scoreColorGrid)
+
+            if(currentTry == todaysWord.w)
             {
                 #game won
-                .mostRecentCompletedIndex = currentInProgressIndex
-                .currentInProgressIndex = false
+                .mostRecentCompletedIndex = database.get("currentInProgressIndex")
+                database.set("mostRecentCompletedIndex", mostRecentCompletedIndex)
+                database.remove("currentInProgressIndex")
                 highScores.showHighScoresAfterGame(tryIndex, 
                     scoreColorGrid
                     todaysWord, 
@@ -138,10 +153,13 @@ confirmPressed = function()
             else
             {
                 tryIndex++
+                database.set("tryIndex", tryIndex)
+
                 if(tryIndex == 8)
                 {
-                    .mostRecentCompletedIndex = currentInProgressIndex
-                    .currentInProgressIndex = false
+                    .mostRecentCompletedIndex = database.get("currentInProgressIndex")
+                    database.set("mostRecentCompletedIndex", mostRecentCompletedIndex)
+                    database.remove("currentInProgressIndex")
                     highScores.showHighScoresAfterGame(tryIndex, 
                         scoreColorGrid
                         todaysWord,
@@ -150,7 +168,9 @@ confirmPressed = function()
                 }
                 else
                 {
-                    .currentTry = ""
+                    addSquareViews(tryIndex)
+
+                    database.set("try_" + tryIndex, "")
                     key = "key_>"
                     keyButton = gameView.getView(key)
                     keyButton.setDisabled(true)
@@ -165,6 +185,12 @@ confirmPressed = function()
 
 deleteCurrentChar = function()
 {
+    tryIndex = database.get("tryIndex")
+    currentTry = database.get("try_" + tryIndex)
+    if(!currentTry)
+    {
+        return
+    }
     currentLength = string.length(currentTry)
     if(currentLength > 0)
     {
@@ -181,7 +207,8 @@ deleteCurrentChar = function()
 
         textView = squareView.getView("text")
         textView.text = ""
-        .currentTry = string.subString(currentTry, 0, currentLength - 1)
+        currentTry = string.subString(currentTry, 0, currentLength - 1)
+        database.set("try_" + tryIndex, currentTry)
 
         if(currentLength == 5)
         {
@@ -208,10 +235,75 @@ keyClickFunction = function(keyView)
     }
 }
 
+addSquareViews = function(rowIndex)
+{
+    gridCellSize = scene.gridCellSize
+    padding = scene.padding
+    gridView = gameView.getView("grid")
+
+    gridView.size = vec2(scene.gridBackgroundSize.x, (gridCellSize + padding) * (rowIndex + 1) + padding)
+
+    for(x = 0, x < 5, x++)
+    {
+        yOffsetIndex = -rowIndex
+        squareViewLayout = {
+            id = "square_" + rowIndex + "_" + x
+            type = "color"
+            alignmentY = "top"
+            alignmentX = "left"
+            size = vec2(gridCellSize,gridCellSize)
+            color = scene.squareBackgroundColor
+            pos = vec2(padding + (gridCellSize + padding) * x, -padding + (gridCellSize + padding) * yOffsetIndex)
+            subviews = {
+                {
+                    id = "text"
+                    type = "text"
+                    font = "robotoBold"
+                    fontSize = 30
+                }
+            }
+        }
+
+        squareView = gridView.addView(squareViewLayout)
+
+        table.insert(gridView.squareViews, squareView)
+    }
+}
+
 clearBoard = function()
 {
+    tryIndex = database.get("tryIndex")
+    scoreColorGrid = database.get("scoreColorGrid")
+
+    print("tryIndex:", tryIndex)
+    print("scoreColorGrid:", scoreColorGrid)
+
+    selectionSet = false
+    charColors = {}
+
+    gridView = gameView.getView("grid")
+
+    if(gridView.squareViews)
+    {
+        for(squareView in gridView.squareViews)
+        {
+            gridView.removeView(squareView)
+        }
+    }
+    gridView.squareViews = {}
+
     for(y = 0, y < 8, y++)
     {
+        addSquareViews(y)
+
+        tryWord = false
+        if(tryIndex and tryIndex >= y)
+        {
+            tryWord = database.get("try_" + y)
+        }
+
+        print("y:", y, " tryWord:", tryWord)
+
         for(x = 0, x < 5, x++)
         {
             key = "square_" + y + "_" + x
@@ -220,6 +312,46 @@ clearBoard = function()
             textView = squareView.getView("text")
             textView.text = ""
             textView.color = vec4(1,1,1,1)
+
+            if(tryWord and string.length(tryWord) > x)
+            {
+                char = string.subString(tryWord, x, 1)
+                textView.text = string.upper(char)
+
+                if(string.length(tryWord) < 5)
+                {
+                    squareView.color = scene.squareSetColor
+                }
+                else
+                {
+                    scoreColorGridRow = scoreColorGrid[y]
+                    color = scoreColorGridRow[x]
+                    charColors[char] = color
+                    if(color == 1)
+                    {
+                        squareView.color = vec4(0,1,0,0.6)
+                    }
+                    else if(color == 2)
+                    {
+                        squareView.color = vec4(1,1,0,0.6)
+                    }
+                    else
+                    {
+                        squareView.color = vec4(0,0,0,0.2)
+                        textView.color = vec4(1,1,1,0.4)
+                    }
+                }
+            }
+            else if(!selectionSet)
+            {
+                squareView.color = scene.squareSelectedColor
+                .selectionSet = true
+            }
+        }
+
+        if(selectionSet)
+        {
+            break
         }
     }
 
@@ -232,19 +364,37 @@ clearBoard = function()
             {
                 key = "key_" + char
                 keyButton = gameView.getView(key)
-                keyButton.setColor(scene.squareBackgroundColor)
+                charColorIndex = charColors[string.lower(char)]
+                if(charColorIndex)
+                {
+                    if(charColorIndex == 0)
+                    {
+                        keyButton.setColor(vec4(0,0,0,0.5))
+                    }
+                    else if(charColorIndex == 1)
+                    {
+                        keyButton.setColor(vec4(0,1,0,0.6))
+                    }
+                    else if(charColorIndex == 2)
+                    {
+                        keyButton.setColor(vec4(1,1,0,0.6))
+                    }
+                }
+                else
+                {
+                    keyButton.setColor(scene.squareBackgroundColor)
+                }
                 textView = keyButton.getView("text")
                 textView.color = vec4(1,1,1,1)
             }
         }
     }
+}
 
-    squareView = gameView.getView("square_0_0")
-    squareView.color = scene.squareSelectedColor
-
-    .currentTry = ""
-    .tryIndex = 0
-    .scoreColorGrid = {}
+getTodaysIndex = function()
+{
+    nowTime = time.now()
+    return math.randomInt(table.count(words), math.floor(nowTime / secondsBetweenWords))
 }
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
@@ -258,6 +408,8 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
             database.set(k, v)
         }
     }
+
+    .mostRecentCompletedIndex = database.get("mostRecentCompletedIndex")
 
     for(y = 0, y < 3, y++)
     {
@@ -278,6 +430,16 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
     }
 
     clearBoard()
+
+    todaysIndex = getTodaysIndex()
+    if(highScores.checkHasCompleted(todaysIndex))
+    {
+        highScores.showHighScores(words[todaysIndex], todaysIndex, gameView)
+    }
+    else
+    {
+        highScores.fadeOut(gameView)
+    }
 }
 
 katipo.onBackgroundChange = function(isBackground) #called if the app enters the background, or a new site is loaded and we are hidden
@@ -301,37 +463,44 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
     {
         #print("update")
         .prevTimeUpdateSeconds = secondsUntilNext
-        todaysIndex = math.randomInt(table.count(words), math.floor(nowTime / secondsBetweenWords))
+        todaysIndex = getTodaysIndex()
 
         if(mostRecentCompletedIndex != todaysIndex)
         {
             #print("mostRecentCompletedIndex:", mostRecentCompletedIndex, " != todaysIndex:", todaysIndex)
 
+            #print("currentInProgressIndex:", database.get("currentInProgressIndex"))
             
-            if(!currentInProgressIndex)
+            if(database.get("currentInProgressIndex") != todaysIndex)
             {
                 existingScore = highScores.checkHasCompleted(todaysIndex)
 
                 if(existingScore)
                 {
                     .mostRecentCompletedIndex = todaysIndex
+                    database.set("mostRecentCompletedIndex", todaysIndex)
 
                     timeUntilNextText = scene.getView("timeUntilNextText")
                     timeUntilNextText.text = ""
-                    .todaysWord = words[todaysIndex]
-                    highScores.showHighScores(todaysWord, todaysIndex, gameView)
+                    highScores.showHighScores(words[todaysIndex], todaysIndex, gameView)
                 }
                 else
                 {
-                    .currentInProgressIndex = todaysIndex
+                    database.set("currentInProgressIndex", todaysIndex)
+                    database.remove("mostRecentCompletedIndex")
                     .mostRecentCompletedIndex = false
-                    .todaysWord = words[todaysIndex]
                     if(printCheatWord)
                     {
-                        print("today's word:", todaysWord)
+                        print("today's word:", words[todaysIndex])
                     }
-                    highScores.fadeOut(gameView)
+
+                    tryIndex = 0
+                    database.set("tryIndex", tryIndex)
+                    database.set("try_" + tryIndex, "")
+                    database.set("scoreColorGrid", {})
+
                     clearBoard()
+
                 }
             }
         }
@@ -340,10 +509,10 @@ katipo.update = function(dt) #called every rendered frame, the variable time ste
             timeUntilNextText = scene.getView("timeUntilNextText")
             timeUntilNextText.text = string.format("%d:%d%d:%d%d", 
             (math.floor(secondsUntilNext / 3600)),
-            (math.floor(secondsUntilNext / 360) % 10)
-            (math.floor(secondsUntilNext / 60) % 10)
-            (math.floor((secondsUntilNext % 60) / 10)), 
-            (secondsUntilNext % 10))
+            (math.floor(secondsUntilNext / 60 % 60 / 10)) //10 minutes
+            (math.floor(secondsUntilNext / 60) % 10) // minute
+            (math.floor((secondsUntilNext % 60) / 10)), //10 second
+            (secondsUntilNext % 10)) #00:X0:00
         }
     }
 }
@@ -365,7 +534,7 @@ keyEvent = function(isDown, keyCode, modKey, isRepeat)
 
 textEntry = function(text)
 {
-    print("text entry:", text)
+    #print("text entry:", text)
 
     string.eachChar(text, enterChar)
 }
