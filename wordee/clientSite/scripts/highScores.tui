@@ -203,7 +203,7 @@ updateWordText = function(todaysWord)
     combinedDescription = ""
     for(i, description in todaysWord.d)
     {
-        combinedDescription += (i + ". " + description)
+        combinedDescription += ((i + 1) + ". " + description)
         if(i + 1 < table.count(todaysWord.d))
         {
             combinedDescription += "\n"

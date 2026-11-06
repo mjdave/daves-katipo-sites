@@ -1,4 +1,5 @@
 dictionary = require("dictionary.jsonl")
+dictionary400kWordsList = require("words_dictionary.json")
 
 allowedCharsList = {
     "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M"
@@ -15,9 +16,32 @@ validWords = {}
 for(v in dictionary)
 {
     word = v.word
-    if(word and string.length(word) == 5)
+    if(word)
     {
-        lowercaseWord = string.lower(word)
+        word = string.lower(word)
+        wordLength = string.length(word)
+        if(wordLength == 4)
+        {
+            word = word + "s"
+            print("testing plural:", word)
+            if(dictionary400kWordsList[word])
+            {
+                print("word is valid")
+            }
+            else
+            {
+                print("not a word")
+                word = nil
+            }
+        }
+        else if(wordLength != 5)
+        {
+            word = nil
+        }
+    }
+
+    if(word)
+    {
         validWord = true
 
         charFunc = function(char)
@@ -29,15 +53,15 @@ for(v in dictionary)
             }
             return false
         }
-        string.eachChar(lowercaseWord, charFunc)
+        string.eachChar(word, charFunc)
 
         if(validWord)
         {
-            wordDefinitions = validWords[lowercaseWord]
+            wordDefinitions = validWords[word]
             if(!wordDefinitions)
             {
                 wordDefinitions = {}
-                validWords[lowercaseWord] = wordDefinitions
+                validWords[word] = wordDefinitions
             }
             if(table.count(wordDefinitions) < 4)
             {

@@ -394,7 +394,7 @@ clearBoard = function()
 getTodaysIndex = function()
 {
     nowTime = time.now()
-    return math.randomInt(table.count(words), math.floor(nowTime / secondsBetweenWords))
+    return math.randomInt(table.count(words), math.floor(database.get("randomSeed") + nowTime / secondsBetweenWords))
 }
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection
