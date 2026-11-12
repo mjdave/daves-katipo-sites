@@ -80,7 +80,7 @@ scoreViewLayout = {
 }
 
 colors = {
-    vec4(0.2,0.1,0.1,0.5)
+    vec4(0.5,0.5,0.5,0.5)
     vec4(0.0,1.0,0.0,1.0)
     vec4(1.0,1.0,0.0,1.0)
 }
@@ -143,6 +143,8 @@ updateHighScores = function()
         listView = highScoreContentView.addView({type = "view"})
         highScoreContentView.listView = listView
         
+        scoreIndex = 1
+        lastScore = false
         for(i, scoreInfo in scores)
         {
             scoreViewLayout.pos = vec2(0, -(i * rowHeight))
@@ -150,13 +152,21 @@ updateHighScores = function()
             scoreView = listView.addView(scoreViewLayout)
 
             numberTextView = scoreView.getView("number")
-            numberTextView.text = (i + 1) + ". "
+            tryCount = table.count(scoreInfo.scoreColorGrid)
+            if(lastScore and lastScore != tryCount)
+            {
+                scoreIndex++
+            }
+            .lastScore = tryCount
+
+            numberTextView.text = scoreIndex + ". "
 
             nameTextView = scoreView.getView("name")
             nameTextView.text = string.upper(scoreInfo.name)
 
             colorGridView = scoreView.getView("colorGrid")
             constructColorGrid(colorGridView, scoreInfo.scoreColorGrid)
+            
 
             if(i == mostRecentScoreIndex)
             {

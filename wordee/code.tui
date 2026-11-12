@@ -9,9 +9,9 @@ host = katipo.host
 
 init = function() #called just after katipo.init. The database is now ready to use.
 {
-    if(!host.getPublicData("randomSeed"))
+    if(!host.getPublicData("seed"))
     {
-        host.setPublicData("randomSeed", time.now())
+        host.setPublicData("seed", math.floor(time.now()))
     }
 }
 
