@@ -252,18 +252,21 @@ checkHasCompleted = function(todaysIndex_)
     unsentScore = database.get("unsentScore_" + thisIndex)
     if(unsentScore)
     {
-    print("unsentScore")
+        print("unsentScore")
         scoreSentFunction = function(result)
         {
-            database.remove("unsentScore_" + thisIndex)
-            database.set("sentScore_" + thisIndex, unsentScore)
+            if(result and result.status == "ok")
+            {
+                database.remove("unsentScore_" + thisIndex)
+                database.set("sentScore_" + thisIndex, unsentScore)
+            }
         }
 
         katipo.get("setScore", unsentScore, scoreSentFunction)
         return true
     }
 
-    print("result:", (database.get("sentScore_" + thisIndex) != nil))
+    print("checkHasCompleted result:", (database.get("sentScore_" + thisIndex) != nil))
 
     return (database.get("sentScore_" + thisIndex) != nil)
 }
@@ -283,7 +286,7 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
     enterHighScoreText = highScoresView.getView("enterHighScoreText")
 
     enterHighScoreText.hidden = false
-    enterHighScoreText.setText("Player 1")
+    enterHighScoreText.setText("")
     enterHighScoreText.textEntryClickFunction()
     #highScoresTitle.text = string.upper(todaysWord.w)
     updateWordText(todaysWord)
@@ -324,14 +327,16 @@ showHighScoresAfterGame = function(newScore, scoreColorGrid, todaysWord, todaysI
 
         newScoreInfo.dayIndex = todaysIndex
 
+
         scoreSentFunction = function(result)
         {
-            database.remove("unsentScore_" + todaysIndex)
-            database.set("sentScore_" + todaysIndex, newScoreInfo)
-            print("in score sent function")
+            if(result and result.status == "ok")
+            {
+                database.remove("unsentScore_" + newScoreInfo.dayIndex)
+                database.set("sentScore_" + newScoreInfo.dayIndex, newScoreInfo)
+            }
         }
 
-            print("setting score")
         katipo.get("setScore", newScoreInfo, scoreSentFunction)
 
         enterHighScoreText.hidden = true
